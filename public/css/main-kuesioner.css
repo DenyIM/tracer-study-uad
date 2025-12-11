@@ -1,0 +1,194 @@
+.progress-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.progress {
+    height: 12px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    background-color: var(--accent-yellow);
+}
+
+.category-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    height: 100%;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent-yellow);
+}
+
+.category-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.category-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.questionnaire-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.questionnaire-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.questionnaire-card.completed {
+    border-color: var(--accent-yellow);
+}
+
+.questionnaire-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.questionnaire-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.category-modal .modal-dialog {
+    max-width: 800px;
+}
+
+.category-modal .modal-header {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.category-modal .modal-title {
+    font-weight: 600;
+}
+
+.category-modal .modal-body {
+    padding: 2rem;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.feature-locked {
+    opacity: 0.6;
+}
+
+.lock-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #6c757d;
+}
+
+.footer {
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 20px 0;
+    margin-top: 50px;
+    text-align: center;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@media (max-width: 768px) {
+
+    .category-card,
+    .questionnaire-card {
+        margin-bottom: 20px;
+    }
+
+    .notification-dropdown {
+        width: 320px;
+    }
+
+    .profile-dropdown {
+        width: 220px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: 280px;
+    }
+
+    .profile-dropdown {
+        width: 200px;
+    }
+}
