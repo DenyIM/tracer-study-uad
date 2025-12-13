@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('pages.main-kuesioner');
+    return view('layout');
 });
 
 Route::get('/nav-kuesioner', function () {
