@@ -188,8 +188,8 @@
                     </ul>
                     
                     <div class="d-flex">
-                        <a href="#" class="btn btn-outline-primary-custom me-2" data-aos="zoom-in" data-aos-delay="400">Login</a>
-                        <a href="#" class="btn btn-primary-custom" data-aos="zoom-in" data-aos-delay="500">Daftar</a>
+                        <a href="/homepage-login" class="btn btn-outline-primary-custom me-2" data-aos="zoom-in" data-aos-delay="400">Login</a>
+                        <a href="/homepage-register" class="btn btn-primary-custom" data-aos="zoom-in" data-aos-delay="500">Daftar</a>
                     </div>
                 </div>
             </div>
@@ -203,8 +203,8 @@
                     <h1 class="display-4 fw-bold mb-4" data-aos="fade-right" data-aos-duration="800">Sistem Informasi Tracer Study Universitas Ahmad Dahlan</h1>
                     <p class="lead mb-4" data-aos="fade-right" data-aos-duration="800" data-aos-delay="200">Menjembatani alumni dengan dunia kerja dan mengumpulkan data untuk pengembangan kualitas pendidikan</p>
                     <div class="d-flex flex-wrap gap-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="400">
-                        <a href="#" class="btn btn-warning btn-lg fw-bold pulse-animation">Daftar Sekarang</a>
-                        <a href="#" class="btn btn-outline-light btn-lg">Login Alumni</a>
+                        <a href="/homepage-register" class="btn btn-warning btn-lg fw-bold pulse-animation">Daftar Sekarang</a>
+                        <a href="/homepage-login" class="btn btn-outline-light btn-lg">Login Alumni</a>
                     </div>
                 </div>
                 <div class="col-lg-6 text-center">

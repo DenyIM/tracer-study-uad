@@ -6,30 +6,36 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        // Schema::create('users', function (Blueprint $table) {
+        //     $table->bigIncrements('id');
+        //     $table->string('email', 255)->unique();
+        //     $table->dateTime('email_verified_at')->nullable();
+        //     $table->string('password', 255);
+        //     $table->enum('role', ['admin', 'alumni']);
+        //     $table->string('provider', 100)->nullable();
+        //     $table->string('provider_id', 100)->nullable();
+        //     $table->string('verification_string', 100)->nullable();
+        //     $table->string('pp_url', 255)->nullable();
+        //     $table->dateTime('last_login_at')->nullable();
+        //     $table->string('otp_code', 10)->nullable();
+        //     $table->dateTime('otp_expires_at')->nullable();
+        //     $table->timestamps();
+        // });
+
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_lengkap');
+            $table->string('name');
             $table->string('email')->unique();
-            $table->string('nim')->unique();
-            $table->string('program_studi');
-            $table->date('tanggal_lulus');
-            $table->string('npwp')->nullable();
-            $table->string('no_hp');
-            $table->string('password');
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->enum('role', ['alumni', 'admin', 'super_admin'])->default('alumni');
             $table->rememberToken();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

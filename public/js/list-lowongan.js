@@ -44,7 +44,8 @@ document.querySelectorAll('.sort-btn').forEach(button => {
 function viewJobDetail(jobId) {
     // In real implementation, this would navigate to job detail page
     console.log('Viewing job detail for ID:', jobId);
-    alert(`Membuka detail lowongan ID: ${jobId}\n\nDalam implementasi nyata, ini akan mengarahkan ke halaman detail lowongan kerja.`);
+    // alert(`Membuka detail lowongan ID: ${jobId}\n\nDalam implementasi nyata, ini akan mengarahkan ke halaman detail lowongan kerja.`);
+    window.location.href = "/lowongan/detail-lowongan";
 }
 
 // Simulate job count

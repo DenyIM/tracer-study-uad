@@ -248,11 +248,11 @@ function hideLogoutDialog() {
 
 // Fungsi untuk logout langsung (tanpa modal)
 function logoutUser() {
-    showToast('Anda telah logout. Mengarahkan ke halaman login...', 'success');
+    showToast('Anda telah logout. Mengarahkan ke halaman homepage...', 'success');
 
-    // Simulasi redirect ke halaman login setelah 1.5 detik
+    // Simulasi redirect ke halaman homepage setelah 1.5 detik
     setTimeout(() => {
-        window.location.href = '/login'; // Sesuaikan dengan URL login Anda
+        window.location.href = '/logout'; // Sesuaikan dengan URL homepage Anda
     }, 1500);
 }
 

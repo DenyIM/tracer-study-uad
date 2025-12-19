@@ -1,4 +1,11 @@
 // MAIN KUESIONER FUNCTIONALITY - COMPATIBLE VERSION
+let selectedCategory = 'umum';
+
+document.querySelectorAll('.category-card').forEach(card => {
+    card.addEventListener('click', function () {
+        selectedCategory = this.getAttribute('data-category');
+    });
+});
 
 // Data kuesioner berdasarkan kategori
 const questionnaireData = {
@@ -161,13 +168,19 @@ function initializeQuestionnaire() {
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 // Redirect ke halaman kuesioner yang sesuai
-                                window.location.href = `/kuesioner/${kuesionerNumber}`;
+                                const kategori = selectedCategory || 'umum';
+
+                                window.location.href =
+                                    `/kuesioner?kategori=${kategori}&nomor=${kuesionerNumber}`;
                             }
                         });
                     } else {
                         if (confirm(`Memulai Kuesioner ${kuesionerNumber} untuk kategori: ${categoryTitle}\n\nAnda akan diarahkan ke halaman kuesioner.`)) {
                             // Redirect ke halaman kuesioner yang sesuai
-                            window.location.href = `/kuesioner/${kuesionerNumber}`;
+                            const kategori = selectedCategory || 'umum';
+
+                            window.location.href =
+                                `/kuesioner?kategori=${kategori}&nomor=${kuesionerNumber}`;
                         }
                     }
                 }, 300);
@@ -302,19 +315,7 @@ function showToast(message, type = 'info') {
     });
 }
 
-// Tunggu DOM siap
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
-} else {
-    // DOM sudah dimuat
-    initializeQuestionnaire();
-}
-
-// Juga jalankan saat window load
-window.addEventListener('load', function () {
-    // Pastikan semua elemen sudah ter-render
-    setTimeout(initializeQuestionnaire, 100);
-});
+document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
 
 // Export untuk testing (opsional)
 if (typeof module !== 'undefined' && module.exports) {

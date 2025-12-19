@@ -352,7 +352,7 @@
                 <div class="forgot-password-links">
                     <div>
                         <span>Ingat password Anda?</span>
-                        <a href="login.html"> Kembali ke Login</a>
+                        <a href="/homepage-login"> Kembali ke Login</a>
                     </div>
                 </div>
             </div>

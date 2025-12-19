@@ -251,18 +251,14 @@
                     <div class="mb-3 position-relative">
                         <label for="password" class="form-label fw-semibold">Password</label>
                         <input type="password" class="form-control" id="password" placeholder="Masukkan password Anda" required>
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="far fa-eye"></i>
-                        </button>
+                        <button type="button" class="password-toggle" id="togglePassword"></button>
                     </div>
 
                     <!-- Konfirmasi Password -->
                     <div class="mb-3 position-relative">
                         <label for="confirmPassword" class="form-label fw-semibold">Konfirmasi Password</label>
                         <input type="password" class="form-control" id="confirmPassword" placeholder="Konfirmasi password Anda" required>
-                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
-                            <i class="far fa-eye"></i>
-                        </button>
+                        <button type="button" class="password-toggle" id="toggleConfirmPassword"></button>
                     </div>
                     
                     <!-- Terms Agreement -->
@@ -281,7 +277,7 @@
                     </div>
                     
                     <!-- Google Register -->
-                    <button type="button" class="btn btn-google mb-4">
+                    <button id="google-register" type="button" class="btn btn-google mb-4">
                         <i class="fab fa-google text-danger"></i>
                         Lanjutkan dengan Akun Google
                     </button>
@@ -290,7 +286,7 @@
                     <div class="register-links">
                         <div>
                             <span>Sudah Daftar?</span>
-                            <a href="{{ route('login') }}"> Login di sini!</a>
+                            <a href="/homepage-login"> Login di sini!</a>
                         </div>
                     </div>
                 </form>
@@ -361,6 +357,8 @@
             // Jika validasi berhasil, lanjutkan dengan proses pendaftaran
             console.log('Registration attempt');
             // Tambahkan logika pendaftaran di sini
+
+            window.location.href = '/go-to-kuesioner1';
         });
 
         // Format NPWP input
@@ -379,6 +377,18 @@
                 value = '62' + value.substring(1);
             }
             e.target.value = value;
+        });
+
+        document.getElementById('google-register').addEventListener('click', function() {
+            // Tampilkan loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengalihkan...';
+                this.disabled = true;
+                
+                // Alihkan ke halaman utama
+                setTimeout(() => {
+                    window.location.href = '/go-to-register-form';
+                }, 1000);
         });
     </script>
 </body>

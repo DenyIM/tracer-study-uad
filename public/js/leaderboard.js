@@ -11,13 +11,13 @@ function initializeLeaderboard() {
     initializePagination();
 
     // 3. Initialize tab switching
-    // initializeTabSwitching();
+    initializeTabSwitching();
 
     // 4. Initialize podium animations
     initializePodiumAnimations();
 
     // 5. Initialize current user highlight
-    initializeCurrentUserHighlight();
+    // initializeCurrentUserHighlight();
 
     // 6. Initialize button effects
     initializeButtonEffects();
@@ -68,44 +68,44 @@ function initializePagination() {
 }
 
 // 3. Initialize tab switching
-// function initializeTabSwitching() {
-//     // Main tabs (Leaderboard / Submit)
-//     const leaderboardTabs = document.querySelectorAll('#leaderboardTabs .nav-link');
-//     if (leaderboardTabs.length > 0) {
-//         leaderboardTabs.forEach(tab => {
-//             tab.addEventListener('click', function () {
-//                 // Reset scroll position ketika ganti tab
-//                 setTimeout(() => {
-//                     window.scrollTo({
-//                         top: document.querySelector('.main-content').offsetTop - 100,
-//                         behavior: 'smooth'
-//                     });
-//                 }, 300);
-//             });
-//         });
-//     }
+function initializeTabSwitching() {
+    // Main tabs (Leaderboard / Submit)
+    const leaderboardTabs = document.querySelectorAll('#leaderboardTabs .nav-link');
+    if (leaderboardTabs.length > 0) {
+        leaderboardTabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Reset scroll position ketika ganti tab
+                setTimeout(() => {
+                    window.scrollTo({
+                        top: document.querySelector('.main-content').offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }, 300);
+            });
+        });
+    }
 
-//     // Submit tabs (Forum / Job)
-//     const submitTabs = document.querySelectorAll('#submitTabs .nav-link');
-//     if (submitTabs.length > 0) {
-//         submitTabs.forEach(tab => {
-//             tab.addEventListener('click', function () {
-//                 // Animate form section
-//                 const formSection = document.querySelector('.tab-pane.active .form-section');
-//                 if (formSection) {
-//                     formSection.style.opacity = '0.5';
-//                     formSection.style.transform = 'translateY(10px)';
+    // Submit tabs (Forum / Job)
+    const submitTabs = document.querySelectorAll('#submitTabs .nav-link');
+    if (submitTabs.length > 0) {
+        submitTabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Animate form section
+                const formSection = document.querySelector('.tab-pane.active .form-section');
+                if (formSection) {
+                    formSection.style.opacity = '0.5';
+                    formSection.style.transform = 'translateY(10px)';
 
-//                     setTimeout(() => {
-//                         formSection.style.opacity = '1';
-//                         formSection.style.transform = 'translateY(0)';
-//                         formSection.style.transition = 'all 0.3s ease';
-//                     }, 300);
-//                 }
-//             });
-//         });
-//     }
-// }
+                    setTimeout(() => {
+                        formSection.style.opacity = '1';
+                        formSection.style.transform = 'translateY(0)';
+                        formSection.style.transition = 'all 0.3s ease';
+                    }, 300);
+                }
+            });
+        });
+    }
+}
 
 // 4. Initialize podium animations
 function initializePodiumAnimations() {
@@ -132,38 +132,38 @@ function initializePodiumAnimations() {
 }
 
 // 5. Initialize current user highlight
-function initializeCurrentUserHighlight() {
-    const currentUserRow = document.querySelector('.current-user');
-    if (currentUserRow) {
-        // Add initial animation
-        setTimeout(() => {
-            currentUserRow.style.transition = 'background-color 1.5s ease';
-        }, 500);
+// function initializeCurrentUserHighlight() {
+//     const currentUserRow = document.querySelector('.current-user');
+//     if (currentUserRow) {
+//         // Add initial animation
+//         setTimeout(() => {
+//             currentUserRow.style.transition = 'background-color 1.5s ease';
+//         }, 500);
 
-        // Add pulsing animation
-        let pulseState = false;
-        setInterval(() => {
-            if (pulseState) {
-                currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.1)';
-            } else {
-                currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.15)';
-            }
-            pulseState = !pulseState;
-        }, 1500);
+//         // Add pulsing animation
+//         let pulseState = false;
+//         setInterval(() => {
+//             if (pulseState) {
+//                 currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.1)';
+//             } else {
+//                 currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.15)';
+//             }
+//             pulseState = !pulseState;
+//         }, 1500);
 
-        // Add click to scroll
-        currentUserRow.addEventListener('click', function () {
-            this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
+//         // Add click to scroll
+//         currentUserRow.addEventListener('click', function () {
+//             this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+//         });
 
-        // Scroll to current user on load (only if not on submit tab)
-        if (window.location.hash !== '#submit') {
-            setTimeout(() => {
-                currentUserRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 1000);
-        }
-    }
-}
+//         // Scroll to current user on load (only if not on submit tab)
+//         if (window.location.hash !== '#submit') {
+//             setTimeout(() => {
+//                 currentUserRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+//             }, 1000);
+//         }
+//     }
+// }
 
 // 6. Initialize button effects
 function initializeButtonEffects() {

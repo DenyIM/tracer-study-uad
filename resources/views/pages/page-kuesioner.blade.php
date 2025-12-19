@@ -1137,7 +1137,7 @@
         // Tombol kembali ke halaman utama
         document.getElementById('backToMainBtn').addEventListener('click', function() {
             if (confirm('Apakah Anda yakin ingin kembali ke halaman utama? Perubahan yang belum disimpan akan hilang.')) {
-                window.location.href = 'halaman-utama-kuesioner.html';
+                window.location.href = '/nav-kuesioner';
             }
         });
 
@@ -1266,15 +1266,16 @@
                 localStorage.removeItem('kuesioner_draft');
                 
                 // Tampilkan notifikasi sukses
-                showNotification('Kuesioner berhasil dikirim! Terima kasih atas partisipasi Anda.', 'success');
+                showNotification('Kuesioner berhasil dikirim! Mengalihkan ke bagian berikutnya...', 'success');
                 
-                // Redirect ke halaman baru setelah 1.5 detik
+                // Redirect ke halaman section1-kuesioner.blade.php setelah 1.5 detik
                 setTimeout(() => {
                     loadingModal.hide();
-                    window.location.href = 'halaman-terimakasih.html'; // Ganti dengan halaman tujuan Anda
-                }, 1000);
+                    // Redirect ke halaman Laravel Blade
+                    window.location.href = '/section1-kuesioner';
+                }, 1500);
                 
-            }, 1000); // Simulasi waktu pengiriman 2 detik
+            }, 1000);
         });
 
         // Function untuk menampilkan notifikasi

@@ -208,7 +208,7 @@
                     </div>
                     
                     <!-- Google Login -->
-                    <button type="button" class="btn btn-google mb-4">
+                    <button id="google-login" type="button" class="btn btn-google mb-4">
                         <i class="fab fa-google text-danger"></i>
                         Lanjutkan dengan Akun Google
                     </button>
@@ -217,11 +217,11 @@
                     <div class="login-links">
                         <div class="mb-2">
                             <span>Anda belum Daftar?</span>
-                            <a href="#"> Daftar di sini!</a>
+                            <a href="/homepage-register"> Daftar di sini!</a>
                         </div>
                         <div>
                             <span>Lupa password?</span>
-                            <a href="#">Klik disini!</a>
+                            <a href="/lupa-pass">Klik disini!</a>
                         </div>
                     </div>
                 </form>
@@ -244,6 +244,26 @@
             once: true
         });
 
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Tambahkan logika login di sini
+            console.log('Login attempt');
+            window.location.href = '/nav-kuesioner';
+        });
+
+        document.getElementById('google-login').addEventListener('click', function() {
+            // Tampilkan loading state
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengalihkan...';
+                this.disabled = true;
+                
+                // Alihkan ke halaman utama
+                setTimeout(() => {
+                    window.location.href = '/nav-kuesioner';
+                }, 1000);
+        });
+
         // Toggle Password Visibility
         document.getElementById('togglePassword').addEventListener('click', function() {
             const passwordInput = document.getElementById('password');
@@ -258,13 +278,6 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
-        });
-
-        // Form submission
-        document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Tambahkan logika login di sini
-            console.log('Login attempt');
         });
     </script>
 </body>

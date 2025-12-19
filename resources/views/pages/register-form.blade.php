@@ -345,7 +345,7 @@
             
             // Redirect setelah 1.5 detik
             setTimeout(() => {
-                window.location.href = 'kuesioner-bagian1.html';
+                window.location.href = '/go-to-kuesioner1';
             }, 1500);
         });
 

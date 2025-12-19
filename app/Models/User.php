@@ -2,173 +2,92 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'nama_lengkap',
         'email',
-        'nim',
-        'program_studi',
-        'tanggal_lulus',
-        'npwp',
-        'no_hp',
         'password',
-        'email_verified_at',
+        'role',
+        'provider',
+        'provider_id',
+        'verification_string',
+        'pp_url',
+        'last_login_at',
+        'otp_code',
+        'otp_expires_at',
+        'email_verified_at'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
+    protected $hidden = ['password'];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'otp_expires_at' => 'datetime',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function alumni()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'tanggal_lulus' => 'date',
-        ];
+        return $this->hasOne(Alumni::class);
     }
 
-    /**
-     * Scope untuk mencari berdasarkan NIM
-     */
-    public function scopeByNim($query, $nim)
+    public function admin()
     {
-        return $query->where('nim', $nim);
+        return $this->hasOne(Admin::class);
     }
 
-    /**
-     * Scope untuk mencari berdasarkan program studi
-     */
-    public function scopeByProgramStudi($query, $programStudi)
+    public function userResponses()
     {
-        return $query->where('program_studi', $programStudi);
+        return $this->hasMany(UserResponse::class);
     }
 
-    /**
-     * Scope untuk alumni berdasarkan tahun lulus
-     */
-    public function scopeByTahunLulus($query, $tahun)
+    // Helper methods
+    public function isAdmin(): bool
     {
-        return $query->whereYear('tanggal_lulus', $tahun);
+        return $this->role === 'admin';
     }
 
-    /**
-     * Mutator untuk mengubah format NPWP
-     */
-    public function setNpwpAttribute($value)
+    public function isAlumni(): bool
     {
-        if ($value) {
-            // Hapus semua karakter non-digit
-            $clean = preg_replace('/\D/', '', $value);
-            // Format: XX.XXX.XXX.X-XXX.XXX
-            if (strlen($clean) == 15) {
-                $this->attributes['npwp'] = substr($clean, 0, 2) . '.' .
-                    substr($clean, 2, 3) . '.' .
-                    substr($clean, 5, 3) . '.' .
-                    substr($clean, 8, 1) . '-' .
-                    substr($clean, 9, 3) . '.' .
-                    substr($clean, 12, 3);
-            } else {
-                $this->attributes['npwp'] = $value;
-            }
-        } else {
-            $this->attributes['npwp'] = null;
-        }
+        return $this->role === 'alumni';
     }
 
-    /**
-     * Mutator untuk format nomor HP
-     */
-    public function setNoHpAttribute($value)
+    public function getProfile()
     {
-        // Hapus semua karakter non-digit
-        $clean = preg_replace('/\D/', '', $value);
-
-        // Jika diawali dengan 0, ganti dengan 62
-        if (str_starts_with($clean, '0')) {
-            $clean = '62' . substr($clean, 1);
+        if ($this->isAlumni()) {
+            return $this->alumni;
+        } elseif ($this->isAdmin()) {
+            return $this->admin;
         }
 
-        // Jika belum diawali dengan 62, tambahkan
-        if (!str_starts_with($clean, '62')) {
-            $clean = '62' . $clean;
+        return null;
+    }
+
+    public function getFullnameAttribute(): ?string
+    {
+        if ($this->isAlumni() && $this->alumni) {
+            return $this->alumni->fullname;
+        } elseif ($this->isAdmin() && $this->admin) {
+            return $this->admin->fullname;
         }
 
-        $this->attributes['no_hp'] = $clean;
+        return null;
     }
 
-    /**
-     * Accessor untuk nama lengkap (title case)
-     */
-    public function getNamaLengkapAttribute($value)
+    public function getPhoneAttribute(): ?string
     {
-        return ucwords(strtolower($value));
-    }
-
-    /**
-     * Accessor untuk program studi (title case)
-     */
-    public function getProgramStudiAttribute($value)
-    {
-        return ucwords(strtolower($value));
-    }
-
-    /**
-     * Accessor untuk tahun lulus
-     */
-    public function getTahunLulusAttribute()
-    {
-        return $this->tanggal_lulus ? $this->tanggal_lulus->format('Y') : null;
-    }
-
-    /**
-     * Accessor untuk format tanggal lulus (d-m-Y)
-     */
-    public function getTanggalLulusFormattedAttribute()
-    {
-        return $this->tanggal_lulus ? $this->tanggal_lulus->format('d-m-Y') : null;
-    }
-
-    /**
-     * Validasi bahwa user adalah alumni UAD
-     */
-    public function isAlumniUad()
-    {
-        // Anda bisa menambahkan logika validasi tambahan di sini
-        return !empty($this->nim) && !empty($this->program_studi);
-    }
-
-    /**
-     * Hitung lama sejak lulus (dalam tahun)
-     */
-    public function getLamaLulusAttribute()
-    {
-        if ($this->tanggal_lulus) {
-            return now()->diffInYears($this->tanggal_lulus);
+        if ($this->isAlumni() && $this->alumni) {
+            return $this->alumni->phone;
+        } elseif ($this->isAdmin() && $this->admin) {
+            return $this->admin->phone;
         }
+
         return null;
     }
 }

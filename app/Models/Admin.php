@@ -3,64 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 
-class Admin extends Authenticatable
+class Admin extends Model
 {
-    use HasFactory, Notifiable, SoftDeletes;
-
-    protected $guard = 'admin';
+    use HasFactory;
 
     protected $fillable = [
-        'name',
-        'email',
-        'username',
+        'user_id',
+        'fullname',
         'phone',
-        'role',
-        'password',
+        'job_title'
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    protected function casts(): array
+    public function user()
     {
-        return [
-            'password' => 'hashed',
-        ];
-    }
-
-    // Cek jika super admin
-    public function isSuperAdmin()
-    {
-        return $this->role === 'super_admin';
-    }
-
-    // Cek jika admin biasa
-    public function isAdmin()
-    {
-        return $this->role === 'admin';
-    }
-
-    // Cek jika operator
-    public function isOperator()
-    {
-        return $this->role === 'operator';
-    }
-
-    // Scope untuk admin aktif
-    public function scopeActive($query)
-    {
-        return $query->whereNull('deleted_at');
-    }
-
-    // Scope berdasarkan role
-    public function scopeByRole($query, $role)
-    {
-        return $query->where('role', $role);
+        return $this->belongsTo(User::class);
     }
 }

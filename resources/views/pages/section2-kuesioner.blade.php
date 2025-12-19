@@ -601,7 +601,7 @@
             
             // Simulasi proses pengalihan
             setTimeout(() => {
-                window.location.href = 'kuesioner-bagian2.html';
+                window.location.href = '/next-section3';
             }, 1500);
         });
 
@@ -616,7 +616,7 @@
                 
                 // Alihkan ke halaman utama
                 setTimeout(() => {
-                    window.location.href = 'halaman-utama-kuesioner.html';
+                    window.location.href = '/back-to-main';
                 }, 1000);
             }
         });

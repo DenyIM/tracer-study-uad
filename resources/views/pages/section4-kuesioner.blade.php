@@ -469,7 +469,7 @@
             
             // Simulasi loading
             setTimeout(() => {
-                window.location.href = 'halaman-utama-kuesioner.html';
+                window.location.href = '/back-to-main';
             }, 1000);
         });
 
