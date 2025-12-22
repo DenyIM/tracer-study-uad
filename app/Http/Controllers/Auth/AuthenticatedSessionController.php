@@ -4,37 +4,40 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
-     */
-    public function create(): View
-    {
-        return view('auth.login');
-    }
-
-    /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request)
     {
-        $request->authenticate();
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-        $request->session()->regenerate();
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
 
-        return redirect()->intended(route('alumni.dashboard', absolute: false));
+        $user = Auth::user();
+        $user->update(['last_login_at' => now()]);
+
+        return response()->json([
+            'token' => $user->createToken('auth_token')->plainTextToken,
+            'role' => $user->role
+        ]);
     }
+
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): Response
     {
         Auth::guard('web')->logout();
 
@@ -42,6 +45,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return response()->noContent();
     }
 }

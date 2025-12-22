@@ -90,4 +90,28 @@ class User extends Authenticatable
 
         return null;
     }
+
+    // Add these methods to your existing User model
+
+    public function getStatusBadgeAttribute(): string
+    {
+        if ($this->email_verified_at) {
+            return '<span class="status-badge badge-success">
+                        <i class="bi bi-check-circle me-1"></i> Terverifikasi
+                    </span>';
+        }
+        
+        return '<span class="status-badge badge-warning">
+                    <i class="bi bi-clock me-1"></i> Belum Verifikasi
+                </span>';
+    }
+
+    public function getLastLoginFormattedAttribute(): string
+    {
+        if (!$this->last_login_at) {
+            return '<small class="text-muted">Belum pernah</small>';
+        }
+        
+        return '<small>' . $this->last_login_at->diffForHumans() . '</small>';
+    }
 }

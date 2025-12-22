@@ -1,12 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\QuestionnaireController; // untuk memanggil controller
 
 Route::get('/', function () {
-    return view('admin.views.layouts.app');
+    return view('admin.views.users.alumni.index');
 });
 
 // Route::get('/', function () {
@@ -65,10 +65,6 @@ Route::get('/logout', function () {
     return view('pages.homepage');
 });
 
-Route::get('/detlow', function () {
-    return view('pages.lowongan');
-});
-
 Route::get('/lowongan/detail-lowongan', function () {
     return view('detail-lowongan');
 })->name('lowongan.detail-lowongan');
@@ -101,42 +97,29 @@ Route::get('/next-section4', function () {
     return view('pages.section4-kuesioner');
 });
 
-// Routes untuk testing template
-Route::prefix('admin')->name('admin.views.')->group(function () {
+// Admin Routes
+Route::prefix('admin')->name('admin.')->group(function () {
     // Dashboard
-    Route::get('dashboard', function () {
-        return view('admin.views.dashboard.index');
-    })->name('dashboard');
-
+    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('views.dashboard');
+    
     // Alumni Management
-    Route::get('users', function () {
-        return view('admin.views.users.index');
-    })->name('users.index');
-
-    Route::get('users/admins', function () {
-        return view('admin.views.users.admins');
-    })->name('users.admins');
-
-    Route::get('users/{id}/edit', function ($id) {
-        return view('admin.views.users.edit');
-    })->name('users.edit');
-
-    Route::get('users/{id}', function ($id) {
-        return view('admin.views.users.show');
-    })->name('users.show');
-
-    // Dummy routes untuk form submission
-    Route::post('users/store-admin', function () {
-        return back()->with('success', 'Admin berhasil ditambahkan!');
-    })->name('users.store-admin');
-
-    Route::put('users/{id}', function ($id) {
-        return back()->with('success', 'Data alumni berhasil diperbarui!');
-    })->name('users.update');
-
-    Route::delete('users/{id}', function ($id) {
-        return redirect()->route('admin.views.users.index')->with('success', 'Alumni berhasil dihapus!');
-    })->name('users.destroy');
+    Route::prefix('users')->name('views.users.')->group(function () {
+        // Alumni
+        Route::get('/alumni', [UserController::class, 'alumniIndex'])->name('alumni.index');
+        Route::get('/alumni/{alumni}', [UserController::class, 'alumniShow'])->name('alumni.show');
+        Route::get('/alumni/{alumni}/edit', [UserController::class, 'alumniEdit'])->name('alumni.edit');
+        Route::put('/alumni/{alumni}', [UserController::class, 'alumniUpdate'])->name('alumni.update');
+        Route::delete('/alumni/{alumni}', [UserController::class, 'alumniDestroy'])->name('alumni.destroy');
+        
+        // Admin
+        Route::get('/admins', [UserController::class, 'adminIndex'])->name('admin.index');
+        Route::get('/admins/create', [UserController::class, 'adminCreate'])->name('admin.create');
+        Route::post('/admins', [UserController::class, 'adminStore'])->name('admin.store');
+        Route::get('/admins/{admin}', [UserController::class, 'adminShow'])->name('admin.show');
+        Route::get('/admins/{admin}/edit', [UserController::class, 'adminEdit'])->name('admin.edit');
+        Route::put('/admins/{admin}', [UserController::class, 'adminUpdate'])->name('admin.update');
+        Route::delete('/admins/{admin}', [UserController::class, 'adminDestroy'])->name('admin.destroy');
+    });
 });
 
 // Route::get('/', [UserController::class, 'index'])->name('admin.views.layout');

@@ -10,6 +10,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use App\Models\Alumni;
 
 class RegisteredUserController extends Controller
 {
@@ -50,4 +51,5 @@ class RegisteredUserController extends Controller
             'token' => $token,
         ], 201);
     }
+
 }

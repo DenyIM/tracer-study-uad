@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AdminSeeder::class);
 
         // ========== SEED DATA ALUMNI (USER) ==========
-        $this->call(UserSeeder::class);
+        $this->call(AlumniSeeder::class);
 
         // ========== SEED DATA CATEGORIES ==========
         $this->call(CategorySeeder::class);
