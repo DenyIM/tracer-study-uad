@@ -10,12 +10,15 @@ return new class extends Migration
     {
         Schema::create('question_options', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('question_id')->constrained()->onDelete('cascade');
-            $table->string('option_text');
-            $table->integer('value')->nullable(); // untuk scale
-            $table->string('label')->nullable(); // label untuk scale
-            $table->integer('order')->default(0);
+            $table->foreignId('questions_id')->constrained()->onDelete('cascade');
+            $table->string('nilai'); // untuk disimpan di DB
+            $table->string('label'); // untuk ditampilkan
+            $table->integer('urutan');
+            $table->boolean('memerlukan_input_lainnya')->default(false); // untuk opsi "Lainnya"
+            $table->string('placeholder_input_lainnya')->nullable();
             $table->timestamps();
+            
+            $table->index(['questions_id', 'urutan']);
         });
     }
 

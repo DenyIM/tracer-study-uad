@@ -4,101 +4,87 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Category extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
-        'icon',
+        'slug',
         'description',
+        'icon',
+        'order',
         'is_active',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'is_active' => 'boolean',
     ];
 
     /**
-     * Get the questionnaires for the category.
+     * Get all questionnaires for this category
      */
-    public function questionnaires()
+    public function questionnaires(): HasMany
     {
         return $this->hasMany(Questionnaire::class);
     }
 
     /**
-     * Get the user responses for the category.
+     * Get the general questionnaire for this category
      */
-    public function userResponses()
+    public function generalQuestionnaire(): HasOne
     {
-        return $this->hasMany(UserResponse::class);
+        return $this->hasOne(Questionnaire::class)->where('is_general', true);
     }
 
     /**
-     * Scope a query to only include active categories.
+     * Get specific questionnaires (non-general)
      */
-    public function scopeActive($query)
+    public function specificQuestionnaires(): HasMany
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(Questionnaire::class)->where('is_general', false);
     }
 
     /**
-     * Scope a query to order by name.
+     * Get questionnaire sequence for this category
      */
-    public function scopeOrderByName($query, $direction = 'asc')
+    public function sequences(): HasMany
     {
-        return $query->orderBy('name', $direction);
+        return $this->hasMany(QuestionnaireSequence::class)->orderBy('order');
     }
 
     /**
-     * Get the icon HTML.
+     * Get alumni statuses for this category
      */
-    public function getIconHtmlAttribute()
+    public function alumniStatuses(): HasMany
     {
-        return "<i class='{$this->icon}'></i>";
+        return $this->hasMany(StatusQuestionnaire::class);
     }
 
     /**
-     * Get the display name (with icon).
+     * Get the URL for this category
      */
-    public function getDisplayNameAttribute()
+    public function getUrlAttribute(): string
     {
-        return "{$this->iconHtml} {$this->name}";
+        return route('questionnaire.start', ['category' => $this->slug]);
     }
 
     /**
-     * Check if category has any questionnaires.
+     * Get total questions count for this category
      */
-    public function hasQuestionnaires()
+    public function getTotalQuestionsAttribute(): int
     {
-        return $this->questionnaires()->exists();
+        return $this->questionnaires()->withCount('questions')->get()->sum('questions_count');
     }
 
     /**
-     * Get active questionnaires count.
+     * Check if category is selectable (active and has questionnaires)
      */
-    public function getActiveQuestionnairesCountAttribute()
+    public function getIsSelectableAttribute(): bool
     {
-        return $this->questionnaires()->active()->count();
-    }
-
-    /**
-     * Get total questionnaires count.
-     */
-    public function getTotalQuestionnairesCountAttribute()
-    {
-        return $this->questionnaires()->count();
+        return $this->is_active && $this->questionnaires()->where('is_required', true)->exists();
     }
 }

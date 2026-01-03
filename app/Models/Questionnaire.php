@@ -4,177 +4,111 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Questionnaire extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'category_id',
         'name',
-        'title',
+        'slug',
         'description',
         'order',
         'is_required',
-        'is_active',
+        'is_general',
+        'time_estimate',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'is_required' => 'boolean',
-        'is_active' => 'boolean',
-        'order' => 'integer',
+        'is_general' => 'boolean',
+        'time_estimate' => 'integer',
     ];
 
     /**
-     * Get the category that owns the questionnaire.
+     * Get the category that owns the questionnaire
      */
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
     /**
-     * Get the questions for the questionnaire.
+     * Get all questions for this questionnaire
      */
-    public function questions()
+    public function questions(): HasMany
     {
-        return $this->hasMany(Question::class);
+        return $this->hasMany(Question::class)->orderBy('order');
     }
 
     /**
-     * Get the user responses for the questionnaire.
+     * Get required questions only
      */
-    public function userResponses()
+    public function requiredQuestions(): HasMany
     {
-        return $this->hasMany(UserResponse::class);
+        return $this->hasMany(Question::class)->where('is_required', true)->orderBy('order');
     }
 
     /**
-     * Scope a query to only include active questionnaires.
+     * Get optional questions only
      */
-    public function scopeActive($query)
+    public function optionalQuestions(): HasMany
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(Question::class)->where('is_required', false)->orderBy('order');
     }
 
     /**
-     * Scope a query to only include required questionnaires.
+     * Get progress records for this questionnaire
      */
-    public function scopeRequired($query)
+    public function progressRecords(): HasMany
     {
-        return $query->where('is_required', true);
+        return $this->hasMany(QuestionnaireProgress::class);
     }
 
     /**
-     * Scope a query to order by order field.
+     * Get the next questionnaire in sequence
      */
-    public function scopeOrdered($query, $direction = 'asc')
+    public function nextQuestionnaire()
     {
-        return $query->orderBy('order', $direction)
-            ->orderBy('id', $direction);
+        return $this->category->sequences()
+            ->where('order', '>', function ($query) {
+                $query->select('order')
+                    ->from('questionnaire_sequences')
+                    ->where('questionnaire_id', $this->id)
+                    ->whereColumn('category_id', 'categories.id')
+                    ->limit(1);
+            })
+            ->orderBy('order')
+            ->first()
+            ?->questionnaire;
     }
 
     /**
-     * Scope a query to filter by category.
+     * Get the previous questionnaire in sequence
      */
-    public function scopeByCategory($query, $categoryId)
+    public function previousQuestionnaire()
     {
-        return $query->where('category_id', $categoryId);
+        return $this->category->sequences()
+            ->where('order', '<', function ($query) {
+                $query->select('order')
+                    ->from('questionnaire_sequences')
+                    ->where('questionnaire_id', $this->id)
+                    ->whereColumn('category_id', 'categories.id')
+                    ->limit(1);
+            })
+            ->orderBy('order', 'desc')
+            ->first()
+            ?->questionnaire;
     }
 
     /**
-     * Get the display name with order.
+     * Check if questionnaire has locked questions
      */
-    public function getDisplayNameAttribute()
+    public function hasLockedQuestions(): bool
     {
-        return "{$this->name}: {$this->title}";
-    }
-
-    /**
-     * Get the questionnaire number.
-     */
-    public function getQuestionnaireNumberAttribute()
-    {
-        return (int) filter_var($this->name, FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    /**
-     * Check if questionnaire has any questions.
-     */
-    public function hasQuestions()
-    {
-        return $this->questions()->exists();
-    }
-
-    /**
-     * Get active questions count.
-     */
-    public function getActiveQuestionsCountAttribute()
-    {
-        return $this->questions()->active()->count();
-    }
-
-    /**
-     * Get total questions count.
-     */
-    public function getTotalQuestionsCountAttribute()
-    {
-        return $this->questions()->count();
-    }
-
-    /**
-     * Get the next questionnaire in order.
-     */
-    public function getNextQuestionnaireAttribute()
-    {
-        return self::where('category_id', $this->category_id)
-            ->where('order', '>', $this->order)
-            ->active()
-            ->ordered()
-            ->first();
-    }
-
-    /**
-     * Get the previous questionnaire in order.
-     */
-    public function getPreviousQuestionnaireAttribute()
-    {
-        return self::where('category_id', $this->category_id)
-            ->where('order', '<', $this->order)
-            ->active()
-            ->ordered('desc')
-            ->first();
-    }
-
-    /**
-     * Check if this is the first questionnaire.
-     */
-    public function getIsFirstAttribute()
-    {
-        return !self::where('category_id', $this->category_id)
-            ->where('order', '<', $this->order)
-            ->active()
-            ->exists();
-    }
-
-    /**
-     * Check if this is the last questionnaire.
-     */
-    public function getIsLastAttribute()
-    {
-        return !self::where('category_id', $this->category_id)
-            ->where('order', '>', $this->order)
-            ->active()
-            ->exists();
+        return $this->questions()->where('is_locked_by_default', true)->exists();
     }
 }

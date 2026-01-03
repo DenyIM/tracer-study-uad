@@ -60,19 +60,27 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Tanggal Lahir</label>
-                        <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror"
-                            name="date_of_birth"
-                            value="{{ old('date_of_birth', $alumni->date_of_birth ? $alumni->date_of_birth->format('Y-m-d') : '') }}">
-                        @error('date_of_birth')
+                        <label class="form-label">Ranking</label>
+                        <input type="number" class="form-control @error('ranking') is-invalid @enderror" name="ranking"
+                            value="{{ old('ranking', $alumni->ranking) }}" min="1" placeholder="Masukkan ranking">
+                        @error('ranking')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">No. Telepon</label>
+                        <label class="form-label">Points</label>
+                        <input type="number" class="form-control @error('points') is-invalid @enderror" name="points"
+                            value="{{ old('points', $alumni->points) }}" min="0" placeholder="Masukkan points">
+                        @error('points')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">No. Telepon <span class="text-danger">*</span></label>
                         <input type="text" class="form-control @error('phone') is-invalid @enderror" name="phone"
-                            value="{{ old('phone', $alumni->phone) }}">
+                            value="{{ old('phone', $alumni->phone) }}" required>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

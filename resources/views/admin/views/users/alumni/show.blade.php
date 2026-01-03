@@ -42,16 +42,6 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Tanggal Lahir</label>
-                            <div class="form-control-plaintext">
-                                {{ $alumni->formatted_date_of_birth ?? '-' }}
-                                @if ($alumni->age)
-                                    ({{ $alumni->age }} tahun)
-                                @endif
-                            </div>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Tahun Lulus</label>
                             <div class="form-control-plaintext">
                                 {{ $alumni->graduation_date ? $alumni->graduation_date->format('Y') : '-' }}
@@ -74,9 +64,24 @@
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Usia Saat Lulus</label>
+                            <label class="form-label fw-bold">Ranking</label>
                             <div class="form-control-plaintext">
-                                {{ $alumni->graduation_age ? $alumni->graduation_age . ' tahun' : '-' }}
+                                @if ($alumni->ranking)
+                                    <span class="badge bg-primary fs-6">#{{ $alumni->ranking }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Points</label>
+                            <div class="form-control-plaintext">
+                                @if ($alumni->points)
+                                    <span class="badge bg-success fs-6">{{ $alumni->points }} pts</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
                             </div>
                         </div>
 
@@ -99,6 +104,29 @@
                             <label class="form-label fw-bold">Email Terverifikasi</label>
                             <div class="form-control-plaintext">
                                 {{ $alumni->user->email_verified_at ? $alumni->user->email_verified_at->format('d F Y H:i') : 'Belum' }}
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top">
+                            <h6>Aksi Tambahan</h6>
+                            <div class="d-flex gap-2">
+                                <form action="{{ route('admin.views.users.alumni.verify-email', $alumni->id) }}"
+                                    method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-success"
+                                        {{ $alumni->user->email_verified_at ? 'disabled' : '' }}>
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        {{ $alumni->user->email_verified_at ? 'Email Sudah Terverifikasi' : 'Verifikasi Email' }}
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('admin.views.users.alumni.reset-password', $alumni->id) }}"
+                                    method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-warning">
+                                        <i class="bi bi-key me-2"></i> Reset Password
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

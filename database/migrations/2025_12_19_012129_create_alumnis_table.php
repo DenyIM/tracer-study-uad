@@ -13,11 +13,13 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('fullname', 255);
             $table->string('nim', 20)->unique();
-            $table->date('date_of_birth');
+            $table->date('date_of_birth')->nullable(); 
             $table->string('phone', 20)->nullable();
             $table->string('study_program', 100);
             $table->date('graduation_date');
             $table->string('npwp', 50)->nullable();
+            $table->integer('ranking')->nullable(); 
+            $table->integer('points')->default(0); 
             $table->timestamps();
         });
     }

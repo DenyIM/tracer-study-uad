@@ -9,6 +9,7 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -70,24 +71,36 @@ class UserController extends Controller
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($alumni->user_id)],
             'nim' => 'required|string|max:20',
             'study_program' => 'required|string|max:100',
-            'date_of_birth' => 'nullable|date',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'graduation_date' => 'required|date',
             'npwp' => 'nullable|string|max:50',
+            'ranking' => 'nullable|integer|min:1',
+            'points' => 'nullable|integer|min:0',
+            'email_verified' => 'nullable|boolean',
         ]);
 
         // Update user email
-        $alumni->user->update(['email' => $validated['email']]);
+        $userData = ['email' => $validated['email']];
+        
+        // Update email verification status
+        if ($request->has('email_verified')) {
+            $userData['email_verified_at'] = now();
+        } else {
+            $userData['email_verified_at'] = null;
+        }
+        
+        $alumni->user->update($userData);
 
         // Update alumni data
         $alumni->update([
             'fullname' => $validated['fullname'],
             'nim' => $validated['nim'],
             'study_program' => $validated['study_program'],
-            'date_of_birth' => $validated['date_of_birth'],
             'phone' => $validated['phone'],
             'graduation_date' => $validated['graduation_date'],
             'npwp' => $validated['npwp'],
+            'ranking' => $validated['ranking'],
+            'points' => $validated['points'],
         ]);
 
         return redirect()->route('admin.views.users.alumni.show', $alumni->id)
@@ -106,6 +119,57 @@ class UserController extends Controller
 
         return redirect()->route('admin.views.users.alumni.index')
             ->with('success', 'Alumni berhasil dihapus');
+    }
+
+    /**
+     * Show the form for creating a new alumni.
+     */
+    public function alumniCreate()
+    {
+        $studyPrograms = ['Teknik Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
+        return view('admin.views.users.alumni.create', compact('studyPrograms'));
+    }
+
+    /**
+     * Store a newly created alumni in storage.
+     */
+    public function alumniStore(Request $request)
+    {
+        $validated = $request->validate([
+            'fullname' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'nim' => 'required|string|max:20|unique:alumnis,nim',
+            'study_program' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'graduation_date' => 'required|date',
+            'npwp' => 'nullable|string|max:50',
+            'ranking' => 'nullable|integer|min:1',
+            'points' => 'nullable|integer|min:0',
+        ]);
+
+        // Create user with default password
+        $user = User::create([
+            'email' => $validated['email'],
+            'password' => Hash::make('password123'), // Default password
+            'role' => 'alumni',
+            'email_verified_at' => now(), // Auto verify for admin-created accounts
+        ]);
+
+        // Create alumni profile
+        Alumni::create([
+            'user_id' => $user->id,
+            'fullname' => $validated['fullname'],
+            'nim' => $validated['nim'],
+            'study_program' => $validated['study_program'],
+            'phone' => $validated['phone'],
+            'graduation_date' => $validated['graduation_date'],
+            'npwp' => $validated['npwp'],
+            'ranking' => $validated['ranking'],
+            'points' => $validated['points'],
+        ]);
+
+        return redirect()->route('admin.views.users.alumni.index')
+            ->with('success', 'Alumni berhasil ditambahkan dengan password default: password123');
     }
 
     /**
@@ -143,7 +207,7 @@ class UserController extends Controller
             'fullname' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'job_title' => 'required|string|max:100',
         ]);
 
@@ -156,7 +220,7 @@ class UserController extends Controller
         ]);
 
         // Create admin profile
-        $admin = Admin::create([
+        Admin::create([
             'user_id' => $user->id,
             'fullname' => $validated['fullname'],
             'phone' => $validated['phone'],
@@ -185,7 +249,7 @@ class UserController extends Controller
             'fullname' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin->user_id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
             'job_title' => 'required|string|max:100',
         ]);
 
@@ -212,6 +276,13 @@ class UserController extends Controller
      */
     public function adminDestroy(Admin $admin)
     {
+        // Check if trying to delete last admin
+        $adminCount = Admin::count();
+        if ($adminCount <= 1) {
+            return redirect()->route('admin.views.users.admin.index')
+                ->with('error', 'Tidak dapat menghapus admin terakhir');
+        }
+
         // Delete associated user
         $user = $admin->user;
         $admin->delete();
@@ -232,6 +303,53 @@ class UserController extends Controller
             ->whereNotNull('email_verified_at')
             ->count();
 
-        return view('admin.views.dashboard.index', compact('alumniCount', 'adminCount', 'verifiedAlumniCount'));
+        // Get recent alumni (last 5)
+        $recentAlumni = Alumni::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get statistics for charts
+        $studyProgramStats = Alumni::select('study_program')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('study_program')
+            ->get();
+
+        $graduationYearStats = Alumni::selectRaw('YEAR(graduation_date) as year')
+            ->selectRaw('COUNT(*) as count')
+            ->groupBy('year')
+            ->orderBy('year', 'desc')
+            ->get();
+
+        return view('admin.views.dashboard.index', compact(
+            'alumniCount', 
+            'adminCount', 
+            'verifiedAlumniCount',
+            'recentAlumni',
+            'studyProgramStats',
+            'graduationYearStats'
+        ));
+    }
+
+    /**
+     * Verify alumni email manually.
+     */
+    public function verifyAlumniEmail(Alumni $alumni)
+    {
+        $alumni->user->update(['email_verified_at' => now()]);
+        
+        return redirect()->back()
+            ->with('success', 'Email alumni berhasil diverifikasi');
+    }
+
+    /**
+     * Reset alumni password.
+     */
+    public function resetAlumniPassword(Alumni $alumni)
+    {
+        $alumni->user->update(['password' => Hash::make('password123')]);
+        
+        return redirect()->back()
+            ->with('success', 'Password alumni berhasil direset ke: password123');
     }
 }

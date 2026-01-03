@@ -1,327 +1,342 @@
-// MAIN KUESIONER FUNCTIONALITY - COMPATIBLE VERSION
-let selectedCategory = 'umum';
+// MAIN KUESIONER FUNCTIONALITY - COMPACT VERSION
 
-document.querySelectorAll('.category-card').forEach(card => {
-    card.addEventListener('click', function () {
-        selectedCategory = this.getAttribute('data-category');
-    });
-});
-
-// Data kuesioner berdasarkan kategori
+// Status data
+let currentStatus = 'belum'; // 'belum', 'sedang', 'selesai'
 const questionnaireData = {
-    'bekerja': {
-        title: 'BEKERJA DI PERUSAHAAN/INSTANSI',
-        kuesioner2: {
-            title: 'Pengalaman Kerja & Karir',
-            desc: 'Kuesioner tentang pengalaman kerja di perusahaan/instansi, posisi, tanggung jawab, dan perkembangan karir.'
-        },
-        kuesioner3: {
-            title: 'Keterampilan di Tempat Kerja',
-            desc: 'Kuesioner tentang penerapan keterampilan yang diperoleh selama kuliah di tempat kerja.'
-        },
-        kuesioner4: {
-            title: 'Kepuasan Kerja & Saran',
-            desc: 'Kuesioner tentang kepuasan terhadap pekerjaan saat ini dan saran untuk pengembangan karir.'
-        }
-    },
-    'wirausaha': {
-        title: 'WIRAUSAHA/PEMILIK USAHA',
-        kuesioner2: {
-            title: 'Profil Usaha & Pengembangan',
-            desc: 'Kuesioner tentang jenis usaha, skala, perkembangan, dan tantangan dalam berwirausaha.'
-        },
-        kuesioner3: {
-            title: 'Keterampilan Kewirausahaan',
-            desc: 'Kuesioner tentang keterampilan yang dibutuhkan dalam berwirausaha dan penerapannya.'
-        },
-        kuesioner4: {
-            title: 'Kepuasan & Saran Pengembangan',
-            desc: 'Kuesioner tentang kepuasan sebagai wirausaha dan saran untuk pengembangan usaha.'
-        }
-    },
-    'pendidikan': {
-        title: 'MELANJUTKAN PENDIDIKAN',
-        kuesioner2: {
-            title: 'Studi Lanjut & Persiapan',
-            desc: 'Kuesioner tentang program studi lanjut, persiapan, dan motivasi melanjutkan pendidikan.'
-        },
-        kuesioner3: {
-            title: 'Keterampilan Akademik',
-            desc: 'Kuesioner tentang keterampilan akademik yang diperoleh dan pengembangannya.'
-        },
-        kuesioner4: {
-            title: 'Kepuasan & Rencana Masa Depan',
-            desc: 'Kuesioner tentang kepuasan terhadap pendidikan lanjut dan rencana karir setelah lulus.'
-        }
-    },
-    'pencari': {
-        title: 'PENCARI KERJA',
-        kuesioner2: {
-            title: 'Pencarian Kerja & Hambatan',
-            desc: 'Kuesioner tentang proses pencarian kerja, hambatan yang dihadapi, dan strategi yang digunakan.'
-        },
-        kuesioner3: {
-            title: 'Kesiapan Kerja & Keterampilan',
-            desc: 'Kuesioner tentang kesiapan memasuki dunia kerja dan keterampilan yang perlu dikembangkan.'
-        },
-        kuesioner4: {
-            title: 'Harapan & Dukungan yang Dibutuhkan',
-            desc: 'Kuesioner tentang harapan terhadap pekerjaan dan dukungan yang dibutuhkan dari almamater.'
-        }
-    },
-    'tidak-kerja': {
-        title: 'TIDAK BEKERJA & TIDAK MENCARI',
-        kuesioner2: {
-            title: 'Situasi & Aktivitas Saat Ini',
-            desc: 'Kuesioner tentang situasi saat ini, aktivitas yang dilakukan, dan alasan tidak bekerja.'
-        },
-        kuesioner3: {
-            title: 'Keterampilan & Minat',
-            desc: 'Kuesioner tentang keterampilan yang dimiliki dan minat untuk pengembangan diri.'
-        },
-        kuesioner4: {
-            title: 'Rencana Masa Depan & Dukungan',
-            desc: 'Kuesioner tentang rencana masa depan dan jenis dukungan yang dibutuhkan dari almamater.'
-        }
-    }
+    kategori: 'Bekerja di Perusahaan/Instansi',
+    progress: 60,
+    kuesionerAktif: 'Kuesioner 2 dari 4',
+    kuesionerTitle: 'Pengalaman Kerja & Karir',
+    pertanyaanSelesai: '8 dari 15 pertanyaan'
 };
 
-// Fungsi untuk menginisialisasi kuesioner
+// Initialize questionnaire
 function initializeQuestionnaire() {
-    console.log('Initializing questionnaire functionality...');
+    console.log('Initializing compact questionnaire...');
 
-    // Event listener untuk kategori card
+    // Setup status navigation
+    setupStatusNavigation();
+
+    // Setup category cards
+    setupCategoryCards();
+
+    // Setup feature exploration
+    setupFeatureExploration();
+
+    // Load current status (simulate API call)
+    setTimeout(() => {
+        loadCurrentStatus();
+    }, 800);
+
+    console.log('Questionnaire initialized successfully');
+}
+
+// Setup status navigation
+function setupStatusNavigation() {
+    const statusButtons = document.querySelectorAll('.btn-status');
+
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const status = this.getAttribute('data-status');
+
+            // Update active button
+            statusButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.transform = 'scale(1)';
+            });
+
+            this.classList.add('active');
+            this.style.transform = 'scale(1.03)';
+
+            // Show selected status
+            showStatusView(status);
+
+            // Update current status
+            currentStatus = status;
+        });
+    });
+}
+
+// Show specific status view
+function showStatusView(status) {
+    // Hide all status sections with animation
+    const statusSections = document.querySelectorAll('.status-section');
+    statusSections.forEach(section => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(15px)';
+        setTimeout(() => {
+            section.classList.add('d-none');
+        }, 250);
+    });
+
+    // Show selected section with animation
+    setTimeout(() => {
+        const selectedSection = document.getElementById(`status-${status}-mengerjakan`);
+        if (selectedSection) {
+            selectedSection.classList.remove('d-none');
+
+            // Animate in
+            setTimeout(() => {
+                selectedSection.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                selectedSection.style.opacity = '1';
+                selectedSection.style.transform = 'translateY(0)';
+
+                // Update progress bar if needed
+                if (status === 'sedang') {
+                    animateProgressBar();
+                }
+            }, 10);
+        }
+
+        // Update data for status
+        updateStatusData(status);
+    }, 250);
+}
+
+// Animate progress bar
+function animateProgressBar() {
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.getElementById('progress-percentage');
+
+    if (progressBar && progressText) {
+        // Reset width
+        progressBar.style.width = '0%';
+
+        // Animate to actual progress
+        setTimeout(() => {
+            progressBar.style.transition = 'width 1s cubic-bezier(0.4, 0, 0.2, 1)';
+            progressBar.style.width = `${questionnaireData.progress}%`;
+
+            // Animate percentage text
+            let currentPercent = 0;
+            const targetPercent = questionnaireData.progress;
+            const increment = targetPercent / 40; // 40 steps
+
+            const interval = setInterval(() => {
+                currentPercent += increment;
+                if (currentPercent >= targetPercent) {
+                    currentPercent = targetPercent;
+                    clearInterval(interval);
+                }
+                progressText.textContent = `${Math.round(currentPercent)}%`;
+            }, 25);
+        }, 400);
+    }
+}
+
+// Update status data
+function updateStatusData(status) {
+    if (status === 'sedang') {
+        // Update sedang mengerjakan data
+        document.getElementById('kategori-dikerjakan').innerHTML =
+            `Kategori: <strong>${questionnaireData.kategori}</strong>`;
+
+        document.getElementById('kuesioner-aktif').textContent = questionnaireData.kuesionerAktif;
+        document.getElementById('pertanyaan-selesai').textContent = questionnaireData.pertanyaanSelesai;
+    }
+}
+
+// Setup category cards interactions
+function setupCategoryCards() {
     const categoryCards = document.querySelectorAll('.category-card');
-    if (categoryCards.length > 0) {
-        categoryCards.forEach(card => {
-            card.addEventListener('click', function () {
-                const category = this.getAttribute('data-category');
-                const categoryData = questionnaireData[category];
 
-                if (!categoryData) {
-                    console.warn('Data kategori tidak ditemukan:', category);
-                    return;
+    categoryCards.forEach(card => {
+        // Click effect
+        card.addEventListener('click', function (e) {
+            // Only animate if not already navigating
+            if (!this.classList.contains('clicked')) {
+                this.classList.add('clicked');
+
+                // Animate badge
+                const badge = this.querySelector('.badge');
+                if (badge) {
+                    badge.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Membuka...';
                 }
 
-                // Update modal title
-                const modalTitle = document.getElementById('modalCategoryTitle');
-                if (modalTitle) {
-                    modalTitle.textContent = categoryData.title;
-                }
+                // Show loading state
+                this.style.transform = 'translateY(-4px) scale(0.98)';
 
-                // Update kuesioner 2
-                const kuesioner2Title = document.getElementById('kuesioner2Title');
-                const kuesioner2Desc = document.getElementById('kuesioner2Desc');
-                if (kuesioner2Title && kuesioner2Desc) {
-                    kuesioner2Title.textContent = categoryData.kuesioner2.title;
-                    kuesioner2Desc.textContent = categoryData.kuesioner2.desc;
-                }
-
-                // Update kuesioner 3
-                const kuesioner3Title = document.getElementById('kuesioner3Title');
-                const kuesioner3Desc = document.getElementById('kuesioner3Desc');
-                if (kuesioner3Title && kuesioner3Desc) {
-                    kuesioner3Title.textContent = categoryData.kuesioner3.title;
-                    kuesioner3Desc.textContent = categoryData.kuesioner3.desc;
-                }
-
-                // Update kuesioner 4
-                const kuesioner4Title = document.getElementById('kuesioner4Title');
-                const kuesioner4Desc = document.getElementById('kuesioner4Desc');
-                if (kuesioner4Title && kuesioner4Desc) {
-                    kuesioner4Title.textContent = categoryData.kuesioner4.title;
-                    kuesioner4Desc.textContent = categoryData.kuesioner4.desc;
-                }
-
-                console.log('Kategori dipilih:', categoryData.title);
-            });
-        });
-    } else {
-        console.warn('Tidak ditemukan elemen category-card');
-    }
-
-    // Event listener untuk tombol mulai kuesioner
-    const startButtons = document.querySelectorAll('.btn-start-kuesioner');
-    if (startButtons.length > 0) {
-        startButtons.forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const kuesionerNumber = this.getAttribute('data-kuesioner');
-                const categoryTitle = document.getElementById('modalCategoryTitle')?.textContent || 'Umum';
-
-                // Tampilkan modal atau alert
-                const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
-                modal.hide();
-
-                // Simulasi mulai kuesioner
+                // Reset after animation
                 setTimeout(() => {
-                    // Gunakan SweetAlert atau alert biasa
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            title: `Kuesioner ${kuesionerNumber}`,
-                            html: `Memulai <b>Kuesioner ${kuesionerNumber}</b> untuk kategori:<br><b>${categoryTitle}</b>`,
-                            icon: 'info',
-                            showCancelButton: true,
-                            confirmButtonText: 'Mulai',
-                            cancelButtonText: 'Nanti',
-                            confirmButtonColor: '#003366'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Redirect ke halaman kuesioner yang sesuai
-                                const kategori = selectedCategory || 'umum';
-
-                                window.location.href =
-                                    `/kuesioner?kategori=${kategori}&nomor=${kuesionerNumber}`;
-                            }
-                        });
-                    } else {
-                        if (confirm(`Memulai Kuesioner ${kuesionerNumber} untuk kategori: ${categoryTitle}\n\nAnda akan diarahkan ke halaman kuesioner.`)) {
-                            // Redirect ke halaman kuesioner yang sesuai
-                            const kategori = selectedCategory || 'umum';
-
-                            window.location.href =
-                                `/kuesioner?kategori=${kategori}&nomor=${kuesionerNumber}`;
-                        }
+                    this.style.transform = 'translateY(-8px)';
+                    if (badge) {
+                        badge.innerHTML = '<i class="fas fa-arrow-right me-1"></i> Mulai';
                     }
-                }, 300);
-            });
+                    this.classList.remove('clicked');
+                }, 800);
+            }
         });
-    } else {
-        console.warn('Tidak ditemukan tombol mulai kuesioner');
-    }
 
-    // Event listener untuk tombol "Lanjutkan Kuesioner Sekarang"
-    const continueButton = document.querySelector('button[data-bs-target="#categoryModal"]');
-    if (continueButton) {
-        continueButton.addEventListener('click', function () {
-            // Set default category ke "bekerja" jika belum ada yang dipilih
-            const modalTitle = document.getElementById('modalCategoryTitle');
-            if (modalTitle && modalTitle.textContent === 'BEKERJA DI PERUSAHAAN/INSTANSI') {
-                // Sudah ada default, tidak perlu update
-            } else {
-                // Update dengan default
-                const categoryData = questionnaireData['bekerja'];
-                if (categoryData) {
-                    if (modalTitle) modalTitle.textContent = categoryData.title;
+        // Enhanced hover effects
+        card.addEventListener('mouseenter', function () {
+            if (!this.classList.contains('clicked')) {
+                this.style.transform = 'translateY(-8px)';
+                this.style.boxShadow = '0 12px 25px rgba(0, 0, 0, 0.12)';
 
-                    const kuesioner2Title = document.getElementById('kuesioner2Title');
-                    const kuesioner2Desc = document.getElementById('kuesioner2Desc');
-                    if (kuesioner2Title && kuesioner2Desc) {
-                        kuesioner2Title.textContent = categoryData.kuesioner2.title;
-                        kuesioner2Desc.textContent = categoryData.kuesioner2.desc;
-                    }
-
-                    const kuesioner3Title = document.getElementById('kuesioner3Title');
-                    const kuesioner3Desc = document.getElementById('kuesioner3Desc');
-                    if (kuesioner3Title && kuesioner3Desc) {
-                        kuesioner3Title.textContent = categoryData.kuesioner3.title;
-                        kuesioner3Desc.textContent = categoryData.kuesioner3.desc;
-                    }
-
-                    const kuesioner4Title = document.getElementById('kuesioner4Title');
-                    const kuesioner4Desc = document.getElementById('kuesioner4Desc');
-                    if (kuesioner4Title && kuesioner4Desc) {
-                        kuesioner4Title.textContent = categoryData.kuesioner4.title;
-                        kuesioner4Desc.textContent = categoryData.kuesioner4.desc;
-                    }
+                // Animate icon
+                const icon = this.querySelector('.category-icon');
+                if (icon) {
+                    icon.style.transform = 'scale(1.08) rotate(8deg)';
                 }
             }
         });
-    }
-
-    // Tambahkan efek hover untuk category cards
-    const categoryCardsAll = document.querySelectorAll('.category-card');
-    categoryCardsAll.forEach(card => {
-        // Efek hover CSS sudah ada, tambahkan efek klik
-        card.style.cursor = 'pointer';
-
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-5px)';
-            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-        });
 
         card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+            if (!this.classList.contains('clicked')) {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.06)';
+
+                // Reset icon
+                const icon = this.querySelector('.category-icon');
+                if (icon) {
+                    icon.style.transform = 'scale(1) rotate(0deg)';
+                }
+            }
         });
     });
-
-    // Tambahkan animasi untuk progress bar
-    const progressBar = document.querySelector('.progress-bar');
-    if (progressBar) {
-        // Animasikan progress bar
-        setTimeout(() => {
-            progressBar.style.transition = 'width 1.5s ease-in-out';
-        }, 500);
-    }
-
-    // Inisialisasi AOS jika ada
-    if (typeof AOS !== 'undefined') {
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-    }
 }
 
-// Fungsi untuk menampilkan toast (sama dengan di app.js)
-function showToast(message, type = 'info') {
-    // Cek jika bootstrap tersedia
-    if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
-        console.warn('Bootstrap Toast tidak tersedia');
-        return;
-    }
+// Setup feature exploration buttons
+function setupFeatureExploration() {
+    const exploreButtons = document.querySelectorAll('.btn-jelajahi-fitur');
 
-    // Buat elemen toast
+    exploreButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Scroll to feature section
+            const featureSection = document.getElementById('fitur-eksklusif');
+            if (featureSection) {
+                // Add highlight animation
+                featureSection.classList.add('section-highlight');
+
+                // Scroll to section
+                featureSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // Remove highlight after animation
+                setTimeout(() => {
+                    featureSection.classList.remove('section-highlight');
+                }, 1500);
+            }
+        });
+    });
+}
+
+// Load current status (simulated API call)
+function loadCurrentStatus() {
+    // In a real app, this would be an API call
+    // For demo, we'll simulate loading and set to 'sedang'
+    setTimeout(() => {
+        const defaultStatus = 'sedang';
+        const activeButton = document.querySelector(`.btn-status[data-status="${defaultStatus}"]`);
+
+        if (activeButton) {
+            // Update UI
+            document.querySelectorAll('.btn-status').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.transform = 'scale(1)';
+            });
+
+            activeButton.classList.add('active');
+            activeButton.style.transform = 'scale(1.03)';
+
+            // Show status view
+            showStatusView(defaultStatus);
+            currentStatus = defaultStatus;
+        }
+    }, 800);
+}
+
+// Toast notification function (simple version)
+function showToast(message, type = 'info') {
+    // Create simple toast
     const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
+    toast.className = `toast-notification toast-${type}`;
+    toast.textContent = message;
+
+    // Style the toast
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-size: 0.9rem;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s ease;
     `;
 
-    // Tambahkan ke container toast yang sudah ada atau buat baru
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-        toastContainer.style.zIndex = '1060';
-        document.body.appendChild(toastContainer);
+    // Set background color based on type
+    if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+    } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = 'var(--primary-blue)';
     }
 
-    toastContainer.appendChild(toast);
+    // Add to body
+    document.body.appendChild(toast);
 
-    // Inisialisasi dan tampilkan toast
-    const bsToast = new bootstrap.Toast(toast, {
-        autohide: true,
-        delay: 3000
-    });
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
 
-    bsToast.show();
+    // Remove after delay
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
 
-    // Hapus toast setelah ditutup
-    toast.addEventListener('hidden.bs.toast', function () {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-        }
-    });
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
 
-document.addEventListener('DOMContentLoaded', initializeQuestionnaire);
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function () {
+    initializeQuestionnaire();
 
-// Export untuk testing (opsional)
+    // Add CSS for section highlight
+    const style = document.createElement('style');
+    style.textContent = `
+        .section-highlight {
+            animation: highlight-pulse 1.5s ease;
+        }
+        
+        @keyframes highlight-pulse {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(0, 51, 102, 0); 
+            }
+            50% { 
+                box-shadow: 0 0 0 15px rgba(0, 51, 102, 0.08); 
+            }
+        }
+        
+        .toast-notification {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// Export for testing
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        questionnaireData,
         initializeQuestionnaire,
+        showStatusView,
+        animateProgressBar,
         showToast
     };
 }

@@ -26,23 +26,14 @@ class DatabaseSeeder extends Seeder
         $this->call(QuestionnaireSeeder::class);
 
         // ========== SEED DATA QUESTIONS ==========
-        $this->call(QuestionSeeder::class);
+        // $this->call(QuestionSeeder::class);
 
         // ========== SEED DATA QUESTION OPTIONS (Opsional) ==========
-        $this->call(QuestionOptionSeeder::class);
+        // $this->call(QuestionOptionSeeder::class);
 
         // ========== SEED DATA FEATURES ==========
         // $this->call(FeatureSeeder::class);
-
-        // ========== SEED DATA SAMPLE RESPONSES (Hanya di Local) ==========
-        if (app()->environment('local')) {
-            $this->call(UserResponseSeeder::class);
-            $this->call(ResponseDetailSeeder::class);
-
-            // Atau gunakan SampleResponseSeeder yang komprehensif
-            // $this->call(SampleResponseSeeder::class);
-        }
-
+        
         // Enable foreign key constraints kembali
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 

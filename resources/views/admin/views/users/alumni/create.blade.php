@@ -9,7 +9,7 @@
             <h5 class="mb-0">Form Tambah Alumni</h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.views.users.store') }}" method="POST">
+            <form action="{{ route('admin.views.users.alumni.store') }}" method="POST">
                 @csrf
 
                 <div class="row">
@@ -54,19 +54,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="date_of_birth" class="form-label">Tanggal Lahir *</label>
-                            <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror"
-                                id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth') }}" required>
-                            @error('date_of_birth')
+                            <label for="phone" class="form-label">Nomor Telepon *</label>
+                            <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
+                                name="phone" value="{{ old('phone') }}" required>
+                            @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Nomor Telepon *</label>
-                            <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone"
-                                name="phone" value="{{ old('phone') }}" required>
-                            @error('phone')
+                            <label for="ranking" class="form-label">Ranking</label>
+                            <input type="number" class="form-control @error('ranking') is-invalid @enderror" id="ranking"
+                                name="ranking" value="{{ old('ranking') }}" min="1" placeholder="Masukkan ranking">
+                            @error('ranking')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -108,6 +108,15 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="points" class="form-label">Points</label>
+                            <input type="number" class="form-control @error('points') is-invalid @enderror" id="points"
+                                name="points" value="{{ old('points') }}" min="0" placeholder="Masukkan points">
+                            @error('points')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3">
                             <label for="npwp" class="form-label">NPWP</label>
                             <input type="text" class="form-control @error('npwp') is-invalid @enderror" id="npwp"
                                 name="npwp" value="{{ old('npwp') }}" placeholder="12.345.678.9-012.345">
@@ -125,7 +134,7 @@
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <a href="{{ route('admin.views.users.index') }}" class="btn btn-secondary">
+                    <a href="{{ route('admin.views.users.alumni.index') }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left me-2"></i> Batal
                     </a>
                     <button type="submit" class="btn btn-primary">

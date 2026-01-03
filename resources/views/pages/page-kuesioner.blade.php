@@ -81,17 +81,6 @@
             font-size: 1.1rem;
         }
 
-        .question-code {
-            font-size: 0.85rem;
-            color: var(--primary-blue);
-            background-color: var(--light-blue);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
         .question-nav-card {
             background: white;
             border-radius: 12px;
@@ -174,16 +163,6 @@
             font-size: 0.9rem;
             margin-right: 10px;
             flex-shrink: 0;
-        }
-
-        .nav-question-code {
-            font-size: 0.75rem;
-            color: var(--primary-blue);
-            background-color: #f0f7ff;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            margin-left: auto;
         }
 
         .answer-option {
@@ -281,27 +260,49 @@
             text-align: center;
         }
 
+        .category-badge {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .section-badge {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
         @media (max-width: 768px) {
             .question-nav-card {
                 margin-bottom: 20px;
             }
-            
+
             .navigation-buttons {
                 flex-direction: column;
                 gap: 15px;
             }
-            
-            .btn-group-left, .btn-group-right {
+
+            .btn-group-left,
+            .btn-group-right {
                 width: 100%;
                 justify-content: center;
             }
-            
+
             .competency-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 15px;
             }
-            
+
             .competency-scale {
                 width: 100%;
                 justify-content: space-between;
@@ -320,19 +321,21 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Apakah Anda yakin ingin mengirim kuesioner ini?</p>
-                    <p class="text-muted small">Setelah dikirim, Anda tidak dapat mengubah jawaban.</p>
+                    <p>Apakah Anda yakin ingin mengirim bagian kuesioner ini?</p>
+                    <p class="text-muted small">Setelah dikirim, Anda tidak dapat mengubah jawaban pada bagian ini.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary-custom" id="confirmSubmitBtn">Ya, Kirim Sekarang</button>
+                    <button type="button" class="btn btn-primary-custom" id="confirmSubmitBtn">Ya, Kirim
+                        Bagian Ini</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Loading -->
-    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 bg-transparent">
                 <div class="modal-body text-center">
@@ -351,7 +354,10 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h3 class="fw-bold mb-0" style="color: var(--primary-blue);">Kuesioner Tracer Study UAD</h3>
-                    <p class="text-muted mb-0">BAGIAN 1: STATUS DAN DATA DASAR</p>
+                    <div class="mt-1">
+                        <span class="category-badge">Bekerja di Perusahaan</span>
+                        <span class="section-badge">Bagian 1: Informasi Karir Awal</span>
+                    </div>
                 </div>
                 <div class="text-end">
                     <p class="mb-0"><strong>Deny Iqbal</strong></p>
@@ -367,11 +373,11 @@
                 <div class="col-12">
                     <div class="progress-section p-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-semibold" id="progressText">Progress: Pertanyaan 1 dari 5</span>
-                            <span class="fw-bold text-accent" id="progressPercent">20%</span>
+                            <span class="fw-semibold" id="progressText">Progress: Pertanyaan 1 dari 2</span>
+                            <span class="fw-bold text-accent" id="progressPercent">50%</span>
                         </div>
                         <div class="progress">
-                            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 20%"></div>
+                            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 50%"></div>
                         </div>
                     </div>
                 </div>
@@ -389,9 +395,8 @@
                                     <i class="fas fa-pen"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <span>Status Saat Ini</span>
+                                    <span>Lama Dapat Pekerjaan</span>
                                 </div>
-                                <div class="nav-question-code">F8</div>
                             </div>
                         </div>
 
@@ -402,48 +407,8 @@
                                     <i class="fas fa-lock"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <span>Lama Dapat Pekerjaan</span>
+                                    <span>Pendapatan Per Bulan</span>
                                 </div>
-                                <div class="nav-question-code">F502</div>
-                            </div>
-                        </div>
-
-                        <div class="question-nav-item locked" data-question-id="3">
-                            <div class="d-flex align-items-center">
-                                <div class="nav-question-number">3</div>
-                                <div class="nav-status locked me-3">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <span>Sumber Dana Kuliah</span>
-                                </div>
-                                <div class="nav-question-code">F12</div>
-                            </div>
-                        </div>
-
-                        <div class="question-nav-item locked" data-question-id="4">
-                            <div class="d-flex align-items-center">
-                                <div class="nav-question-number">4</div>
-                                <div class="nav-status locked me-3">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <span>Kompetensi Saat Lulus</span>
-                                </div>
-                                <div class="nav-question-code">F17.A</div>
-                            </div>
-                        </div>
-
-                        <div class="question-nav-item locked" data-question-id="5">
-                            <div class="d-flex align-items-center">
-                                <div class="nav-question-number">5</div>
-                                <div class="nav-status locked me-3">
-                                    <i class="fas fa-lock"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <span>Metode Pembelajaran</span>
-                                </div>
-                                <div class="nav-question-code">F21-F27</div>
                             </div>
                         </div>
                     </div>
@@ -454,14 +419,54 @@
                         <div class="d-flex align-items-start mb-4">
                             <div class="question-number" id="currentQuestionNumber">1</div>
                             <div class="flex-grow-1 ms-3">
-                                <div class="question-code" id="currentQuestionCode">F8</div>
-                                <h4 class="fw-bold mb-2" id="currentQuestionTitle">Jelaskan status Anda saat ini?</h4>
-                                <p class="text-muted mb-0" id="currentQuestionDescription">Pertanyaan Pemisah Rute - Pilih satu opsi yang sesuai</p>
+                                <h4 class="fw-bold mb-2" id="currentQuestionTitle">Sejak lulus, berapa lama Anda
+                                    mendapat pekerjaan sebagai karyawan untuk pertama kali?</h4>
+                                <p class="text-muted mb-0" id="currentQuestionDescription">Pilih satu opsi yang sesuai
+                                </p>
                             </div>
                         </div>
 
                         <div id="dynamicAnswerArea">
                             <!-- Area ini akan diisi secara dinamis berdasarkan tipe pertanyaan -->
+                            <!-- Untuk contoh statis: pertanyaan 1 kategori Bekerja di Perusahaan - Bagian 1 -->
+                            <div class="mb-4">
+                                <div class="answer-option" data-option="3-<6 bulan">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="question_radio"
+                                            id="radio_option_1" value="3-<6 bulan" required>
+                                        <label class="form-check-label fw-medium" for="radio_option_1">
+                                            3-<6 bulan </label>
+                                    </div>
+                                </div>
+
+                                <div class="answer-option" data-option="6-<9 bulan">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="question_radio"
+                                            id="radio_option_2" value="6-<9 bulan" required>
+                                        <label class="form-check-label fw-medium" for="radio_option_2">
+                                            6-<9 bulan </label>
+                                    </div>
+                                </div>
+
+                                <div class="answer-option" data-option="9-<12 bulan">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="question_radio"
+                                            id="radio_option_3" value="9-<12 bulan" required>
+                                        <label class="form-check-label fw-medium" for="radio_option_3">
+                                            9-<12 bulan </label>
+                                    </div>
+                                </div>
+
+                                <div class="answer-option" data-option=">12 bulan">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="question_radio"
+                                            id="radio_option_4" value=">12 bulan" required>
+                                        <label class="form-check-label fw-medium" for="radio_option_4">
+                                            >12 bulan
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center pt-3 navigation-buttons">
@@ -475,7 +480,12 @@
                             </div>
 
                             <div class="btn-group-right" id="dynamicButtonGroup">
-                                <!-- Tombol akan diisi secara dinamis -->
+                                <button class="btn btn-outline-secondary" id="saveDraftBtn">
+                                    <i class="fas fa-save me-2"></i> Simpan Sementara
+                                </button>
+                                <button class="btn btn-primary-custom" id="nextQuestionBtn">
+                                    Selanjutnya <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -500,36 +510,21 @@
         });
 
         // Konfigurasi
-        const TOTAL_QUESTIONS = 5;
+        const CATEGORY_NAME = "Bekerja di Perusahaan";
+        const SECTION_NAME = "Bagian 1: Informasi Karir Awal";
+        const TOTAL_QUESTIONS_IN_SECTION = 2;
+
         let currentQuestionId = 1;
         let highestAnsweredQuestion = 1;
 
-        // Data pertanyaan berdasarkan spesifikasi Anda
+        // Data pertanyaan untuk Bekerja di Perusahaan - Bagian 1
         const questions = {
             1: {
-                title: "Jelaskan status Anda saat ini?",
-                description: "Pertanyaan Pemisah Rute - Pilih satu opsi yang sesuai",
-                code: "F8",
-                number: 1,
-                type: "dropdown",
-                options: [
-                    "Bekerja (full time/part time) di perusahaan/instansi",
-                    "Wiraswasta/Pemilik Usaha",
-                    "Melanjutkan Pendidikan",
-                    "Tidak Kerja, tetapi sedang mencari kerja",
-                    "Belum memungkinkan bekerja / Tidak mencari kerja"
-                ],
-                required: true
-            },
-            2: {
-                title: "Berapa lama Anda mendapat pekerjaan sebagai karyawan/wirausaha pertama kali?",
+                title: "Sejak lulus, berapa lama Anda mendapat pekerjaan sebagai karyawan untuk pertama kali?",
                 description: "Pilih satu opsi yang sesuai",
-                code: "F502",
-                number: 2,
+                number: 1,
                 type: "radio-options",
                 options: [
-                    "Belum mendapat pekerjaan",
-                    "0-<3 bulan",
                     "3-<6 bulan",
                     "6-<9 bulan",
                     "9-<12 bulan",
@@ -537,65 +532,17 @@
                 ],
                 required: true
             },
-            3: {
-                title: "Sebutkan sumber dana utama pembiayaan kuliah S1 Anda?",
-                description: "",
-                code: "F12",
-                number: 3,
-                type: "dropdown",
+            2: {
+                title: "Rata-rata pendapatan bersih (take home pay) per bulan?",
+                description: "Pilih satu opsi yang sesuai",
+                number: 2,
+                type: "radio-options",
                 options: [
-                    "Biaya Sendiri/Keluarga",
-                    "Beasiswa ADIK",
-                    "Beasiswa BIDIKMISI",
-                    "Beasiswa PPA",
-                    "Beasiswa AFIRMASI",
-                    "Beasiswa Perusahaan/Swasta",
-                    "Lainnya, sebutkan!"
+                    "0-<3 juta",
+                    "3-<6 juta",
+                    "6-<10 juta",
+                    ">10 juta"
                 ],
-                hasOther: true,
-                required: true
-            },
-            4: {
-                title: "Pada saat lulus, pada tingkat mana Anda menguasai kompetensi berikut?",
-                description: "1 = Sangat Rendah, 5 = Sangat Tinggi",
-                code: "F17.A",
-                number: 4,
-                type: "competency-scale",
-                competencies: [
-                    "Etika",
-                    "Keahlian Bidang Ilmu",
-                    "Bahasa Inggris",
-                    "Penggunaan IT",
-                    "Komunikasi",
-                    "Kerja Sama Tim",
-                    "Pengembangan Diri"
-                ],
-                scale: [1, 2, 3, 4, 5],
-                scaleLabels: {
-                    1: "Sangat Rendah",
-                    2: "Rendah",
-                    3: "Cukup",
-                    4: "Tinggi",
-                    5: "Sangat Tinggi"
-                },
-                required: true
-            },
-            5: {
-                title: "Menurut Anda, seberapa besar penekanan metode pembelajaran berikut di prodi Anda?",
-                description: "",
-                code: "F21-F27",
-                number: 5,
-                type: "learning-methods",
-                methods: [
-                    "Perkuliahan",
-                    "Demonstrasi",
-                    "Partisipasi Proyek Riset",
-                    "Magang",
-                    "Praktikum",
-                    "Kerja Lapangan",
-                    "Diskusi"
-                ],
-                scaleOptions: ["Sangat Besar", "Besar", "Cukup", "Kurang", "Tidak Sama Sekali"],
                 required: true
             }
         };
@@ -604,76 +551,53 @@
         function renderAnswerArea(questionId) {
             const question = questions[questionId];
             const answerArea = document.getElementById('dynamicAnswerArea');
-            
+
             if (!question) return;
-            
+
             let html = '';
-            
-            switch(question.type) {
+
+            switch (question.type) {
                 case 'dropdown':
                     html = renderDropdownOptions(question);
                     break;
                 case 'radio-options':
                     html = renderRadioOptions(question);
                     break;
+                case 'text-input':
+                    html = renderTextInput(question);
+                    break;
+                case 'textarea':
+                    html = renderTextarea(question);
+                    break;
+                case 'date-input':
+                    html = renderDateInput(question);
+                    break;
+                case 'number-input':
+                    html = renderNumberInput(question);
+                    break;
+                case 'checkbox-options':
+                    html = renderCheckboxOptions(question);
+                    break;
                 case 'competency-scale':
                     html = renderCompetencyScale(question);
-                    break;
-                case 'learning-methods':
-                    html = renderLearningMethods(question);
                     break;
                 default:
                     html = '<p>Tipe pertanyaan tidak dikenali</p>';
             }
-            
+
             answerArea.innerHTML = html;
-            
+
             // Attach event listeners setelah render
             attachAnswerEvents();
-            
+
             // Restore saved answer jika ada
             restoreAnswer(questionId);
         }
 
-        // Render dropdown options
-        function renderDropdownOptions(question) {
-            let html = '<div class="mb-4">';
-            
-            if (question.hasOther) {
-                html += `
-                    <select class="form-select form-select-lg mb-3" id="question_dropdown" ${question.required ? 'required' : ''}>
-                        <option value="" selected disabled>Pilih sumber dana...</option>
-                `;
-            } else {
-                html += `
-                    <select class="form-select form-select-lg mb-3" id="question_dropdown" ${question.required ? 'required' : ''}>
-                        <option value="" selected disabled>Pilih status Anda...</option>
-                `;
-            }
-            
-            question.options.forEach(option => {
-                html += `<option value="${option}">${option}</option>`;
-            });
-            
-            html += `</select>`;
-            
-            if (question.hasOther) {
-                html += `
-                    <div class="mt-3" id="otherInputContainer" style="display: none;">
-                        <label for="otherInput" class="form-label fw-medium">Sebutkan sumber dana lainnya:</label>
-                        <input type="text" class="form-control" id="otherInput" placeholder="Tuliskan sumber dana lainnya...">
-                    </div>
-                `;
-            }
-            
-            html += '</div>';
-            return html;
-        }
-
-        // Render radio options untuk pertanyaan nomor 2
+        // Render radio options
         function renderRadioOptions(question) {
             let html = '<div class="mb-4">';
-            
+
             question.options.forEach((option, index) => {
                 html += `
                     <div class="answer-option" data-option="${option}">
@@ -690,135 +614,140 @@
                     </div>
                 `;
             });
-            
+
             html += '</div>';
             return html;
         }
 
-        // Render competency scale
-        function renderCompetencyScale(question) {
-            let html = '<div class="competency-grid mb-4">';
-            
-            question.competencies.forEach((competency, index) => {
-                html += `
-                    <div class="competency-item">
-                        <div class="competency-name">${competency}</div>
-                        <div class="competency-scale">
-                `;
-                
-                question.scale.forEach(value => {
-                    html += `
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" 
-                                   name="competency_${index}" 
-                                   id="comp_${index}_${value}" 
-                                   value="${value}"
-                                   ${question.required ? 'required' : ''}>
-                            <label class="form-check-label" for="comp_${index}_${value}">
-                                ${value}
-                            </label>
-                        </div>
-                    `;
-                });
-                
-                html += `
-                        </div>
-                    </div>
-                `;
-            });
-            
-            // Add legend
+        // Render dropdown options
+        function renderDropdownOptions(question) {
+            let html = '<div class="mb-4">';
+
             html += `
-                <div class="mt-4 p-3 bg-light rounded">
-                    <div class="row text-center">
-                        <div class="col">
-                            <span class="badge bg-secondary">1</span>
-                            <div class="small mt-1">${question.scaleLabels[1]}</div>
-                        </div>
-                        <div class="col">
-                            <span class="badge bg-secondary">2</span>
-                            <div class="small mt-1">${question.scaleLabels[2]}</div>
-                        </div>
-                        <div class="col">
-                            <span class="badge bg-secondary">3</span>
-                            <div class="small mt-1">${question.scaleLabels[3]}</div>
-                        </div>
-                        <div class="col">
-                            <span class="badge bg-secondary">4</span>
-                            <div class="small mt-1">${question.scaleLabels[4]}</div>
-                        </div>
-                        <div class="col">
-                            <span class="badge bg-secondary">5</span>
-                            <div class="small mt-1">${question.scaleLabels[5]}</div>
-                        </div>
+                <select class="form-select form-select-lg mb-3" id="question_dropdown" ${question.required ? 'required' : ''}>
+                    <option value="" selected disabled>Pilih salah satu...</option>
+            `;
+
+            question.options.forEach(option => {
+                html += `<option value="${option}">${option}</option>`;
+            });
+
+            html += `</select>`;
+
+            if (question.hasOther) {
+                html += `
+                    <div class="mt-3" id="otherInputContainer" style="display: none;">
+                        <label for="otherInput" class="form-label fw-medium">Sebutkan:</label>
+                        <input type="text" class="form-control" id="otherInput" placeholder="Tuliskan...">
                     </div>
+                `;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        // Render text input
+        function renderTextInput(question) {
+            return `
+                <div class="mb-4">
+                    <input type="text" class="form-control form-control-lg" 
+                           id="text_input" 
+                           placeholder="Tuliskan jawaban Anda..."
+                           ${question.required ? 'required' : ''}>
                 </div>
             `;
-            
-            html += '</div>';
-            return html;
         }
 
-        // Render learning methods
-        function renderLearningMethods(question) {
-            let html = '<div class="table-responsive mb-4">';
-            html += `
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 40%">Metode Pembelajaran</th>
-                            <th class="text-center">Sangat Besar</th>
-                            <th class="text-center">Besar</th>
-                            <th class="text-center">Cukup</th>
-                            <th class="text-center">Kurang</th>
-                            <th class="text-center">Tidak Sama Sekali</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        // Render textarea
+        function renderTextarea(question) {
+            return `
+                <div class="mb-4">
+                    <textarea class="form-control" 
+                              id="textarea_input" 
+                              rows="4" 
+                              placeholder="Tuliskan jawaban Anda..."
+                              ${question.required ? 'required' : ''}></textarea>
+                </div>
             `;
-            
-            question.methods.forEach((method, index) => {
+        }
+
+        // Render date input
+        function renderDateInput(question) {
+            return `
+                <div class="mb-4">
+                    <input type="date" class="form-control form-control-lg" 
+                           id="date_input" 
+                           ${question.required ? 'required' : ''}>
+                </div>
+            `;
+        }
+
+        // Render number input
+        function renderNumberInput(question) {
+            return `
+                <div class="mb-4">
+                    <input type="number" class="form-control form-control-lg" 
+                           id="number_input" 
+                           placeholder="Masukkan angka..."
+                           min="0"
+                           ${question.required ? 'required' : ''}>
+                </div>
+            `;
+        }
+
+        // Render checkbox options
+        function renderCheckboxOptions(question) {
+            let html = '<div class="mb-4">';
+
+            question.options.forEach((option, index) => {
                 html += `
-                    <tr>
-                        <td class="fw-medium">${method}</td>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" 
+                               id="checkbox_option_${index}" 
+                               value="${option}">
+                        <label class="form-check-label" for="checkbox_option_${index}">
+                            ${option}
+                        </label>
+                    </div>
                 `;
-                
-                question.scaleOptions.forEach((option, optIndex) => {
-                    html += `
-                        <td class="text-center">
-                            <input class="form-check-input" type="radio" 
-                                   name="method_${index}" 
-                                   value="${optIndex + 1}"
-                                   ${question.required ? 'required' : ''}>
-                        </td>
-                    `;
-                });
-                
-                html += '</tr>';
             });
-            
-            html += `
-                    </tbody>
-                </table>
-            </div>`;
+
+            if (question.hasOther) {
+                html += `
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" 
+                               id="checkbox_other" 
+                               value="other">
+                        <label class="form-check-label" for="checkbox_other">
+                            Lainnya:
+                        </label>
+                    </div>
+                    <div class="mt-2 ms-4" id="otherCheckboxInputContainer" style="display: none;">
+                        <input type="text" class="form-control" id="otherCheckboxInput" placeholder="Tuliskan...">
+                    </div>
+                `;
+            }
+
+            html += '</div>';
             return html;
         }
 
         // Function to render dynamic buttons
         function renderButtons(questionId) {
             const buttonGroup = document.getElementById('dynamicButtonGroup');
-            const isLastQuestion = questionId === TOTAL_QUESTIONS;
-            
+            const isLastQuestion = questionId === TOTAL_QUESTIONS_IN_SECTION;
+
             let html = `
                 <button class="btn btn-outline-secondary" id="saveDraftBtn">
                     <i class="fas fa-save me-2"></i> Simpan Sementara
                 </button>
             `;
-            
+
             if (isLastQuestion) {
                 html += `
                     <button class="btn btn-success" id="submitQuestionnaireBtn">
-                        <i class="fas fa-paper-plane me-2"></i> Kirim Kuesioner
+                        <i class="fas fa-paper-plane me-2"></i> Kirim Bagian Ini
                     </button>
                 `;
             } else {
@@ -828,9 +757,9 @@
                     </button>
                 `;
             }
-            
+
             buttonGroup.innerHTML = html;
-            
+
             // Re-attach event listeners
             document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
             if (isLastQuestion) {
@@ -847,61 +776,78 @@
             if (dropdown) {
                 dropdown.addEventListener('change', function() {
                     const otherInputContainer = document.getElementById('otherInputContainer');
-                    if (otherInputContainer && this.value === "Lainnya, sebutkan!") {
+                    if (otherInputContainer && this.value && this.value.includes("Lainnya")) {
                         otherInputContainer.style.display = 'block';
                         document.getElementById('otherInput').required = true;
                     } else if (otherInputContainer) {
                         otherInputContainer.style.display = 'none';
                         document.getElementById('otherInput').required = false;
                     }
-                    
+
                     // Simpan jawaban saat berubah
                     saveAnswer();
                 });
             }
-            
-            // Untuk radio options (pertanyaan nomor 2)
+
+            // Untuk radio options
             const radioOptions = document.querySelectorAll('.answer-option');
             radioOptions.forEach(option => {
                 option.addEventListener('click', function() {
                     const radioInput = this.querySelector('input[type="radio"]');
                     if (radioInput) {
                         radioInput.checked = true;
-                        
+
                         // Add visual feedback
                         document.querySelectorAll('.answer-option').forEach(opt => {
                             opt.classList.remove('selected');
                         });
                         this.classList.add('selected');
-                        
+
                         // Simpan jawaban
                         saveAnswer();
                     }
                 });
             });
-            
-            // Untuk radio input di competency scale
+
+            // Untuk checkbox dengan opsi "Lainnya"
+            const otherCheckbox = document.getElementById('checkbox_other');
+            if (otherCheckbox) {
+                otherCheckbox.addEventListener('change', function() {
+                    const otherCheckboxInputContainer = document.getElementById('otherCheckboxInputContainer');
+                    if (otherCheckboxInputContainer) {
+                        otherCheckboxInputContainer.style.display = this.checked ? 'block' : 'none';
+                    }
+                });
+            }
+
+            // Untuk semua input
+            document.querySelectorAll('input, textarea, select').forEach(input => {
+                if (input.type !== 'radio' && input.type !== 'checkbox') {
+                    input.addEventListener('input', saveAnswer);
+                }
+            });
+
+            // Untuk radio input
             document.querySelectorAll('input[type="radio"]').forEach(radio => {
                 radio.addEventListener('change', saveAnswer);
             });
-            
-            // Untuk text input lainnya
-            const otherInput = document.getElementById('otherInput');
-            if (otherInput) {
-                otherInput.addEventListener('input', saveAnswer);
-            }
+
+            // Untuk checkbox input
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', saveAnswer);
+            });
         }
 
         // Restore saved answer
         function restoreAnswer(questionId) {
             const savedAnswers = JSON.parse(localStorage.getItem('kuesioner_draft') || '{}');
             const savedAnswer = savedAnswers[questionId];
-            
+
             if (!savedAnswer) return;
-            
+
             const question = questions[questionId];
-            
-            switch(question.type) {
+
+            switch (question.type) {
                 case 'dropdown':
                     const dropdown = document.getElementById('question_dropdown');
                     if (dropdown) {
@@ -918,7 +864,7 @@
                         }
                     }
                     break;
-                    
+
                 case 'radio-options':
                     const radioInput = document.querySelector(`input[value="${savedAnswer}"]`);
                     if (radioInput) {
@@ -932,28 +878,32 @@
                         }
                     }
                     break;
-                    
-                case 'competency-scale':
-                    if (typeof savedAnswer === 'object') {
-                        Object.keys(savedAnswer).forEach(competency => {
-                            const index = question.competencies.indexOf(competency);
-                            if (index !== -1) {
-                                const radio = document.querySelector(`input[name="competency_${index}"][value="${savedAnswer[competency]}"]`);
-                                if (radio) radio.checked = true;
-                            }
-                        });
-                    }
+
+                case 'text-input':
+                    const textInput = document.getElementById('text_input');
+                    if (textInput) textInput.value = savedAnswer;
                     break;
-                    
-                case 'learning-methods':
-                    if (typeof savedAnswer === 'object') {
-                        Object.keys(savedAnswer).forEach(method => {
-                            const index = question.methods.indexOf(method);
-                            if (index !== -1) {
-                                const value = question.scaleOptions.indexOf(savedAnswer[method]) + 1;
-                                const radio = document.querySelector(`input[name="method_${index}"][value="${value}"]`);
-                                if (radio) radio.checked = true;
-                            }
+
+                case 'textarea':
+                    const textarea = document.getElementById('textarea_input');
+                    if (textarea) textarea.value = savedAnswer;
+                    break;
+
+                case 'date-input':
+                    const dateInput = document.getElementById('date_input');
+                    if (dateInput) dateInput.value = savedAnswer;
+                    break;
+
+                case 'number-input':
+                    const numberInput = document.getElementById('number_input');
+                    if (numberInput) numberInput.value = savedAnswer;
+                    break;
+
+                case 'checkbox-options':
+                    if (Array.isArray(savedAnswer)) {
+                        savedAnswer.forEach(value => {
+                            const checkbox = document.querySelector(`input[value="${value}"]`);
+                            if (checkbox) checkbox.checked = true;
                         });
                     }
                     break;
@@ -962,10 +912,10 @@
 
         // Function to update progress
         function updateProgress(questionId) {
-            const progressPercent = (questionId / TOTAL_QUESTIONS) * 100;
-            const progressText = `Progress: Pertanyaan ${questionId} dari ${TOTAL_QUESTIONS}`;
+            const progressPercent = (questionId / TOTAL_QUESTIONS_IN_SECTION) * 100;
+            const progressText = `Progress: Pertanyaan ${questionId} dari ${TOTAL_QUESTIONS_IN_SECTION}`;
             const progressPercentText = `${Math.round(progressPercent)}%`;
-            
+
             document.getElementById('progressBar').style.width = `${progressPercent}%`;
             document.getElementById('progressText').textContent = progressText;
             document.getElementById('progressPercent').textContent = progressPercentText;
@@ -973,14 +923,15 @@
 
         // Question navigation functionality dengan pembatasan
         document.querySelectorAll('.question-nav-item').forEach(item => {
-            item.addEventListener('click', function () {
+            item.addEventListener('click', function() {
                 const questionId = parseInt(this.getAttribute('data-question-id'));
-                
+
                 // Cek apakah pertanyaan ini sudah dijawab atau tidak
                 if (questionId <= highestAnsweredQuestion) {
                     navigateToQuestion(questionId);
                 } else {
-                    showNotification('Anda harus menyelesaikan pertanyaan sebelumnya terlebih dahulu', 'warning');
+                    showNotification('Anda harus menyelesaikan pertanyaan sebelumnya terlebih dahulu',
+                        'warning');
                 }
             });
         });
@@ -993,21 +944,15 @@
             updateProgress(questionId);
             renderAnswerArea(questionId);
             renderButtons(questionId);
-            
-            // Validasi khusus untuk pertanyaan routing
-            if (questionId === 1) {
-                setupRoutingLogic();
-            }
         }
 
         // Function to update question display
         function updateQuestionDisplay(questionId) {
             const question = questions[questionId];
-            
+
             if (!question) return;
-            
+
             document.getElementById('currentQuestionNumber').textContent = question.number;
-            document.getElementById('currentQuestionCode').textContent = question.code;
             document.getElementById('currentQuestionTitle').textContent = question.title;
             document.getElementById('currentQuestionDescription').textContent = question.description;
         }
@@ -1016,10 +961,10 @@
         function updateNavigationStates(questionId) {
             document.querySelectorAll('.question-nav-item').forEach(navItem => {
                 navItem.classList.remove('active', 'current', 'locked');
-                
+
                 const statusIcon = navItem.querySelector('.nav-status');
                 const itemQuestionId = parseInt(navItem.getAttribute('data-question-id'));
-                
+
                 if (itemQuestionId < currentQuestionId) {
                     navItem.classList.add('answered');
                     statusIcon.className = 'nav-status answered me-3';
@@ -1045,32 +990,6 @@
             }
         }
 
-        // Setup routing logic untuk pertanyaan F8
-        function setupRoutingLogic() {
-            const dropdown = document.getElementById('question_dropdown');
-            if (dropdown) {
-                dropdown.addEventListener('change', function() {
-                    const selectedValue = this.value;
-                    
-                    // Reset semua pertanyaan menjadi locked kecuali yang pertama
-                    highestAnsweredQuestion = 1;
-                    
-                    // Tentukan pertanyaan mana yang akan di-unlock berdasarkan pilihan
-                    if (selectedValue === "Melanjutkan Pendidikan" || 
-                        selectedValue === "Tidak Kerja, tetapi sedang mencari kerja" ||
-                        selectedValue === "Belum memungkinkan bekerja / Tidak mencari kerja") {
-                        // Untuk status ini, pertanyaan F502 di-skip
-                        highestAnsweredQuestion = 2;
-                    } else if (selectedValue) {
-                        // Untuk status bekerja/wiraswasta, unlock pertanyaan 2
-                        highestAnsweredQuestion = Math.max(highestAnsweredQuestion, 2);
-                    }
-                    
-                    updateNavigationStates(currentQuestionId);
-                });
-            }
-        }
-
         // Navigation functions
         document.getElementById('prevQuestionBtn').addEventListener('click', function() {
             if (currentQuestionId > 1) {
@@ -1084,8 +1003,8 @@
                 showNotification('Harap lengkapi jawaban untuk pertanyaan ini', 'warning');
                 return;
             }
-            
-            if (currentQuestionId < TOTAL_QUESTIONS) {
+
+            if (currentQuestionId < TOTAL_QUESTIONS_IN_SECTION) {
                 // Update highestAnsweredQuestion jika user menjawab pertanyaan baru
                 if (currentQuestionId === highestAnsweredQuestion) {
                     highestAnsweredQuestion = currentQuestionId + 1;
@@ -1098,7 +1017,7 @@
         function validateCurrentQuestion() {
             const question = questions[currentQuestionId];
             if (!question.required) return true;
-            
+
             const answer = getQuestionAnswer(currentQuestionId);
             return answer !== null && answer !== '';
         }
@@ -1106,24 +1025,14 @@
         // Validasi semua pertanyaan sebelum submit
         function validateAllQuestions() {
             const savedAnswers = JSON.parse(localStorage.getItem('kuesioner_draft') || '{}');
-            
-            // Periksa status di pertanyaan 1 untuk menentukan routing
-            const q1Answer = savedAnswers[1];
-            const isQuestion2Relevant = q1Answer === "Bekerja (full time/part time) di perusahaan/instansi" || 
-                                        q1Answer === "Wiraswasta/Pemilik Usaha";
-            
-            for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
+
+            for (let i = 1; i <= TOTAL_QUESTIONS_IN_SECTION; i++) {
                 const question = questions[i];
-                
-                // Skip pertanyaan yang tidak relevan berdasarkan routing
-                if (i === 2 && !isQuestion2Relevant) {
-                    continue; // Skip pertanyaan 2 jika tidak relevan
-                }
-                
+
                 if (question.required) {
                     const answer = savedAnswers[i];
-                    
-                    if (!answer || answer === "" || (typeof answer === 'object' && Object.keys(answer).length === 0)) {
+
+                    if (!answer || answer === "" || (Array.isArray(answer) && answer.length === 0)) {
                         // Navigasi ke pertanyaan yang belum diisi
                         navigateToQuestion(i);
                         showNotification(`Harap lengkapi pertanyaan nomor ${i} terlebih dahulu`, 'warning');
@@ -1136,7 +1045,9 @@
 
         // Tombol kembali ke halaman utama
         document.getElementById('backToMainBtn').addEventListener('click', function() {
-            if (confirm('Apakah Anda yakin ingin kembali ke halaman utama? Perubahan yang belum disimpan akan hilang.')) {
+            if (confirm(
+                    'Apakah Anda yakin ingin kembali ke halaman utama? Perubahan yang belum disimpan akan hilang.'
+                )) {
                 window.location.href = '/nav-kuesioner';
             }
         });
@@ -1144,7 +1055,7 @@
         // Simpan jawaban untuk pertanyaan saat ini
         function saveAnswer() {
             const answer = getQuestionAnswer(currentQuestionId);
-            if (answer) {
+            if (answer !== null && answer !== '') {
                 // Update UI untuk menandai pertanyaan telah dijawab
                 const navItem = document.querySelector(`[data-question-id="${currentQuestionId}"]`);
                 if (navItem && !navItem.classList.contains('answered')) {
@@ -1155,14 +1066,14 @@
                         statusIcon.innerHTML = '<i class="fas fa-check"></i>';
                     }
                 }
-                
+
                 // Simpan ke localStorage
                 const savedAnswers = JSON.parse(localStorage.getItem('kuesioner_draft') || '{}');
                 savedAnswers[currentQuestionId] = answer;
                 localStorage.setItem('kuesioner_draft', JSON.stringify(savedAnswers));
-                
+
                 // Update highestAnsweredQuestion jika perlu
-                if (currentQuestionId === highestAnsweredQuestion && currentQuestionId < TOTAL_QUESTIONS) {
+                if (currentQuestionId === highestAnsweredQuestion && currentQuestionId < TOTAL_QUESTIONS_IN_SECTION) {
                     highestAnsweredQuestion = currentQuestionId + 1;
                     updateNavigationStates(currentQuestionId);
                 }
@@ -1179,56 +1090,51 @@
         function getQuestionAnswer(questionId) {
             const question = questions[questionId];
             if (!question) return null;
-            
-            switch(question.type) {
+
+            switch (question.type) {
                 case 'dropdown':
                     const dropdown = document.getElementById('question_dropdown');
                     if (!dropdown || !dropdown.value) return null;
-                    
+
                     const value = dropdown.value;
-                    if (value === "Lainnya, sebutkan!") {
+                    if (value === "Lainnya, sebutkan!" || value.includes("Lainnya")) {
                         const otherInput = document.getElementById('otherInput');
                         return otherInput && otherInput.value.trim() ? `Lainnya: ${otherInput.value}` : value;
                     }
                     return value;
-                    
+
                 case 'radio-options':
                     const selectedRadio = document.querySelector('input[name="question_radio"]:checked');
                     return selectedRadio ? selectedRadio.value : null;
-                    
-                case 'competency-scale':
-                    const competencyAnswers = {};
-                    let competencyAnswered = false;
-                    
-                    question.competencies.forEach((competency, index) => {
-                        const radios = document.querySelectorAll(`input[name="competency_${index}"]`);
-                        radios.forEach(radio => {
-                            if (radio.checked) {
-                                competencyAnswers[competency] = radio.value;
-                                competencyAnswered = true;
-                            }
-                        });
+
+                case 'text-input':
+                    const textInput = document.getElementById('text_input');
+                    return textInput ? textInput.value.trim() : null;
+
+                case 'textarea':
+                    const textarea = document.getElementById('textarea_input');
+                    return textarea ? textarea.value.trim() : null;
+
+                case 'date-input':
+                    const dateInput = document.getElementById('date_input');
+                    return dateInput ? dateInput.value : null;
+
+                case 'number-input':
+                    const numberInput = document.getElementById('number_input');
+                    return numberInput ? numberInput.value : null;
+
+                case 'checkbox-options':
+                    const selectedCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+                    const values = Array.from(selectedCheckboxes).map(cb => {
+                        if (cb.id === 'checkbox_other') {
+                            const otherInput = document.getElementById('otherCheckboxInput');
+                            return otherInput && otherInput.value.trim() ? `Lainnya: ${otherInput.value}` :
+                                'Lainnya';
+                        }
+                        return cb.value;
                     });
-                    
-                    return competencyAnswered ? competencyAnswers : null;
-                    
-                case 'learning-methods':
-                    const methodAnswers = {};
-                    let methodAnswered = false;
-                    
-                    question.methods.forEach((method, index) => {
-                        const radios = document.querySelectorAll(`input[name="method_${index}"]`);
-                        radios.forEach(radio => {
-                            if (radio.checked) {
-                                const valueIndex = parseInt(radio.value) - 1;
-                                methodAnswers[method] = question.scaleOptions[valueIndex];
-                                methodAnswered = true;
-                            }
-                        });
-                    });
-                    
-                    return methodAnswered ? methodAnswers : null;
-                    
+                    return values.length > 0 ? values : null;
+
                 default:
                     return null;
             }
@@ -1239,7 +1145,7 @@
             if (!validateAllQuestions()) {
                 return;
             }
-            
+
             const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
             confirmationModal.show();
         }
@@ -1249,32 +1155,36 @@
             // Tutup modal konfirmasi
             const confirmationModal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
             confirmationModal.hide();
-            
+
             // Tampilkan loading modal
             const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
             loadingModal.show();
-            
+
             // Kirim kuesioner (simulasi)
             setTimeout(() => {
                 // Kumpulkan semua jawaban dari localStorage
                 const allAnswers = JSON.parse(localStorage.getItem('kuesioner_draft') || '{}');
-                
-                // Simpan sebagai submitted (simulasi pengiriman ke server)
-                localStorage.setItem('kuesioner_submitted', JSON.stringify(allAnswers));
-                
+
+                // Simpan sebagai submitted untuk bagian ini
+                const submittedSections = JSON.parse(localStorage.getItem('kuesioner_submitted_sections') ||
+                    '{}');
+                submittedSections['bekerja_bagian_1'] = allAnswers;
+                localStorage.setItem('kuesioner_submitted_sections', JSON.stringify(submittedSections));
+
                 // Hapus draft setelah berhasil submit
                 localStorage.removeItem('kuesioner_draft');
-                
+
                 // Tampilkan notifikasi sukses
-                showNotification('Kuesioner berhasil dikirim! Mengalihkan ke bagian berikutnya...', 'success');
-                
-                // Redirect ke halaman section1-kuesioner.blade.php setelah 1.5 detik
+                showNotification('Bagian kuesioner berhasil dikirim! Mengalihkan ke bagian berikutnya...',
+                    'success');
+
+                // Redirect ke halaman berikutnya setelah 1.5 detik
                 setTimeout(() => {
                     loadingModal.hide();
-                    // Redirect ke halaman Laravel Blade
-                    window.location.href = '/section1-kuesioner';
+                    // Redirect ke halaman bagian berikutnya (Bagian 2)
+                    window.location.href = '/section2-kuesioner';
                 }, 1500);
-                
+
             }, 1000);
         });
 
@@ -1282,7 +1192,7 @@
         function showNotification(message, type = 'info') {
             const toast = document.createElement('div');
             const bgColor = type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'info';
-            
+
             toast.className = `toast align-items-center text-white bg-${bgColor} border-0 position-fixed top-0 end-0 m-3`;
             toast.style.zIndex = '9999';
             toast.innerHTML = `
@@ -1309,33 +1219,40 @@
         updateNavigationStates(currentQuestionId);
         renderAnswerArea(currentQuestionId);
         renderButtons(currentQuestionId);
-        setupRoutingLogic();
-        
+
         // Load saved answers saat inisialisasi
         const savedAnswers = JSON.parse(localStorage.getItem('kuesioner_draft') || '{}');
-        
+
         // Tentukan highestAnsweredQuestion berdasarkan jawaban yang sudah disimpan
-        for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
+        for (let i = 1; i <= TOTAL_QUESTIONS_IN_SECTION; i++) {
             if (savedAnswers[i]) {
                 highestAnsweredQuestion = Math.max(highestAnsweredQuestion, i + 1);
             }
         }
-        
-        // Apply routing logic berdasarkan jawaban pertanyaan 1 jika ada
-        if (savedAnswers[1]) {
-            const q1Answer = savedAnswers[1];
-            if (q1Answer === "Melanjutkan Pendidikan" || 
-                q1Answer === "Tidak Kerja, tetapi sedang mencari kerja" ||
-                q1Answer === "Belum memungkinkan bekerja / Tidak mencari kerja") {
-                // Untuk status ini, pertanyaan F502 di-skip
-                highestAnsweredQuestion = Math.max(highestAnsweredQuestion, 2);
-            }
-        }
-        
-        // Pastikan highestAnsweredQuestion tidak melebihi TOTAL_QUESTIONS
-        highestAnsweredQuestion = Math.min(highestAnsweredQuestion, TOTAL_QUESTIONS);
-        
+
+        // Pastikan highestAnsweredQuestion tidak melebihi TOTAL_QUESTIONS_IN_SECTION
+        highestAnsweredQuestion = Math.min(highestAnsweredQuestion, TOTAL_QUESTIONS_IN_SECTION);
+
         updateNavigationStates(currentQuestionId);
+
+        // Attach event listeners untuk answer options statis
+        document.querySelectorAll('.answer-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radioInput = this.querySelector('input[type="radio"]');
+                if (radioInput) {
+                    radioInput.checked = true;
+
+                    // Add visual feedback
+                    document.querySelectorAll('.answer-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+
+                    // Simpan jawaban
+                    saveAnswer();
+                }
+            });
+        });
     </script>
 </body>
 

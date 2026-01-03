@@ -11,7 +11,10 @@
                 <p class="text-muted mb-0">Total {{ $alumni->total() }} alumni terdaftar</p>
             </div>
             <div>
-                <a href="#" class="btn btn-success me-2">
+                <a href="{{ route('admin.views.users.alumni.create') }}" class="btn btn-primary me-2">
+                    <i class="bi bi-plus-circle me-2"></i> Tambah Alumni
+                </a>
+                <a href="#" class="btn btn-success">
                     <i class="bi bi-download me-2"></i> Ekspor
                 </a>
             </div>
@@ -65,9 +68,11 @@
                         <tr>
                             <th width="50">No</th>
                             <th>Nama Alumni</th>
-                            <th>NIM</th>
+                            <!-- HAPUS KOLOM NIM DARI HEADER -->
                             <th>Program Studi</th>
                             <th>Tahun Lulus</th>
+                            <th>Ranking</th>
+                            <th>Points</th>
                             <th>Status Email</th>
                             <th>Terakhir Login</th>
                             <th>Aksi</th>
@@ -84,12 +89,28 @@
                                         <div>
                                             <div class="fw-bold">{{ $alumniItem->fullname }}</div>
                                             <small class="text-muted">{{ $alumniItem->user->email }}</small>
+                                            <!-- TAMPILKAN NIM DI BAWAH EMAIL JIKA MASIH INGIN DILIHAT -->
+                                            <small class="text-muted d-block">{{ $alumniItem->nim }}</small>
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ $alumniItem->nim }}</td>
+                                <!-- HAPUS KOLOM NIM TERPISAH -->
                                 <td>{{ $alumniItem->study_program }}</td>
                                 <td>{{ $alumniItem->graduation_date ? $alumniItem->graduation_date->format('Y') : '-' }}
+                                </td>
+                                <td>
+                                    @if ($alumniItem->ranking)
+                                        <span class="badge bg-primary">#{{ $alumniItem->ranking }}</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($alumniItem->points)
+                                        <span class="badge bg-success">{{ $alumniItem->points }} pts</span>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if ($alumniItem->user->email_verified_at)
@@ -110,27 +131,30 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.views.users.alumni.show', $alumniItem->id) }}"
-                                        class="btn btn-action btn-view me-1">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.views.users.alumni.edit', $alumniItem->id) }}"
-                                        class="btn btn-action btn-edit me-1">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route('admin.views.users.alumni.destroy', $alumniItem->id) }}"
-                                        method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn btn-action btn-delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <a href="{{ route('admin.views.users.alumni.show', $alumniItem->id) }}"
+                                            class="btn btn-action btn-view">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.views.users.alumni.edit', $alumniItem->id) }}"
+                                            class="btn btn-action btn-edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="{{ route('admin.views.users.alumni.destroy', $alumniItem->id) }}"
+                                            method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-action btn-delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4">
+                                <!-- UBAH COLSPAN MENJADI 9 (karena kolom berkurang 1) -->
+                                <td colspan="9" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-people display-4"></i>
                                         <p class="mt-2">Belum ada data alumni</p>
@@ -150,7 +174,7 @@
                         {{ $alumni->total() }} data
                     </div>
                     <nav>
-                        {{ $alumni->withQueryString()->links() }}
+                        {{ $alumni->withQueryString()->links('pagination::bootstrap-5') }}
                     </nav>
                 </div>
             @endif

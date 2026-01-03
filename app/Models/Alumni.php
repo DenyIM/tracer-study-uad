@@ -17,7 +17,9 @@ class Alumni extends Model
         'phone',
         'study_program',
         'graduation_date',
-        'npwp'
+        'npwp',
+        'ranking',
+        'points'
     ];
 
     protected $casts = [
@@ -28,11 +30,6 @@ class Alumni extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function responses()
-    {
-        return $this->hasMany(UserResponse::class, 'user_id');
     }
 
     // Accessors

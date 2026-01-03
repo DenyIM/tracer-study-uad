@@ -17,7 +17,7 @@ class AlumniSeeder extends Seeder
 
         // Data alumni utama
         $user = User::create([
-            'email' => 'alumni@tracer.ac.id',
+            'email' => 'test2100018138@webmail.uad.ac.id',
             'password' => Hash::make('password'),
             'role' => 'alumni',
             'email_verified_at' => now(),
@@ -27,11 +27,13 @@ class AlumniSeeder extends Seeder
             'user_id' => $user->id,
             'fullname' => 'Budi Santoso',
             'nim' => '20190001',
-            'date_of_birth' => '1999-05-10',
+            'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
             'phone' => '081298765432',
             'study_program' => 'Teknik Informatika',
             'graduation_date' => '2023-09-15',
             'npwp' => '12.345.678.9-012.345',
+            'ranking' => 1,
+            'points' => 100,
         ]);
 
         // Data dummy tambahan
@@ -39,7 +41,7 @@ class AlumniSeeder extends Seeder
         
         for ($i = 1; $i <= 20; $i++) {
             $user = User::create([
-                'email' => 'alumni' . ($i + 1) . '@example.com', // +1 agar tidak bentrok dengan alumni@tracer.ac.id
+                'email' => 'alumni' . ($i + 1) . '@example.com',
                 'password' => Hash::make('password123'),
                 'role' => 'alumni',
                 'email_verified_at' => rand(0, 1) ? now() : null,
@@ -47,17 +49,19 @@ class AlumniSeeder extends Seeder
             ]);
             
             // Generate NIM unik: 2019 + random 5 digit
-            $nim = '2019' . rand(10000, 99999);
+            $nim = '2019' . str_pad($i + 1, 5, '0', STR_PAD_LEFT);
             
             Alumni::create([
                 'user_id' => $user->id,
                 'fullname' => 'Alumni ' . ($i + 1),
                 'nim' => $nim,
-                'date_of_birth' => now()->subYears(rand(22, 30))->format('Y-m-d'),
-                'phone' => '0812' . rand(10000000, 99999999),
+                'date_of_birth' => now()->subYears(rand(22, 30))->format('Y-m-d'), // Opsional
+                'phone' => '0812' . str_pad(rand(10000000, 99999999), 8, '0'),
                 'study_program' => $studyPrograms[array_rand($studyPrograms)],
                 'graduation_date' => now()->subYears(rand(1, 5))->format('Y-m-d'),
                 'npwp' => rand(0, 1) ? '12.' . rand(100, 999) . '.' . rand(100, 999) . '.' . rand(1, 9) . '-0' . rand(10, 99) . '.' . rand(100, 999) : null,
+                'ranking' => rand(1, 100),
+                'points' => rand(0, 500),
             ]);
         }
     }

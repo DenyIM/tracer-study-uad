@@ -10,19 +10,16 @@ function initializeLeaderboard() {
     // 2. Initialize pagination
     initializePagination();
 
-    // 3. Initialize tab switching
-    initializeTabSwitching();
-
-    // 4. Initialize podium animations
+    // 3. Initialize podium animations
     initializePodiumAnimations();
 
-    // 5. Initialize current user highlight
+    // 4. Initialize current user highlight
     // initializeCurrentUserHighlight();
 
-    // 6. Initialize button effects
+    // 5. Initialize button effects
     initializeButtonEffects();
 
-    // 7. Initialize AOS animations if available
+    // 6. Initialize AOS animations if available
     initializeAOS();
 
     console.log('Leaderboard functionality initialized successfully');
@@ -61,46 +58,6 @@ function initializePagination() {
                 if (this.getAttribute('href') === '#') {
                     e.preventDefault();
                     showNotification('Fitur pagination sedang dalam pengembangan. Pada implementasi nyata, halaman akan berubah sesuai data.', 'info');
-                }
-            });
-        });
-    }
-}
-
-// 3. Initialize tab switching
-function initializeTabSwitching() {
-    // Main tabs (Leaderboard / Submit)
-    const leaderboardTabs = document.querySelectorAll('#leaderboardTabs .nav-link');
-    if (leaderboardTabs.length > 0) {
-        leaderboardTabs.forEach(tab => {
-            tab.addEventListener('click', function () {
-                // Reset scroll position ketika ganti tab
-                setTimeout(() => {
-                    window.scrollTo({
-                        top: document.querySelector('.main-content').offsetTop - 100,
-                        behavior: 'smooth'
-                    });
-                }, 300);
-            });
-        });
-    }
-
-    // Submit tabs (Forum / Job)
-    const submitTabs = document.querySelectorAll('#submitTabs .nav-link');
-    if (submitTabs.length > 0) {
-        submitTabs.forEach(tab => {
-            tab.addEventListener('click', function () {
-                // Animate form section
-                const formSection = document.querySelector('.tab-pane.active .form-section');
-                if (formSection) {
-                    formSection.style.opacity = '0.5';
-                    formSection.style.transform = 'translateY(10px)';
-
-                    setTimeout(() => {
-                        formSection.style.opacity = '1';
-                        formSection.style.transform = 'translateY(0)';
-                        formSection.style.transition = 'all 0.3s ease';
-                    }, 300);
                 }
             });
         });

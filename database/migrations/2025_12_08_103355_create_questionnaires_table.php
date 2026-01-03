@@ -6,22 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    public function up()
     {
         Schema::create('questionnaires', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
-            $table->string('name'); // Kuesioner 1 (Umum), Kuesioner 2, dll
-            $table->string('title'); // Data Diri & Pendidikan
-            $table->text('description');
+            $table->string('name'); 
+            $table->string('slug')->nullable();
+            $table->text('description')->nullable();
             $table->integer('order')->default(0);
-            $table->boolean('is_required')->default(false); // wajib atau tidak
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_required')->default(true);
+            $table->boolean('is_general')->default(false); 
+            $table->integer('time_estimate')->nullable(); 
             $table->timestamps();
+            
+            $table->unique(['category_id', 'slug']);
         });
     }
 
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('questionnaires');
     }
