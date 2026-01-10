@@ -30,7 +30,22 @@ class CategoryController extends Controller
             ->orderBy('order')
             ->get();
         
-        return view('questionnaire.categories', compact('categories'));
+        // Gunakan dashboard view dengan flag khusus
+        return view('questionnaire.dashboard.index', [
+            'categories' => $categories,
+            'showCategorySelection' => true,
+            'statusQuestionnaire' => null, // Belum ada kategori
+            'otherCategories' => collect(),
+            'progressRecords' => collect(),
+            'totalPoints' => 0,
+            'achievements' => collect(),
+            'stats' => [
+                'categories_completed' => 0,
+                'total_questions_answered' => 0,
+                'achievements_count' => 0,
+                'current_rank' => 'Beginner',
+            ]
+        ]);
     }
     
     /**

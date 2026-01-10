@@ -61,25 +61,43 @@
 
                 <div class="d-flex align-items-center">
                     @guest
-                        <a href="{{ route('login') }}" class="btn btn-outline-primary-custom me-2" data-aos="zoom-in"
+                        <a href="{{ route('login') }}" class="btn btn-outline-primary me-2" data-aos="zoom-in"
                             data-aos-delay="400">Login</a>
-                        <a href="{{ route('register') }}" class="btn btn-primary-custom" data-aos="zoom-in"
+                        <a href="{{ route('register') }}" class="btn btn-primary" data-aos="zoom-in"
                             data-aos-delay="500">Daftar</a>
                     @else
                         @if (auth()->user()->role == 'alumni')
-                            <div class="notification-header">
-                                <span>Notifikasi</span>
-                                <div class="d-flex align-items-center">
-                                    <button class="notification-refresh-btn me-2" id="notificationRefreshBtn"
-                                        title="Muat Ulang Notifikasi">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                    <div class="notification-count" id="notificationCount">5</div>
+                            <!-- Notifikasi Dropdown -->
+                            <div class="dropdown me-3">
+                                <button class="btn btn-outline-secondary position-relative dropdown-toggle" type="button"
+                                    id="notificationDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-bell"></i>
+                                    <span
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        5
+                                        <span class="visually-hidden">notifications</span>
+                                    </span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationDropdownBtn"
+                                    style="min-width: 300px;">
+                                    <div class="p-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 fw-bold">Notifikasi</h6>
+                                            <div class="d-flex align-items-center">
+                                                <button class="btn btn-sm btn-outline-secondary me-2"
+                                                    id="notificationRefreshBtn" title="Muat Ulang Notifikasi">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                                <span class="badge bg-primary">5</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-2" id="notificationList">
+                                        <div class="dropdown-item p-3">
+                                            <p class="mb-0 text-muted">Tidak ada notifikasi</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div class="notification-list" id="notificationList">
-                                <!-- Notifikasi akan dimuat di sini -->
                             </div>
 
                             @php
@@ -88,8 +106,6 @@
                                 $initials = $fullname
                                     ? strtoupper(substr($fullname, 0, 2))
                                     : strtoupper(substr($user->email, 0, 2));
-
-                                // Data tambahan untuk profil alumni
                                 $study_program = optional($user->alumni)->study_program ?? '';
                                 $graduation_year = optional($user->alumni)->graduation_date
                                     ? date('Y', strtotime($user->alumni->graduation_date))
@@ -97,66 +113,71 @@
                                 $points = optional($user->alumni)->points ?? 0;
                             @endphp
 
+                            <!-- Profil Dropdown -->
                             <div class="dropdown">
-                                <button class="btn btn-outline-primary d-flex align-items-center" type="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    <div class="user-avatar me-2">{{ $initials }}</div>
-                                    <span>{{ $fullname }}</span>
+                                <button class="btn btn-outline-primary d-flex align-items-center dropdown-toggle"
+                                    type="button" id="profileDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">
+                                        {{ $initials }}
+                                    </div>
+                                    <span>{{ Str::limit($fullname, 15) }}</span>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
+                                    aria-labelledby="profileDropdownBtn" style="min-width: 250px;">
                                     <li>
-                                        <div class="profile-header px-3 py-2">
-                                            <div class="user-avatar-large mb-2">{{ $initials }}</div>
-                                            <div class="profile-info">
-                                                <div class="profile-name">{{ $fullname }}</div>
-                                                @if ($study_program && $graduation_year)
-                                                    <div class="profile-role text-muted">
-                                                        {{ $study_program }} {{ $graduation_year }}
-                                                    </div>
-                                                @endif
+                                        <div class="p-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                                    style="width: 48px; height: 48px; font-size: 18px; font-weight: bold;">
+                                                    {{ $initials }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ $fullname }}</div>
+                                                    @if ($study_program && $graduation_year)
+                                                        <small class="text-muted">{{ $study_program }}
+                                                            {{ $graduation_year }}</small>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                     </li>
 
-                                    <li>
-                                        <hr class="dropdown-divider mx-3">
-                                    </li>
-
-                                    <li class="px-3 py-2">
-                                        <div class="d-flex align-items-center justify-content-between">
+                                    <li class="p-3 border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <i class="fas fa-coins text-warning me-2"></i>
-                                                <span class="fw-semibold">{{ number_format($points) }}</span> Points
+                                                <span class="fw-bold">{{ number_format($points) }}</span> Poin
                                             </div>
-                                            <small class="text-muted">Ranking:
-                                                #{{ optional($user->alumni)->ranking ?? '-' }}</small>
+                                            <span class="badge bg-secondary">Rank
+                                                #{{ optional($user->alumni)->ranking ?? '-' }}</span>
                                         </div>
                                     </li>
 
                                     <li>
-                                        <hr class="dropdown-divider mx-3">
-                                    </li>
-
-                                    {{-- MENU ITEMS --}}
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('nav-profil') }}">
-                                            <i class="fas fa-user me-2"></i> Profil Saya
+                                        <a class="dropdown-item d-flex align-items-center py-2"
+                                            href="{{ route('nav-profile') }}">
+                                            <i class="fas fa-user text-primary me-2"></i>
+                                            <span>Profil Saya</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" href="{{ route('nav-bookmark') }}">
-                                            <i class="fas fa-bookmark me-2"></i> Bookmark
+                                        <a class="dropdown-item d-flex align-items-center py-2"
+                                            href="{{ route('nav-bookmark') }}">
+                                            <i class="fas fa-bookmark text-primary me-2"></i>
+                                            <span>Bookmark</span>
                                         </a>
                                     </li>
 
                                     <li>
-                                        <hr class="dropdown-divider mx-3">
+                                        <hr class="dropdown-divider m-0">
                                     </li>
 
                                     <li>
-                                        <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal"
-                                            data-bs-target="#logoutModal">
-                                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                        <a class="dropdown-item d-flex align-items-center py-2 text-danger" href="#"
+                                            data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                            <i class="fas fa-sign-out-alt me-2"></i>
+                                            <span>Logout</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -170,6 +191,7 @@
 </header>
 
 @auth
+    <!-- Logout Modal -->
     <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -193,3 +215,17 @@
         </div>
     </div>
 @endauth
+
+<!-- Script untuk memastikan Bootstrap berjalan -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi semua dropdown
+        var dropdownElements = document.querySelectorAll('.dropdown-toggle');
+        dropdownElements.forEach(function(dropdownElement) {
+            new bootstrap.Dropdown(dropdownElement);
+        });
+
+        // Debug: Cek jika Bootstrap berjalan
+        console.log('Bootstrap dropdown diinisialisasi');
+    });
+</script>

@@ -30,7 +30,7 @@ class AlumniSeeder extends Seeder
             'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
             'phone' => '081298765432',
             'study_program' => 'Teknik Informatika',
-            'graduation_date' => '2023-09-15',
+            'graduation_date' => '2024-09-15',
             'npwp' => '12.345.678.9-012.345',
             'ranking' => 1,
             'points' => 100,

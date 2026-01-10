@@ -66,7 +66,7 @@ class QuestionnaireController extends Controller
             ->orderBy('order')
             ->get();
         
-        return view('questionnaire.dashboard', compact(
+        return view('questionnaire.dashboard.index', compact(
             'statusQuestionnaire',
             'progressRecords',
             'totalAnswered',
@@ -94,17 +94,35 @@ class QuestionnaireController extends Controller
                 ->with('error', 'Anda belum memilih kategori ini.');
         }
         
-        // Jika tidak ada questionnaireSlug, tampilkan bagian umum
+        // Jika tidak ada questionnaireSlug, ambil bagian umum
         if (!$questionnaireSlug) {
             $questionnaire = $category->generalQuestionnaire;
+            if (!$questionnaire) {
+                return redirect()->route('questionnaire.dashboard')
+                    ->with('error', 'Bagian umum tidak ditemukan.');
+            }
         } else {
             $questionnaire = Questionnaire::where('category_id', $category->id)
                 ->where('slug', $questionnaireSlug)
                 ->firstOrFail();
         }
         
-        // Validasi urutan pengerjaan
+        // Validasi urutan pengerjaan menggunakan sequence
         if (!$this->validateQuestionnaireOrder($alumni, $category, $questionnaire)) {
+            // Tentukan bagian yang harus diselesaikan terlebih dahulu
+            $sequences = $category->sequences()->orderBy('order')->get();
+            $currentSequence = $sequences->where('questionnaire_id', $questionnaire->id)->first();
+            
+            if ($currentSequence) {
+                $prevSequence = $currentSequence->previous();
+                if ($prevSequence) {
+                    return redirect()->route('questionnaire.fill', [
+                        'categorySlug' => $category->slug,
+                        'questionnaireSlug' => $prevSequence->questionnaire->slug
+                    ])->with('error', 'Harap selesaikan bagian sebelumnya terlebih dahulu.');
+                }
+            }
+            
             return redirect()->route('questionnaire.dashboard')
                 ->with('error', 'Harap selesaikan bagian sebelumnya terlebih dahulu.');
         }
@@ -138,12 +156,21 @@ class QuestionnaireController extends Controller
             'status' => 'in_progress',
         ]);
         
+        // Tentukan urutan sequence untuk navigasi
+        $sequences = $category->sequences()->orderBy('order')->get();
+        $currentSequence = $sequences->where('questionnaire_id', $questionnaire->id)->first();
+        $nextSequence = $currentSequence ? $currentSequence->next() : null;
+        $prevSequence = $currentSequence ? $currentSequence->previous() : null;
+        
         return view('questionnaire.fill', compact(
             'category',
             'questionnaire',
             'questions',
             'answers',
-            'statusQuestionnaire'
+            'statusQuestionnaire',
+            'currentSequence',
+            'nextSequence',
+            'prevSequence'
         ));
     }
     
@@ -220,66 +247,109 @@ class QuestionnaireController extends Controller
      * Submit seluruh bagian kuesioner
      */
     public function submitQuestionnaire(Request $request, $questionnaireId)
-    {
-        $alumni = Auth::user()->alumni;
-        $questionnaire = Questionnaire::findOrFail($questionnaireId);
-        
-        // Validasi apakah semua required questions sudah dijawab
-        $requiredQuestions = $questionnaire->requiredQuestions()->pluck('id');
-        $answeredQuestions = AnswerQuestion::where('alumni_id', $alumni->id)
-            ->whereIn('question_id', $requiredQuestions)
-            ->where('is_skipped', false)
-            ->count();
-        
-        if ($answeredQuestions < $requiredQuestions->count()) {
-            return redirect()->back()
-                ->with('error', 'Harap lengkapi semua pertanyaan wajib sebelum mengirim.');
-        }
-        
-        // Update progress questionnaire
-        $progress = QuestionnaireProgress::where('alumni_id', $alumni->id)
-            ->where('questionnaire_id', $questionnaire->id)
-            ->first();
-        
-        if ($progress) {
-            $progress->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-                'progress_percentage' => 100,
-            ]);
-        }
-        
-        // Cek apakah ini bagian terakhir
-        $category = $questionnaire->category;
-        $sequences = $category->sequences()->orderBy('order')->get();
-        $currentSequence = $sequences->where('questionnaire_id', $questionnaire->id)->first();
-        
-        if ($currentSequence && $currentSequence->isLast()) {
-            // Mark category as completed
-            StatusQuestionnaire::where('alumni_id', $alumni->id)
-                ->where('category_id', $category->id)
-                ->update([
+        {
+            $alumni = Auth::user()->alumni;
+            $expectsJson = $request->expectsJson();
+
+            $questionnaire = Questionnaire::with('category')->findOrFail($questionnaireId);
+
+            // Cek status kategori
+            $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+                ->where('category_id', $questionnaire->category_id)
+                ->first();
+
+            if (!$statusQuestionnaire) {
+                if ($expectsJson) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda belum memilih kategori ini.'
+                    ], 403);
+                }
+
+                return redirect()->route('questionnaire.categories')
+                    ->with('error', 'Anda belum memilih kategori ini.');
+            }
+
+            // Validasi pertanyaan wajib
+            $requiredQuestions = $questionnaire->requiredQuestions()->pluck('id');
+            $answeredQuestions = AnswerQuestion::where('alumni_id', $alumni->id)
+                ->whereIn('question_id', $requiredQuestions)
+                ->where('is_skipped', false)
+                ->count();
+
+            if ($answeredQuestions < $requiredQuestions->count()) {
+                if ($expectsJson) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Harap lengkapi semua pertanyaan wajib sebelum mengirim.'
+                    ], 422);
+                }
+
+                return redirect()->back()
+                    ->with('error', 'Harap lengkapi semua pertanyaan wajib sebelum mengirim.');
+            }
+
+            // Update progress questionnaire
+            QuestionnaireProgress::updateOrCreate(
+                [
+                    'alumni_id' => $alumni->id,
+                    'questionnaire_id' => $questionnaire->id,
+                ],
+                [
                     'status' => 'completed',
                     'completed_at' => now(),
                     'progress_percentage' => 100,
+                    'answered_count' => $answeredQuestions,
+                    'total_questions' => $questionnaire->questions()->count(),
+                ]
+            );
+
+            // Sequence logic
+            $category = $questionnaire->category;
+            $currentSequence = $category->sequences()
+                ->where('questionnaire_id', $questionnaire->id)
+                ->first();
+
+            if ($currentSequence && $currentSequence->isLast()) {
+
+                StatusQuestionnaire::where('alumni_id', $alumni->id)
+                    ->where('category_id', $category->id)
+                    ->update([
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                        'progress_percentage' => 100,
+                    ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Semua kuesioner telah diselesaikan.',
+                    'redirect_url' => route('questionnaire.completed'),
                 ]);
-            
-            return redirect()->route('questionnaire.completed')
-                ->with('success', 'Selamat! Anda telah menyelesaikan semua kuesioner.');
+            }
+
+            $nextSequence = $currentSequence?->next();
+
+            if ($nextSequence) {
+                $statusQuestionnaire->update([
+                    'current_questionnaire_id' => $nextSequence->questionnaire_id,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Bagian berhasil disimpan.',
+                    'redirect_url' => route('questionnaire.fill', [
+                        'categorySlug' => $category->slug,
+                        'questionnaireSlug' => $nextSequence->questionnaire->slug,
+                    ]),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kuesioner berhasil disimpan.',
+                'redirect_url' => route('questionnaire.dashboard'),
+            ]);
         }
-        
-        // Redirect ke bagian berikutnya
-        $nextSequence = $currentSequence->next();
-        if ($nextSequence) {
-            return redirect()->route('questionnaire.fill', [
-                'category' => $category->slug,
-                'questionnaire' => $nextSequence->questionnaire->slug
-            ])->with('success', 'Bagian berhasil disimpan. Lanjut ke bagian berikutnya.');
-        }
-        
-        return redirect()->route('questionnaire.dashboard')
-            ->with('success', 'Bagian kuesioner berhasil disimpan.');
-    }
     
     /**
      * Tampilkan halaman selesai
@@ -308,7 +378,11 @@ class QuestionnaireController extends Controller
         // Update total points
         $statusQuestionnaire->update(['total_points' => $totalPoints]);
         
-        return view('questionnaire.completed', compact('statusQuestionnaire', 'totalPoints'));
+        return view('questionnaire.completed', compact(
+            'statusQuestionnaire', 
+            'totalPoints',
+            'stats'
+        ));
     }
     
     /**
@@ -321,20 +395,7 @@ class QuestionnaireController extends Controller
             return true;
         }
         
-        // Cek apakah bagian umum sudah selesai
-        $generalProgress = QuestionnaireProgress::where('alumni_id', $alumni->id)
-            ->whereHas('questionnaire', function ($query) use ($category) {
-                $query->where('category_id', $category->id)
-                    ->where('is_general', true);
-            })
-            ->where('status', 'completed')
-            ->exists();
-        
-        if (!$generalProgress) {
-            return false;
-        }
-        
-        // Cek urutan berdasarkan sequence
+        // Ambil semua sequence untuk kategori ini
         $sequences = $category->sequences()->orderBy('order')->get();
         $currentSequence = $sequences->where('questionnaire_id', $questionnaire->id)->first();
         
@@ -342,9 +403,20 @@ class QuestionnaireController extends Controller
             return false;
         }
         
-        // Jika ini sequence pertama setelah umum, boleh
-        if ($currentSequence->order == 2) { // 1 adalah bagian umum
-            return true;
+        // Cek apakah ini sequence pertama setelah umum (order = 2)
+        if ($currentSequence->order == 2) {
+            // Cek apakah bagian umum sudah selesai
+            $generalQuestionnaire = $category->generalQuestionnaire;
+            if (!$generalQuestionnaire) {
+                return false;
+            }
+            
+            $generalProgress = QuestionnaireProgress::where('alumni_id', $alumni->id)
+                ->where('questionnaire_id', $generalQuestionnaire->id)
+                ->where('status', 'completed')
+                ->exists();
+            
+            return $generalProgress;
         }
         
         // Cek apakah sequence sebelumnya sudah selesai

@@ -10,6 +10,7 @@ use App\Models\Question;
 use App\Models\StatusQuestionnaire;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AnswerController extends Controller
 {
@@ -107,17 +108,21 @@ class AnswerController extends Controller
             ->get()
             ->keyBy('question_id');
         
-        // Generate PDF (gunakan library seperti Dompdf atau mpdf)
-        // $pdf = PDF::loadView('questionnaire.answers.pdf', compact('alumni', 'category', 'questionnaires', 'answers'));
-        // return $pdf->download('hasil-kuesioner-' . $category->slug . '-' . now()->format('Y-m-d') . '.pdf');
-        
-        // Untuk sementara, tampilkan view
-        return view('questionnaire.answers.pdf', compact(
+        // Generate PDF
+        $pdf = PDF::loadView('questionnaire.answers.pdf', compact(
             'alumni',
             'category',
             'questionnaires',
             'answers'
         ));
+        
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'portrait');
+        
+        // Download PDF
+        $filename = 'hasil-kuesioner-' . $category->slug . '-' . now()->format('Y-m-d') . '.pdf';
+        
+        return $pdf->download($filename);
     }
     
     /**

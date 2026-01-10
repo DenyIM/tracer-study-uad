@@ -15,13 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
-        $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-        ]);
+        // $middleware->alias([
+        //     'role' => \App\Http\Middleware\AdminMiddleware::class,
+        // ]);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'alumni' => \App\Http\Middleware\EnsureUserIsAlumni::class,
+            'role' => \App\Http\Middleware\CheckRole::class, // Jika masih ada
+            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
+        
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

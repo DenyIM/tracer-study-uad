@@ -18,14 +18,14 @@ class ProgressController extends Controller
     public function index()
     {
         $alumni = Auth::user()->alumni;
-        
+    
         $statusQuestionnaires = StatusQuestionnaire::with(['category', 'currentQuestionnaire'])
             ->where('alumni_id', $alumni->id)
             ->get();
         
-        // Jika belum ada, redirect ke pemilihan kategori
+        // Jika belum ada, redirect ke dashboard
         if ($statusQuestionnaires->isEmpty()) {
-            return redirect()->route('questionnaire.categories');
+            return redirect()->route('questionnaire.dashboard');
         }
         
         // Ambil progress detail untuk setiap kategori
@@ -49,7 +49,7 @@ class ProgressController extends Controller
             ];
         }
         
-        return view('questionnaire.progress.index', compact('statusQuestionnaires', 'progressDetails'));
+        return view('questionnaire.answers.index', compact('statusQuestionnaires', 'progressDetails'));
     }
     
     /**

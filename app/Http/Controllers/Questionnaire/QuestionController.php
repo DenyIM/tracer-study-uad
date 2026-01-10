@@ -1,10 +1,527 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Questionnaire;
 
+use App\Http\Controllers\Controller;
+use App\Models\Question;
+use App\Models\AnswerQuestion;
+use App\Models\Questionnaire;
+use App\Models\Category;
+use App\Models\StatusQuestionnaire;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
 {
-    //
+    /**
+     * Tampilkan pertanyaan tertentu
+     */
+    public function show($questionId)
+    {
+        $alumni = Auth::user()->alumni;
+        $question = Question::with(['questionnaire.category'])->findOrFail($questionId);
+        
+        // Validasi apakah alumni boleh mengakses pertanyaan ini
+        $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->where('category_id', $question->questionnaire->category_id)
+            ->first();
+        
+        if (!$statusQuestionnaire) {
+            return redirect()->route('questionnaire.categories')
+                ->with('error', 'Anda belum memilih kategori ini.');
+        }
+        
+        // Ambil jawaban jika ada
+        $answer = AnswerQuestion::where('alumni_id', $alumni->id)
+            ->where('question_id', $questionId)
+            ->first();
+        
+        // Ambil pertanyaan sebelumnya dan berikutnya
+        $prevQuestion = Question::where('questionnaire_id', $question->questionnaire_id)
+            ->where('order', '<', $question->order)
+            ->orderBy('order', 'desc')
+            ->first();
+        
+        $nextQuestion = Question::where('questionnaire_id', $question->questionnaire_id)
+            ->where('order', '>', $question->order)
+            ->orderBy('order')
+            ->first();
+        
+        return view('questionnaire.question.show', compact(
+            'question',
+            'answer',
+            'prevQuestion',
+            'nextQuestion',
+            'statusQuestionnaire'
+        ));
+    }
+    
+    /**
+     * Simpan jawaban untuk pertanyaan (API endpoint)
+     */
+    public function storeAnswer(Request $request, $questionId)
+    {
+        $validator = Validator::make($request->all(), [
+            'answer' => 'nullable',
+            'selected_options' => 'nullable|array',
+            'scale_value' => 'nullable|integer|min:1|max:5',
+            'is_skipped' => 'boolean',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $alumni = Auth::user()->alumni;
+        $question = Question::with(['questionnaire.category'])->findOrFail($questionId);
+        
+        // Validasi apakah alumni boleh menjawab pertanyaan ini
+        $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->where('category_id', $question->questionnaire->category_id)
+            ->first();
+        
+        if (!$statusQuestionnaire) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum memilih kategori ini.'
+            ], 403);
+        }
+        
+        // Validasi pertanyaan terkunci
+        if ($question->is_locked_by_default) {
+            // Cek apakah pertanyaan sebelumnya sudah dijawab
+            $prevQuestion = Question::where('questionnaire_id', $question->questionnaire_id)
+                ->where('order', '<', $question->order)
+                ->orderBy('order', 'desc')
+                ->first();
+            
+            if ($prevQuestion) {
+                $prevAnswer = AnswerQuestion::where('alumni_id', $alumni->id)
+                    ->where('question_id', $prevQuestion->id)
+                    ->where('is_skipped', false)
+                    ->first();
+                
+                if (!$prevAnswer) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Harap jawab pertanyaan sebelumnya terlebih dahulu.'
+                    ], 403);
+                }
+            }
+        }
+        
+        // Validasi required question
+        if ($question->is_required && $request->boolean('is_skipped', false)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pertanyaan ini wajib diisi.'
+            ], 422);
+        }
+        
+        // Proses jawaban berdasarkan tipe
+        $answerData = $this->processAnswer($request, $question);
+        
+        // Validasi jika jawaban kosong untuk required question
+        if ($question->is_required && $this->isAnswerEmpty($answerData, $question)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Harap isi jawaban untuk pertanyaan ini.'
+            ], 422);
+        }
+        
+        // Simpan atau update jawaban
+        $answer = AnswerQuestion::updateOrCreate(
+            [
+                'alumni_id' => $alumni->id,
+                'question_id' => $questionId,
+            ],
+            array_merge($answerData, [
+                'is_skipped' => $request->boolean('is_skipped', false),
+                'answered_at' => now(),
+            ])
+        );
+        
+        // Update progress
+        $this->updateQuestionnaireProgress($alumni, $question->questionnaire);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Jawaban berhasil disimpan.',
+            'data' => [
+                'answer' => $answer,
+                'question' => $question,
+                'points_earned' => $question->points,
+            ],
+        ]);
+    }
+    
+    /**
+     * Skip pertanyaan
+     */
+    public function skipQuestion(Request $request, $questionId)
+    {
+        $alumni = Auth::user()->alumni;
+        $question = Question::findOrFail($questionId);
+        
+        // Cek apakah pertanyaan required
+        if ($question->is_required) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pertanyaan wajib tidak bisa dilewati.'
+            ], 422);
+        }
+        
+        // Simpan sebagai skipped
+        AnswerQuestion::updateOrCreate(
+            [
+                'alumni_id' => $alumni->id,
+                'question_id' => $questionId,
+            ],
+            [
+                'is_skipped' => true,
+                'answered_at' => now(),
+            ]
+        );
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Pertanyaan berhasil dilewati.',
+        ]);
+    }
+    
+    /**
+     * Clear jawaban untuk pertanyaan tertentu
+     */
+    public function clearAnswer($questionId)
+    {
+        $alumni = Auth::user()->alumni;
+        
+        $answer = AnswerQuestion::where('alumni_id', $alumni->id)
+            ->where('question_id', $questionId)
+            ->first();
+        
+        if ($answer) {
+            $answer->delete();
+            
+            // Update progress
+            $question = Question::with('questionnaire')->find($questionId);
+            if ($question) {
+                $this->updateQuestionnaireProgress($alumni, $question->questionnaire);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Jawaban berhasil dihapus.',
+            ]);
+        }
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Jawaban tidak ditemukan.',
+        ]);
+    }
+    
+    /**
+     * Get pertanyaan berikutnya
+     */
+    public function getNextQuestion($questionnaireId, $currentOrder)
+    {
+        $nextQuestion = Question::where('questionnaire_id', $questionnaireId)
+            ->where('order', '>', $currentOrder)
+            ->orderBy('order')
+            ->first();
+        
+        if (!$nextQuestion) {
+            // Cek apakah ada kuesioner berikutnya
+            $questionnaire = Questionnaire::find($questionnaireId);
+            $nextQuestionnaire = $questionnaire->nextQuestionnaire();
+            
+            if ($nextQuestionnaire) {
+                $nextQuestion = $nextQuestionnaire->questions()
+                    ->orderBy('order')
+                    ->first();
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'next_question' => $nextQuestion,
+                'has_next' => $nextQuestion !== null,
+            ],
+        ]);
+    }
+    
+    /**
+     * Get pertanyaan sebelumnya
+     */
+    public function getPrevQuestion($questionnaireId, $currentOrder)
+    {
+        $prevQuestion = Question::where('questionnaire_id', $questionnaireId)
+            ->where('order', '<', $currentOrder)
+            ->orderBy('order', 'desc')
+            ->first();
+        
+        if (!$prevQuestion) {
+            // Cek apakah ada kuesioner sebelumnya
+            $questionnaire = Questionnaire::find($questionnaireId);
+            $prevQuestionnaire = $questionnaire->previousQuestionnaire();
+            
+            if ($prevQuestionnaire) {
+                $prevQuestion = $prevQuestionnaire->questions()
+                    ->orderBy('order', 'desc')
+                    ->first();
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'prev_question' => $prevQuestion,
+                'has_prev' => $prevQuestion !== null,
+            ],
+        ]);
+    }
+    
+    /**
+     * Validasi jawaban sebelum submit
+     */
+    public function validateAnswer(Request $request, $questionId)
+    {
+        $validator = Validator::make($request->all(), [
+            'answer' => 'nullable',
+            'selected_options' => 'nullable|array',
+            'scale_value' => 'nullable|integer|min:1|max:5',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $question = Question::findOrFail($questionId);
+        $answerData = $this->processAnswer($request, $question);
+        
+        // Validasi khusus berdasarkan tipe
+        $validationErrors = $this->validateByQuestionType($request, $question);
+        
+        if (!empty($validationErrors)) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validationErrors
+            ], 422);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Jawaban valid.',
+            'data' => $answerData,
+        ]);
+    }
+    
+    /**
+     * Process answer berdasarkan tipe pertanyaan
+     */
+    private function processAnswer(Request $request, Question $question): array
+    {
+        $answerData = [];
+        
+        switch ($question->question_type) {
+            case 'text':
+            case 'textarea':
+            case 'date':
+            case 'number':
+                $answerData['answer'] = $request->answer;
+                break;
+                
+            case 'dropdown':
+                $answerData['answer'] = $request->answer;
+                // Handle other option
+                if ($question->has_other_option && $request->answer === 'Lainnya, sebutkan!') {
+                    $answerData['answer'] = 'Lainnya: ' . $request->other_input;
+                }
+                break;
+                
+            case 'radio':
+            case 'radio_per_row':
+                $answerData['answer'] = $request->answer;
+                // Handle other option
+                if ($question->has_other_option && $request->answer === 'Lainnya, sebutkan!') {
+                    $answerData['answer'] = 'Lainnya: ' . $request->other_input;
+                }
+                break;
+                
+            case 'checkbox':
+            case 'checkbox_per_row':
+                $answerData['selected_options'] = $request->selected_options ?? [];
+                // Handle other option
+                if ($question->has_other_option && in_array('Lainnya', $request->selected_options ?? [])) {
+                    $otherIndex = array_search('Lainnya', $answerData['selected_options']);
+                    if ($otherIndex !== false && $request->other_input) {
+                        $answerData['selected_options'][$otherIndex] = 'Lainnya: ' . $request->other_input;
+                    }
+                }
+                break;
+                
+            case 'likert_scale':
+            case 'competency_scale':
+            case 'likert_per_row':
+                $answerData['scale_value'] = $request->scale_value;
+                break;
+                
+            default:
+                $answerData['answer'] = $request->answer;
+                break;
+        }
+        
+        return $answerData;
+    }
+    
+    /**
+     * Validasi berdasarkan tipe pertanyaan
+     */
+    private function validateByQuestionType(Request $request, Question $question): array
+    {
+        $errors = [];
+        
+        switch ($question->question_type) {
+            case 'number':
+                if ($request->answer && !is_numeric($request->answer)) {
+                    $errors['answer'] = ['Harap masukkan angka yang valid.'];
+                }
+                if ($question->min_value !== null && $request->answer < $question->min_value) {
+                    $errors['answer'] = ['Nilai minimum adalah ' . $question->min_value . '.'];
+                }
+                if ($question->max_value !== null && $request->answer > $question->max_value) {
+                    $errors['answer'] = ['Nilai maksimum adalah ' . $question->max_value . '.'];
+                }
+                break;
+                
+            case 'date':
+                if ($request->answer && !strtotime($request->answer)) {
+                    $errors['answer'] = ['Harap masukkan tanggal yang valid.'];
+                }
+                break;
+                
+            case 'checkbox':
+                if ($question->max_selections && count($request->selected_options ?? []) > $question->max_selections) {
+                    $errors['selected_options'] = ['Maksimal pilihan adalah ' . $question->max_selections . '.'];
+                }
+                break;
+                
+            case 'likert_scale':
+            case 'competency_scale':
+            case 'likert_per_row':
+                if ($request->scale_value && ($request->scale_value < 1 || $request->scale_value > 5)) {
+                    $errors['scale_value'] = ['Skala harus antara 1-5.'];
+                }
+                break;
+        }
+        
+        return $errors;
+    }
+    
+    /**
+     * Cek apakah jawaban kosong
+     */
+    private function isAnswerEmpty(array $answerData, Question $question): bool
+    {
+        if (isset($answerData['answer'])) {
+            return empty(trim($answerData['answer']));
+        }
+        
+        if (isset($answerData['selected_options'])) {
+            return empty($answerData['selected_options']);
+        }
+        
+        if (isset($answerData['scale_value'])) {
+            return $answerData['scale_value'] === null;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Update progress kuesioner
+     */
+    private function updateQuestionnaireProgress($alumni, $questionnaire): void
+    {
+        // Update questionnaire progress
+        $totalQuestions = $questionnaire->questions()->count();
+        $answeredQuestions = AnswerQuestion::where('alumni_id', $alumni->id)
+            ->whereIn('question_id', $questionnaire->questions()->pluck('id'))
+            ->where('is_skipped', false)
+            ->count();
+        
+        $progressPercentage = $totalQuestions > 0 ? round(($answeredQuestions / $totalQuestions) * 100) : 0;
+        
+        // Update questionnaire progress
+        \App\Models\QuestionnaireProgress::updateOrCreate(
+            [
+                'alumni_id' => $alumni->id,
+                'questionnaire_id' => $questionnaire->id,
+            ],
+            [
+                'answered_count' => $answeredQuestions,
+                'total_questions' => $totalQuestions,
+                'progress_percentage' => $progressPercentage,
+                'status' => $progressPercentage >= 100 ? 'completed' : 
+                           ($progressPercentage > 0 ? 'in_progress' : 'not_started'),
+            ]
+        );
+        
+        // Update overall status
+        $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->where('category_id', $questionnaire->category_id)
+            ->first();
+        
+        if ($statusQuestionnaire) {
+            $totalCategoryQuestions = $questionnaire->category->total_questions;
+            $totalAnsweredCategory = AnswerQuestion::where('alumni_id', $alumni->id)
+                ->whereHas('question.questionnaire', function ($query) use ($questionnaire) {
+                    $query->where('category_id', $questionnaire->category_id);
+                })
+                ->where('is_skipped', false)
+                ->count();
+            
+            $categoryProgress = $totalCategoryQuestions > 0 ? 
+                round(($totalAnsweredCategory / $totalCategoryQuestions) * 100) : 0;
+            
+            $statusQuestionnaire->update([
+                'progress_percentage' => $categoryProgress,
+                'status' => $categoryProgress >= 100 ? 'completed' : 
+                           ($categoryProgress > 0 ? 'in_progress' : 'not_started'),
+            ]);
+        }
+    }
+    
+    /**
+     * Get detail pertanyaan untuk modal atau popup
+     */
+    public function getQuestionDetail($questionId)
+    {
+        $question = Question::with(['questionnaire.category'])->findOrFail($questionId);
+        $alumni = Auth::user()->alumni;
+        
+        $answer = AnswerQuestion::where('alumni_id', $alumni->id)
+            ->where('question_id', $questionId)
+            ->first();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'question' => $question,
+                'answer' => $answer,
+                'available_options' => $question->available_options,
+                'scale_options' => $question->scale_options_with_labels,
+                'row_items' => $question->formatted_row_items,
+            ],
+        ]);
+    }
 }

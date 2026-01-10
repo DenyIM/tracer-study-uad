@@ -220,9 +220,9 @@
                     <p class="lead mb-4" data-aos="fade-right" data-aos-duration="800" data-aos-delay="200">Menjembatani
                         alumni dengan dunia kerja dan mengumpulkan data untuk pengembangan kualitas pendidikan</p>
                     <div class="d-flex flex-wrap gap-3" data-aos="fade-up" data-aos-duration="800" data-aos-delay="400">
-                        <a href="/homepage-register" class="btn btn-warning btn-lg fw-bold pulse-animation">Daftar
+                        <a href="{{ route('register') }}" class="btn btn-warning btn-lg fw-bold pulse-animation">Daftar
                             Sekarang</a>
-                        <a href="/homepage-login" class="btn btn-outline-light btn-lg">Login Alumni</a>
+                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-lg">Login Alumni</a>
                     </div>
                 </div>
                 <div class="col-lg-6 text-center">

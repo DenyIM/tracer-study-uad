@@ -374,25 +374,26 @@
                     @csrf
 
                     <input type="hidden" name="email" value="{{ session('email') ?? old('email') }}">
+                    <!-- HIDDEN INPUT UNTUK MENGIRIM OTP KE SERVER -->
+                    <input type="hidden" name="otp" id="fullOtp">
 
                     <div class="mb-4">
                         <label class="form-label fw-semibold d-block text-center mb-3">Kode Verifikasi (6 Digit)</label>
                         <div class="verification-code-inputs">
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <!-- UBAH: name="otp_digit[]" bukan name="otp[]" -->
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="1" required autofocus>
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="2" required>
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="3" required>
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="4" required>
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="5" required>
-                            <input type="text" class="verification-input" name="otp[]" maxlength="1"
+                            <input type="text" class="verification-input" name="otp_digit[]" maxlength="1"
                                 data-index="6" required>
                         </div>
-
-                        <input type="hidden" name="otp_code" id="fullOtp">
 
                         <div class="timer-container">
                             <div class="timer" id="timer">
@@ -520,7 +521,7 @@
             }, 1000);
         }
 
-        // Fungsi untuk mengumpulkan kode OTP
+        // Fungsi untuk mengumpulkan kode OTP ke hidden input
         function collectOtp() {
             let otpCode = '';
             verificationInputs.forEach(input => {
@@ -548,7 +549,7 @@
                     verificationInputs[index + 1].focus();
                 }
 
-                // Kumpulkan OTP
+                // Kumpulkan OTP ke hidden input
                 collectOtp();
             });
 
@@ -556,6 +557,8 @@
                 // Jika tekan backspace dan input kosong, pindah ke input sebelumnya
                 if (e.key === 'Backspace' && this.value === '' && index > 0) {
                     verificationInputs[index - 1].focus();
+                    verificationInputs[index - 1].value = '';
+                    verificationInputs[index - 1].classList.remove('filled');
                 }
 
                 // Jika tekan panah kiri, pindah ke input sebelumnya
@@ -598,6 +601,9 @@
                 return;
             }
 
+            // Pastikan hidden input terisi
+            fullOtpInput.value = otpCode;
+
             // Tampilkan loading state
             verifyBtn.innerHTML = '<span class="loading-spinner"></span> Memverifikasi...';
             verifyBtn.disabled = true;
@@ -638,6 +644,7 @@
                             input.classList.remove('filled');
                         });
                         verificationInputs[0].focus();
+                        fullOtpInput.value = '';
 
                         // Reset dan mulai ulang countdown
                         clearInterval(countdownInterval);

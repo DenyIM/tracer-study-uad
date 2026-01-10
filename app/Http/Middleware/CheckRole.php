@@ -16,10 +16,13 @@ class CheckRole
 
         $user = Auth::user();
         
-        if (in_array('alumni', $roles)) {
-            return $next($request);
+        foreach ($roles as $role) {
+            if ($user->role === $role) {
+                return $next($request);
+            }
         }
-        
-        abort(403, 'Unauthorized');
+
+        return redirect()->route('public')
+            ->with('error', 'Anda tidak memiliki akses ke halaman ini.');
     }
 }
