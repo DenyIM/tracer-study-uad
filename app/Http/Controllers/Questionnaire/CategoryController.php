@@ -117,4 +117,33 @@ class CategoryController extends Controller
         return redirect()->route('questionnaire.dashboard')
             ->with('success', 'Kategori berhasil diubah menjadi ' . $category->name);
     }
+    
+    /**
+     * Batalkan pilihan kategori
+     */
+    public function cancel(Request $request)
+    {
+        $alumni = Auth::user()->alumni;
+        
+        // Cek apakah alumni sudah memilih kategori
+        $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->first();
+        
+        if (!$statusQuestionnaire) {
+            return redirect()->route('questionnaire.dashboard')
+                ->with('error', 'Anda belum memilih kategori.');
+        }
+        
+        // Cek apakah sudah mulai mengisi kuesioner
+        if ($statusQuestionnaire->status !== 'not_started') {
+            return redirect()->route('questionnaire.dashboard')
+                ->with('error', 'Tidak bisa membatalkan kategori karena sudah mulai mengisi kuesioner.');
+        }
+        
+        // Hapus status questionnaire
+        $statusQuestionnaire->delete();
+        
+        return redirect()->route('questionnaire.dashboard')
+            ->with('success', 'Pilihan kategori berhasil dibatalkan. Silakan pilih kategori baru.');
+    }
 }

@@ -15,8 +15,8 @@
         :root {
             --primary-color: #0d6efd;
             --secondary-color: #6c757d;
-            --sidebar-bg: #2c3e50;
-            --sidebar-hover: #34495e;
+            --sidebar-bg: #1f4871;
+            --sidebar-hover: #1b3753;
         }
 
         body {
@@ -211,6 +211,48 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
+        /* Avatar Styles */
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .avatar-title {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            min-height: 200px;
+        }
+
+        /* Progress Bar Thin */
+        .progress-thin {
+            height: 4px;
+        }
+
+        /* Badge Styles */
+        .badge.bg-warning {
+            color: #000;
+        }
+
+        /* Table Hover */
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
     </style>
 
     @stack('styles')
@@ -221,10 +263,9 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <a href="{{ route('admin.views.dashboard') }}" class="logo">
-                <i class="bi bi-mortarboard-fill"></i>
-                <span class="ms-2">AlumniSys</span>
+                <img src="{{ asset('logo-tracer-study.png') }}" style="width: 150px; height: auto;"
+                    class="img-fluid rounded">
             </a>
-            <small class="text-muted d-block mt-2">Admin Panel</small>
         </div>
 
         <nav class="nav flex-column mt-4">
@@ -233,6 +274,30 @@
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
+
+            <!-- Questionnaire Management Section -->
+            <div class="nav-item">
+                <a href="#questionnaireSubmenu"
+                    class="nav-link {{ request()->routeIs('admin.questionnaire.*') ? 'active' : '' }}"
+                    data-bs-toggle="collapse">
+                    <i class="bi bi-clipboard-data"></i>
+                    <span>Manajemen Kuesioner</span>
+                    <i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('admin.questionnaire.*') ? 'show' : '' }} nav-dropdown"
+                    id="questionnaireSubmenu">
+                    <a href="{{ route('admin.questionnaire.categories') }}"
+                        class="nav-link {{ request()->routeIs('admin.questionnaire.categories') ? 'active' : '' }}">
+                        <i class="bi bi-folder"></i>
+                        <span>Kategori</span>
+                    </a>
+                    <a href="{{ route('admin.questionnaire.statistics') }}"
+                        class="nav-link {{ request()->routeIs('admin.questionnaire.statistics') ? 'active' : '' }}">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Statistik</span>
+                    </a>
+                </div>
+            </div>
 
             <!-- User Management Section -->
             <div class="nav-item">

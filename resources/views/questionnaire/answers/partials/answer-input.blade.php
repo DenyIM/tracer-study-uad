@@ -8,15 +8,41 @@
     @case('radio_per_row')
         <div class="radio-options">
             @foreach ($question->available_options as $option)
-                <div class="answer-option {{ $answerValue == $option ? 'selected' : '' }}" data-option="{{ $option }}">
+                @php
+                    $hasEmailInput = stripos($option, 'email') !== false || stripos($option, 'Ya,') !== false;
+                    $emailValue = '';
+                    if ($answerValue && $hasEmailInput && stripos($answerValue, $option) === 0) {
+                        // Extract email from answer value (format: "Ya, email: example@email.com")
+                        $parts = explode(':', $answerValue);
+                        if (count($parts) > 1) {
+                            $emailValue = trim($parts[1]);
+                        }
+                    }
+                @endphp
+
+                <div class="answer-option {{ $answerValue == $option || stripos($answerValue, $option) === 0 ? 'selected' : '' }}"
+                    data-option="{{ $option }}" data-has-email="{{ $hasEmailInput ? 'true' : 'false' }}">
                     <div class="form-check">
                         <input class="form-check-input" type="radio" name="question_{{ $question->id }}"
                             id="radio_{{ $question->id }}_{{ $loop->index }}" value="{{ $option }}"
-                            {{ $answerValue == $option ? 'checked' : '' }} {{ $question->is_required ? 'required' : '' }}>
+                            {{ $answerValue == $option || stripos($answerValue, $option) === 0 ? 'checked' : '' }}
+                            {{ $question->is_required ? 'required' : '' }}>
                         <label class="form-check-label fw-medium" for="radio_{{ $question->id }}_{{ $loop->index }}">
                             {{ $option }}
                         </label>
                     </div>
+
+                    @if ($hasEmailInput)
+                        <div
+                            class="email-input-container mt-2 {{ $answerValue && stripos($answerValue, $option) === 0 ? 'show' : '' }}">
+                            <label for="email_{{ $question->id }}_{{ $loop->index }}" class="form-label small">
+                                <i class="fas fa-envelope me-1"></i> Masukkan email:
+                            </label>
+                            <input type="email" class="form-control form-control-sm email-input"
+                                id="email_{{ $question->id }}_{{ $loop->index }}" placeholder="contoh@email.com"
+                                value="{{ $emailValue }}" style="max-width: 300px;">
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
@@ -26,13 +52,59 @@
     @case('checkbox_per_row')
         <div class="checkbox-options">
             @foreach ($question->available_options as $option)
-                <div class="form-check mb-2">
+                @php
+                    $hasEmailInput = stripos($option, 'email') !== false || stripos($option, 'Ya,') !== false;
+                    $emailValue = '';
+                    if (is_array($selectedOptions)) {
+                        foreach ($selectedOptions as $selected) {
+                            if ($hasEmailInput && stripos($selected, $option) === 0) {
+                                $parts = explode(':', $selected);
+                                if (count($parts) > 1) {
+                                    $emailValue = trim($parts[1]);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                @endphp
+
+                <div class="form-check mb-2" data-has-email="{{ $hasEmailInput ? 'true' : 'false' }}">
                     <input class="form-check-input" type="checkbox" name="question_{{ $question->id }}[]"
                         id="checkbox_{{ $question->id }}_{{ $loop->index }}" value="{{ $option }}"
-                        {{ in_array($option, $selectedOptions) ? 'checked' : '' }}>
+                        {{ in_array($option, $selectedOptions) ||
+                        (is_array($selectedOptions) &&
+                            in_array(
+                                $option,
+                                array_map(function ($item) {
+                                    return explode(':', $item)[0];
+                                }, $selectedOptions),
+                            ))
+                            ? 'checked'
+                            : '' }}>
                     <label class="form-check-label" for="checkbox_{{ $question->id }}_{{ $loop->index }}">
                         {{ $option }}
                     </label>
+
+                    @if ($hasEmailInput)
+                        <div
+                            class="email-input-container mt-2 {{ in_array($option, $selectedOptions) ||
+                            (is_array($selectedOptions) &&
+                                in_array(
+                                    $option,
+                                    array_map(function ($item) {
+                                        return explode(':', $item)[0];
+                                    }, $selectedOptions),
+                                ))
+                                ? 'show'
+                                : '' }}">
+                            <label for="email_checkbox_{{ $question->id }}_{{ $loop->index }}" class="form-label small">
+                                <i class="fas fa-envelope me-1"></i> Masukkan email:
+                            </label>
+                            <input type="email" class="form-control form-control-sm email-input"
+                                id="email_checkbox_{{ $question->id }}_{{ $loop->index }}" placeholder="contoh@email.com"
+                                value="{{ $emailValue }}" style="max-width: 300px;">
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
@@ -47,6 +119,11 @@
                         {{ $option }}
                     </option>
                 @endforeach
+                @if ($question->has_other_option)
+                    <option value="Lainnya, sebutkan!" {{ strpos($answerValue ?? '', 'Lainnya:') === 0 ? 'selected' : '' }}>
+                        Lainnya, sebutkan!
+                    </option>
+                @endif
             </select>
         </div>
     @break

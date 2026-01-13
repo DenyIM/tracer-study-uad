@@ -34,9 +34,7 @@ class AnswerController extends Controller
         return $this->showCategoryAnswers($statusQuestionnaire->category->slug);
     }
     
-    /**
-     * Tampilkan jawaban berdasarkan kategori
-     */
+    // AnswerController.php - Perbaiki method showCategoryAnswers
     public function showCategoryAnswers($categorySlug)
     {
         $alumni = Auth::user()->alumni;
@@ -48,7 +46,7 @@ class AnswerController extends Controller
             ->first();
         
         if (!$statusQuestionnaire) {
-            return redirect()->route('questionnaire.answers.index')
+            return redirect()->route('questionnaire.dashboard')
                 ->with('error', 'Anda tidak mengisi kuesioner kategori ini.');
         }
         
@@ -59,10 +57,7 @@ class AnswerController extends Controller
                 $query->where('category_id', $category->id);
             })
             ->where('is_skipped', false)
-            ->get()
-            ->groupBy(function ($answer) {
-                return $answer->question->questionnaire_id;
-            });
+            ->get();
         
         // Ambil semua bagian kuesioner untuk kategori ini
         $questionnaires = Questionnaire::where('category_id', $category->id)

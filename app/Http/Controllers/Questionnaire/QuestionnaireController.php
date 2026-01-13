@@ -9,6 +9,7 @@ use App\Models\Question;
 use App\Models\AnswerQuestion;
 use App\Models\QuestionnaireProgress;
 use App\Models\StatusQuestionnaire;
+use App\Models\AlumniAchievement;
 use App\Models\QuestionnaireSequence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -247,109 +248,128 @@ class QuestionnaireController extends Controller
      * Submit seluruh bagian kuesioner
      */
     public function submitQuestionnaire(Request $request, $questionnaireId)
-        {
-            $alumni = Auth::user()->alumni;
-            $expectsJson = $request->expectsJson();
+    {
+        $alumni = Auth::user()->alumni;
+        $expectsJson = $request->expectsJson();
 
-            $questionnaire = Questionnaire::with('category')->findOrFail($questionnaireId);
+        $questionnaire = Questionnaire::with('category')->findOrFail($questionnaireId);
 
-            // Cek status kategori
-            $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
-                ->where('category_id', $questionnaire->category_id)
-                ->first();
+        // Cek status kategori
+        $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->where('category_id', $questionnaire->category_id)
+            ->first();
 
-            if (!$statusQuestionnaire) {
-                if ($expectsJson) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda belum memilih kategori ini.'
-                    ], 403);
-                }
-
-                return redirect()->route('questionnaire.categories')
-                    ->with('error', 'Anda belum memilih kategori ini.');
+        if (!$statusQuestionnaire) {
+            if ($expectsJson) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda belum memilih kategori ini.'
+                ], 403);
             }
 
-            // Validasi pertanyaan wajib
-            $requiredQuestions = $questionnaire->requiredQuestions()->pluck('id');
-            $answeredQuestions = AnswerQuestion::where('alumni_id', $alumni->id)
-                ->whereIn('question_id', $requiredQuestions)
-                ->where('is_skipped', false)
-                ->count();
+            return redirect()->route('questionnaire.categories')
+                ->with('error', 'Anda belum memilih kategori ini.');
+        }
 
-            if ($answeredQuestions < $requiredQuestions->count()) {
-                if ($expectsJson) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Harap lengkapi semua pertanyaan wajib sebelum mengirim.'
-                    ], 422);
-                }
+        // Simpan semua jawaban dari request
+        $answers = $request->input('answers', []);
+        
+        foreach ($answers as $questionId => $answerData) {
+        $question = Question::find($questionId);
+        if (!$question) continue;
 
-                return redirect()->back()
-                    ->with('error', 'Harap lengkapi semua pertanyaan wajib sebelum mengirim.');
-            }
-
-            // Update progress questionnaire
-            QuestionnaireProgress::updateOrCreate(
+        // Proses jawaban berdasarkan tipe
+        if (is_array($answerData) && isset($answerData[0])) {
+            // Handle checkbox/array answers
+            AnswerQuestion::updateOrCreate(
                 [
                     'alumni_id' => $alumni->id,
-                    'questionnaire_id' => $questionnaire->id,
+                    'question_id' => $questionId,
                 ],
                 [
-                    'status' => 'completed',
-                    'completed_at' => now(),
-                    'progress_percentage' => 100,
-                    'answered_count' => $answeredQuestions,
-                    'total_questions' => $questionnaire->questions()->count(),
+                    'selected_options' => json_encode($answerData),
+                    'points' => $question->points, // TAMBAHKAN POINTS
+                    'is_skipped' => false,
+                    'answered_at' => now(),
                 ]
             );
+        } else {
+            // Handle single value answers
+            AnswerQuestion::updateOrCreate(
+                [
+                    'alumni_id' => $alumni->id,
+                    'question_id' => $questionId,
+                ],
+                [
+                    'answer' => is_array($answerData) ? json_encode($answerData) : $answerData,
+                    'points' => $question->points, // TAMBAHKAN POINTS
+                    'is_skipped' => false,
+                    'answered_at' => now(),
+                ]
+            );
+        }
+    }
 
-            // Sequence logic
-            $category = $questionnaire->category;
-            $currentSequence = $category->sequences()
-                ->where('questionnaire_id', $questionnaire->id)
-                ->first();
+        // Update progress questionnaire
+        QuestionnaireProgress::updateOrCreate(
+            [
+                'alumni_id' => $alumni->id,
+                'questionnaire_id' => $questionnaire->id,
+            ],
+            [
+                'status' => 'completed',
+                'completed_at' => now(),
+                'progress_percentage' => 100,
+                'answered_count' => $questionnaire->questions()->count(),
+                'total_questions' => $questionnaire->questions()->count(),
+            ]
+        );
 
-            if ($currentSequence && $currentSequence->isLast()) {
+        // Sequence logic
+        $category = $questionnaire->category;
+        $currentSequence = $category->sequences()
+            ->where('questionnaire_id', $questionnaire->id)
+            ->first();
 
-                StatusQuestionnaire::where('alumni_id', $alumni->id)
-                    ->where('category_id', $category->id)
-                    ->update([
-                        'status' => 'completed',
-                        'completed_at' => now(),
-                        'progress_percentage' => 100,
-                    ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Semua kuesioner telah diselesaikan.',
-                    'redirect_url' => route('questionnaire.completed'),
-                ]);
-            }
-
-            $nextSequence = $currentSequence?->next();
-
-            if ($nextSequence) {
-                $statusQuestionnaire->update([
-                    'current_questionnaire_id' => $nextSequence->questionnaire_id,
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Bagian berhasil disimpan.',
-                    'redirect_url' => route('questionnaire.fill', [
-                        'categorySlug' => $category->slug,
-                        'questionnaireSlug' => $nextSequence->questionnaire->slug,
-                    ]),
-                ]);
-            }
+        if ($currentSequence && $currentSequence->isLast()) {
+            // Semua kuesioner selesai
+            $statusQuestionnaire->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'progress_percentage' => 100,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Kuesioner berhasil disimpan.',
-                'redirect_url' => route('questionnaire.dashboard'),
+                'message' => 'Semua kuesioner telah diselesaikan.',
+                'completed' => true,
+                'redirect_url' => route('questionnaire.completed'),
             ]);
         }
+
+        $nextSequence = $currentSequence?->next();
+
+        if ($nextSequence) {
+            $statusQuestionnaire->update([
+                'current_questionnaire_id' => $nextSequence->questionnaire_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bagian berhasil disimpan.',
+                'redirect_url' => route('questionnaire.fill', [
+                    'categorySlug' => $category->slug,
+                    'questionnaireSlug' => $nextSequence->questionnaire->slug,
+                ]),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kuesioner berhasil disimpan.',
+            'redirect_url' => route('questionnaire.dashboard'),
+        ]);
+    }
     
     /**
      * Tampilkan halaman selesai
@@ -364,7 +384,8 @@ class QuestionnaireController extends Controller
             ->first();
         
         if (!$statusQuestionnaire) {
-            return redirect()->route('questionnaire.dashboard');
+            return redirect()->route('questionnaire.dashboard')
+                ->with('error', 'Anda belum menyelesaikan semua kuesioner.');
         }
         
         // Hitung total points
@@ -378,11 +399,42 @@ class QuestionnaireController extends Controller
         // Update total points
         $statusQuestionnaire->update(['total_points' => $totalPoints]);
         
+        // Statistik
+        $stats = [
+            'current_rank' => $this->calculateRank($alumni),
+            'achievements_count' => AlumniAchievement::where('alumni_id', $alumni->id)->count(),
+            'total_questions_answered' => AnswerQuestion::where('alumni_id', $alumni->id)
+                ->whereHas('question.questionnaire', function ($query) use ($statusQuestionnaire) {
+                    $query->where('category_id', $statusQuestionnaire->category_id);
+                })
+                ->where('is_skipped', false)
+                ->count(),
+        ];
+        
         return view('questionnaire.completed', compact(
             'statusQuestionnaire', 
             'totalPoints',
             'stats'
         ));
+    }
+
+    /**
+     * Calculate alumni rank
+     */
+    private function calculateRank($alumni)
+    {
+        $totalPoints = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->sum('total_points');
+        
+        if ($totalPoints >= 100) {
+            return 'Gold';
+        } elseif ($totalPoints >= 50) {
+            return 'Silver';
+        } elseif ($totalPoints >= 20) {
+            return 'Bronze';
+        } else {
+            return 'Beginner';
+        }
     }
     
     /**

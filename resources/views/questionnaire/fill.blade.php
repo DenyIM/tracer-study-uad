@@ -110,16 +110,6 @@
             font-weight: 500;
         }
 
-        .question-nav-item.locked {
-            cursor: not-allowed;
-            opacity: 0.6;
-            background-color: #f8f9fa;
-        }
-
-        .question-nav-item.locked:hover {
-            background-color: #f8f9fa;
-        }
-
         .nav-status {
             width: 20px;
             height: 20px;
@@ -142,11 +132,6 @@
 
         .nav-status.pending {
             background-color: #6c757d;
-            color: white;
-        }
-
-        .nav-status.locked {
-            background-color: #dc3545;
             color: white;
         }
 
@@ -278,7 +263,15 @@
             font-size: 0.9rem;
             font-weight: 600;
             display: inline-block;
-            margin-left: 10px;
+        }
+
+        .email-input-container {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .email-input-container.show {
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -371,21 +364,22 @@
 
     <div class="main-content">
         <div class="container py-4">
+            <!-- Progress Bar Pertanyaan -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="progress-section p-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="fw-semibold" id="progressText">
-                                Progress:
-                                {{ $questionnaire->questions()->count() > 0 ? 'Pertanyaan 1 dari ' . $questionnaire->questions()->count() : 'Belum ada pertanyaan' }}
+                                Progress Pertanyaan:
+                                Pertanyaan <span id="currentQuestionNumber">1</span> dari {{ $questions->count() }}
                             </span>
                             <span class="fw-bold text-accent" id="progressPercent">
-                                {{ $questionnaire->questions()->count() > 0 ? round((1 / $questionnaire->questions()->count()) * 100) : 0 }}%
+                                {{ $questions->count() > 0 ? round((1 / $questions->count()) * 100) : 0 }}%
                             </span>
                         </div>
                         <div class="progress">
                             <div class="progress-bar" role="progressbar" id="progressBar"
-                                style="width: {{ $questionnaire->questions()->count() > 0 ? round((1 / $questionnaire->questions()->count()) * 100) : 0 }}%">
+                                style="width: {{ $questions->count() > 0 ? round((1 / $questions->count()) * 100) : 0 }}%">
                             </div>
                         </div>
                     </div>
@@ -403,12 +397,10 @@
                                 $answer = $answers[$question->id] ?? null;
                                 $isAnswered = $answer && !$answer->is_skipped;
                                 $isCurrent = $loop->first;
-                                $isLocked = false; // Logic lock berdasarkan urutan bisa ditambahkan
                             @endphp
 
                             <div class="question-nav-item 
                                  {{ $isCurrent ? 'active current' : '' }} 
-                                 {{ $isLocked ? 'locked' : '' }}
                                  {{ $isAnswered ? 'answered' : '' }}"
                                 data-question-id="{{ $question->id }}"
                                 onclick="navigateToQuestion({{ $question->id }})">
@@ -419,13 +411,11 @@
                                         class="nav-status 
                                          {{ $isAnswered ? 'answered' : '' }} 
                                          {{ $isCurrent ? 'current' : '' }} 
-                                         {{ $isLocked ? 'locked' : 'pending' }} me-3">
+                                         pending me-3">
                                         @if ($isAnswered)
                                             <i class="fas fa-check"></i>
                                         @elseif($isCurrent)
                                             <i class="fas fa-pen"></i>
-                                        @elseif($isLocked)
-                                            <i class="fas fa-lock"></i>
                                         @endif
                                     </div>
                                     <div class="flex-grow-1">
@@ -434,24 +424,50 @@
                                         </span>
                                         <small class="text-muted d-block">
                                             {{ $question->question_type }}
+                                            @if ($question->is_required)
+                                                <span class="text-danger ms-1">*</span>
+                                            @endif
                                         </small>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
 
-                        <!-- Sequence Info -->
+                        <!-- Progress Urutan Kuesioner -->
                         <div class="mt-4 pt-3 border-top">
                             <h6 class="fw-bold mb-2">Urutan Kuesioner</h6>
                             <div class="sequence-progress">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <small>Bagian {{ $currentSequence ? $currentSequence->order : 1 }}</small>
-                                    <small>{{ $currentSequence && $currentSequence->isLast() ? 'Terakhir' : 'Berlanjut' }}</small>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span id="sequenceProgressText">
+                                        @if ($currentSequence)
+                                            Bagian {{ $currentSequence->order }} dari
+                                            {{ $category->sequences()->count() }}
+                                        @else
+                                            Bagian 1 dari 1
+                                        @endif
+                                    </span>
+                                    <span class="fw-bold text-info" id="sequenceProgressPercent">
+                                        @if ($currentSequence)
+                                            {{ round(($currentSequence->order / $category->sequences()->count()) * 100) }}%
+                                        @else
+                                            100%
+                                        @endif
+                                    </span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-info"
-                                        style="width: {{ $currentSequence ? ($currentSequence->order / $category->sequences()->count()) * 100 : 0 }}%">
+                                    <div class="progress-bar bg-info" id="sequenceProgressBar"
+                                        style="width: {{ $currentSequence ? round(($currentSequence->order / $category->sequences()->count()) * 100) : 100 }}%">
                                     </div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">
+                                        @if ($currentSequence && $currentSequence->isLast())
+                                            <i class="fas fa-check-circle text-success me-1"></i> Bagian terakhir
+                                        @elseif($currentSequence)
+                                            <i class="fas fa-arrow-right text-info me-1"></i> Berlanjut ke bagian
+                                            berikutnya
+                                        @endif
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -461,7 +477,7 @@
                 <!-- Main Content Area -->
                 <div class="col-lg-8" data-aos="fade-left">
                     <!-- Form untuk semua pertanyaan -->
-                    <form id="questionnaireForm" action="{{ route('questionnaire.answer.store', $question->id) }}"
+                    <form id="questionnaireForm" action="{{ route('questionnaire.submit', $questionnaire->id) }}"
                         method="POST">
                         @csrf
                         <input type="hidden" name="questionnaire_id" value="{{ $questionnaire->id }}">
@@ -556,7 +572,7 @@
                                 </a>
                             </div>
                             <div>
-                                <button class="btn btn-outline-info" id="saveAllBtn">
+                                <button type="button" class="btn btn-outline-info" id="saveAllBtn">
                                     <i class="fas fa-save me-2"></i> Simpan Semua
                                 </button>
                             </div>
@@ -592,23 +608,50 @@
         const questionnaireId = {{ $questionnaire->id }};
         const categorySlug = "{{ $category->slug }}";
         const csrfToken = "{{ csrf_token() }}";
+        const totalSequences = {{ $category->sequences()->count() }};
+        const currentSequenceOrder = {{ $currentSequence ? $currentSequence->order : 1 }};
 
         let currentQuestionIndex = 0;
         let answers = {};
         let savedAnswers = {};
+        let answeredQuestions = new Set();
 
         // Load saved answers from localStorage
         function loadSavedAnswers() {
             const saved = localStorage.getItem(`questionnaire_${questionnaireId}_answers`);
             if (saved) {
                 savedAnswers = JSON.parse(saved);
+
+                // Update answered questions set
+                Object.keys(savedAnswers).forEach(questionId => {
+                    if (savedAnswers[questionId].isAnswered) {
+                        answeredQuestions.add(parseInt(questionId));
+                    }
+                });
             }
         }
 
         // Save answer to localStorage
         function saveAnswer(questionId, answerData) {
-            answers[questionId] = answerData;
-            localStorage.setItem(`questionnaire_${questionnaireId}_answers`, JSON.stringify(answers));
+            answers[questionId] = {
+                ...answerData,
+                isAnswered: true
+            };
+            savedAnswers[questionId] = answers[questionId];
+            answeredQuestions.add(questionId);
+
+            localStorage.setItem(`questionnaire_${questionnaireId}_answers`, JSON.stringify(savedAnswers));
+
+            // Update navigation item
+            const navItem = document.querySelector(`[data-question-id="${questionId}"]`);
+            if (navItem) {
+                navItem.classList.add('answered');
+                const statusIcon = navItem.querySelector('.nav-status');
+                if (statusIcon) {
+                    statusIcon.className = 'nav-status answered me-3';
+                    statusIcon.innerHTML = '<i class="fas fa-check"></i>';
+                }
+            }
         }
 
         // Get answer for a question
@@ -618,40 +661,104 @@
 
             switch (questionType) {
                 case 'radio':
+                case 'radio_per_row':
+                    const selectedRadio = container.querySelector('input[type="radio"]:checked');
+                    if (selectedRadio) {
+                        // Handle jawaban dengan input tambahan (email)
+                        if (selectedRadio.value.includes('email') || selectedRadio.value.includes('Ya,')) {
+                            const emailInput = container.querySelector('.email-input');
+                            if (emailInput && emailInput.value) {
+                                return selectedRadio.value + ': ' + emailInput.value;
+                            }
+                            return selectedRadio.value;
+                        }
+                        return selectedRadio.value;
+                    }
+                    return null;
+
                 case 'dropdown':
-                    return container.querySelector('input[type="radio"]:checked')?.value ||
-                        container.querySelector('select')?.value;
+                    const select = container.querySelector('select');
+                    if (select && select.value) {
+                        // Handle other option for dropdown
+                        if (select.value === 'Lainnya, sebutkan!') {
+                            const otherInput = container.querySelector('input[name^="other_"]');
+                            if (otherInput && otherInput.value) {
+                                return 'Lainnya: ' + otherInput.value;
+                            }
+                        }
+                        return select.value;
+                    }
+                    return null;
 
                 case 'text':
                 case 'textarea':
                 case 'date':
                 case 'number':
-                    return container.querySelector('input, textarea')?.value;
+                    const input = container.querySelector('input, textarea');
+                    return input ? input.value : null;
 
                 case 'checkbox':
+                case 'checkbox_per_row':
                     const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
-                    return Array.from(checkboxes).map(cb => cb.value);
+                    const values = Array.from(checkboxes).map(cb => {
+                        // Handle other option for checkbox
+                        if (cb.value === 'Lainnya') {
+                            const otherInput = container.querySelector('input[name^="other_"]');
+                            if (otherInput && otherInput.value) {
+                                return 'Lainnya: ' + otherInput.value;
+                            }
+                        }
+                        // Handle jawaban dengan input tambahan
+                        if (cb.value.includes('email') || cb.value.includes('Ya,')) {
+                            const emailInput = container.querySelector('.email-input');
+                            if (emailInput && emailInput.value) {
+                                return cb.value + ': ' + emailInput.value;
+                            }
+                        }
+                        return cb.value;
+                    }).filter(value => value);
+                    return values.length > 0 ? values : null;
 
                 case 'likert_scale':
                 case 'competency_scale':
-                    return container.querySelector('input[type="radio"]:checked')?.value;
+                    const scaleRadio = container.querySelector('input[type="radio"]:checked');
+                    return scaleRadio ? parseInt(scaleRadio.value) : null;
+
+                case 'likert_per_row':
+                    const rowRadios = container.querySelectorAll('input[type="radio"]:checked');
+                    const rowValues = {};
+                    rowRadios.forEach(radio => {
+                        const name = radio.name;
+                        const match = name.match(/\[(\w+)\]/);
+                        if (match) {
+                            rowValues[match[1]] = radio.value;
+                        }
+                    });
+                    return Object.keys(rowValues).length > 0 ? rowValues : null;
 
                 default:
-                    return container.querySelector('input, textarea, select')?.value;
+                    const defaultInput = container.querySelector('input, textarea, select');
+                    return defaultInput ? defaultInput.value : null;
             }
         }
 
-        // Validate question
-        function validateQuestion(questionId, questionType, isRequired) {
-            const value = getAnswerValue(questionId, questionType);
+        // Check if question has been answered
+        function isQuestionAnswered(questionId, questionType) {
+            const answerValue = getAnswerValue(questionId, questionType);
 
-            if (isRequired) {
-                if (!value || (Array.isArray(value) && value.length === 0)) {
+            if (answerValue !== null) {
+                if (Array.isArray(answerValue) && answerValue.length === 0) {
                     return false;
                 }
+                if (typeof answerValue === 'object' && Object.keys(answerValue).length === 0) {
+                    return false;
+                }
+                if (answerValue === '') {
+                    return false;
+                }
+                return true;
             }
-
-            return true;
+            return false;
         }
 
         // Show question
@@ -672,6 +779,9 @@
 
                 // Update navigation items
                 updateNavigationItems(questions[index].id);
+
+                // Handle email input visibility
+                handleEmailInputVisibility(questions[index].id, questions[index].question_type);
             }
         }
 
@@ -681,9 +791,16 @@
             const progressPercent = Math.round((currentQuestionNumber / totalQuestions) * 100);
 
             document.getElementById('progressBar').style.width = `${progressPercent}%`;
-            document.getElementById('progressText').textContent =
-                `Progress: Pertanyaan ${currentQuestionNumber} dari ${totalQuestions}`;
+            document.getElementById('progressText').innerHTML =
+                `Progress Pertanyaan: <br>Pertanyaan <span id="currentQuestionNumber">${currentQuestionNumber}</span> dari ${totalQuestions}`;
             document.getElementById('progressPercent').textContent = `${progressPercent}%`;
+
+            // Update urutan kuesioner
+            const sequencePercent = Math.round((currentSequenceOrder / totalSequences) * 100);
+            document.getElementById('sequenceProgressBar').style.width = `${sequencePercent}%`;
+            document.getElementById('sequenceProgressText').textContent =
+                `Bagian ${currentSequenceOrder} dari ${totalSequences}`;
+            document.getElementById('sequenceProgressPercent').textContent = `${sequencePercent}%`;
         }
 
         // Update navigation items
@@ -713,7 +830,7 @@
 
         // Save answer via AJAX
         function saveAnswerToServer(questionId, answerData) {
-            return fetch("{{ route('questionnaire.answer.store', $question->id) }}", {
+            return fetch("{{ route('questionnaire.answer.store', $question->id) }}".replace(':questionId', questionId), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -727,17 +844,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Mark question as answered in navigation
-                        const navItem = document.querySelector(`[data-question-id="${questionId}"]`);
-                        if (navItem) {
-                            navItem.classList.add('answered');
-                            const statusIcon = navItem.querySelector('.nav-status');
-                            if (statusIcon) {
-                                statusIcon.className = 'nav-status answered me-3';
-                                statusIcon.innerHTML = '<i class="fas fa-check"></i>';
-                            }
-                        }
-
                         return true;
                     }
                     return false;
@@ -763,11 +869,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Mark question as skipped
-                        const navItem = document.querySelector(`[data-question-id="${questionId}"]`);
-                        if (navItem) {
-                            navItem.classList.add('answered');
-                        }
+                        // Mark question as answered
+                        answeredQuestions.add(questionId);
 
                         // Move to next question
                         if (currentQuestionIndex < questions.length - 1) {
@@ -780,28 +883,159 @@
                 });
         }
 
+        // Handle email input visibility
+        function handleEmailInputVisibility(questionId, questionType) {
+            const container = document.getElementById(`answer-area-${questionId}`);
+            if (!container) return;
+
+            const emailInputContainers = container.querySelectorAll('.email-input-container');
+            emailInputContainers.forEach(emailContainer => {
+                const isVisible = emailContainer.classList.contains('show');
+                if (isVisible) {
+                    // Cek apakah option yang memerlukan email dipilih
+                    const relatedOption = container.querySelector(
+                        'input[type="radio"]:checked, input[type="checkbox"]:checked');
+                    if (relatedOption) {
+                        const optionValue = relatedOption.value;
+                        if (optionValue.includes('email') || optionValue.includes('Ya,')) {
+                            emailContainer.classList.add('show');
+                            return;
+                        }
+                    }
+                    emailContainer.classList.remove('show');
+                }
+            });
+        }
+
+        // Handle jawaban dengan input email
+        function handleEmailAnswerInput(questionId, questionType) {
+            const container = document.getElementById(`answer-area-${questionId}`);
+            if (!container) return;
+
+            const inputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const emailContainers = container.querySelectorAll('.email-input-container');
+                    emailContainers.forEach(emailContainer => {
+                        if (this.value.includes('email') || this.value.includes('Ya,')) {
+                            emailContainer.classList.add('show');
+
+                            // Focus ke input email
+                            const emailInput = emailContainer.querySelector('.email-input');
+                            if (emailInput) {
+                                setTimeout(() => emailInput.focus(), 100);
+                            }
+                        } else {
+                            emailContainer.classList.remove('show');
+                        }
+                    });
+                });
+            });
+        }
+
         // Event Listeners
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedAnswers();
 
-            // Next question button
+            // Initialize email input visibility for all questions
+            questions.forEach(question => {
+                handleEmailInputVisibility(question.id, question.question_type);
+                handleEmailAnswerInput(question.id, question.question_type);
+            });
+
+            // Handle answer changes
+            document.addEventListener('change', function(e) {
+                const target = e.target;
+                const questionContainer = target.closest('.question-container');
+
+                if (questionContainer) {
+                    const questionId = questionContainer.id.replace('question-', '');
+                    const question = questions.find(q => q.id == questionId);
+
+                    if (question) {
+                        // Handle email input visibility
+                        handleEmailInputVisibility(question.id, question.question_type);
+
+                        // Auto-save answer
+                        const answerValue = getAnswerValue(question.id, question.question_type);
+                        if (answerValue !== null) {
+                            saveAnswer(question.id, answerValue);
+                        }
+                    }
+                }
+            });
+
+            // Handle text input changes (email input khusus)
+            document.addEventListener('input', function(e) {
+                const target = e.target;
+                if (target.classList.contains('email-input')) {
+                    const questionContainer = target.closest('.question-container');
+                    if (questionContainer) {
+                        const questionId = questionContainer.id.replace('question-', '');
+                        const question = questions.find(q => q.id == questionId);
+                        if (question) {
+                            // Auto-save answer
+                            setTimeout(() => {
+                                const answerValue = getAnswerValue(question.id, question
+                                    .question_type);
+                                if (answerValue !== null) {
+                                    saveAnswer(question.id, answerValue);
+                                }
+                            }, 500);
+                        }
+                    }
+                } else if (target.type === 'text' || target.type === 'textarea' ||
+                    target.type === 'number' || target.type === 'date') {
+                    const questionContainer = target.closest('.question-container');
+                    if (questionContainer) {
+                        const questionId = questionContainer.id.replace('question-', '');
+                        const question = questions.find(q => q.id == questionId);
+                        if (question) {
+                            // Auto-save answer
+                            setTimeout(() => {
+                                const answerValue = getAnswerValue(question.id, question
+                                    .question_type);
+                                if (answerValue !== null) {
+                                    saveAnswer(question.id, answerValue);
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            });
+
+            // Next question button - Validasi jawaban sebelum lanjut
             document.querySelectorAll('.btn-next-question').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const currentQuestion = questions[currentQuestionIndex];
 
-                    // Validate current question
-                    if (!validateQuestion(currentQuestion.id, currentQuestion.question_type,
-                            currentQuestion.is_required)) {
-                        alert('Harap isi jawaban untuk pertanyaan ini.');
-                        return;
+                    // Validasi pertanyaan wajib
+                    if (currentQuestion.is_required) {
+                        if (!isQuestionAnswered(currentQuestion.id, currentQuestion
+                            .question_type)) {
+                            alert('Harap isi jawaban untuk pertanyaan ini sebelum melanjutkan.');
+                            return;
+                        }
                     }
 
-                    // Save answer
+                    // Save answer to server
                     const answerValue = getAnswerValue(currentQuestion.id, currentQuestion
                         .question_type);
-                    if (answerValue) {
+                    if (answerValue !== null) {
+                        let answerData = {};
+
+                        if (currentQuestion.question_type === 'checkbox' || currentQuestion
+                            .question_type === 'checkbox_per_row') {
+                            answerData.selected_options = answerValue;
+                        } else if (currentQuestion.is_scale || currentQuestion.question_type ===
+                            'likert_per_row') {
+                            answerData.scale_value = answerValue;
+                        } else {
+                            answerData.answer = answerValue;
+                        }
+
                         saveAnswerToServer(currentQuestion.id, {
-                            answer: answerValue,
+                            ...answerData,
                             question_type: currentQuestion.question_type
                         });
                     }
@@ -837,9 +1071,21 @@
                 // Save all answers
                 const promises = questions.map(question => {
                     const answerValue = getAnswerValue(question.id, question.question_type);
-                    if (answerValue) {
+                    if (answerValue !== null) {
+                        let answerData = {};
+
+                        if (question.question_type === 'checkbox' || question.question_type ===
+                            'checkbox_per_row') {
+                            answerData.selected_options = answerValue;
+                        } else if (question.is_scale || question.question_type ===
+                            'likert_per_row') {
+                            answerData.scale_value = answerValue;
+                        } else {
+                            answerData.answer = answerValue;
+                        }
+
                         return saveAnswerToServer(question.id, {
-                            answer: answerValue,
+                            ...answerData,
                             question_type: question.question_type
                         });
                     }
@@ -847,7 +1093,8 @@
                 });
 
                 Promise.all(promises).then(results => {
-                    alert('Semua jawaban berhasil disimpan sementara.');
+                    const successCount = results.filter(r => r).length;
+                    alert(`${successCount} dari ${questions.length} jawaban berhasil disimpan.`);
                 });
             });
 
@@ -855,19 +1102,26 @@
             document.getElementById('submitQuestionnaireBtn').addEventListener('click', function() {
                 // Validate all required questions
                 let hasErrors = false;
+                let firstErrorQuestion = null;
+
                 questions.forEach(question => {
-                    if (question.is_required) {
-                        if (!validateQuestion(question.id, question.question_type, true)) {
+                    if (question.is_required && !answeredQuestions.has(question.id)) {
+                        if (!isQuestionAnswered(question.id, question.question_type)) {
                             hasErrors = true;
-                            navigateToQuestion(question.id);
-                            alert(
-                                `Harap isi pertanyaan ${questions.indexOf(question) + 1}: ${question.question_text}`
-                            );
+                            if (!firstErrorQuestion) {
+                                firstErrorQuestion = question;
+                            }
                         }
                     }
                 });
 
-                if (hasErrors) return;
+                if (hasErrors && firstErrorQuestion) {
+                    navigateToQuestion(firstErrorQuestion.id);
+                    alert(
+                        `Harap isi pertanyaan ${questions.findIndex(q => q.id === firstErrorQuestion.id) + 1}: ${firstErrorQuestion.question_text}`
+                    );
+                    return;
+                }
 
                 // Show confirmation modal
                 const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -885,16 +1139,45 @@
                 const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
                 loadingModal.show();
 
-                // Submit form
+                // Submit form via AJAX
+                const formData = new FormData();
+                formData.append('_token', csrfToken);
+                formData.append('questionnaire_id', questionnaireId);
+
+                // Collect all answers
+                questions.forEach(question => {
+                    const answerValue = getAnswerValue(question.id, question.question_type);
+                    if (answerValue !== null) {
+                        if (question.question_type === 'checkbox' || question.question_type ===
+                            'checkbox_per_row') {
+                            if (Array.isArray(answerValue)) {
+                                answerValue.forEach(value => {
+                                    formData.append(`answers[${question.id}][]`, value);
+                                });
+                            }
+                        } else if (question.question_type === 'likert_per_row') {
+                            if (typeof answerValue === 'object') {
+                                Object.keys(answerValue).forEach(key => {
+                                    formData.append(`answers[${question.id}][${key}]`,
+                                        answerValue[key]);
+                                });
+                            }
+                        } else {
+                            formData.append(`answers[${question.id}]`,
+                                typeof answerValue === 'object' ? JSON.stringify(answerValue) :
+                                answerValue);
+                        }
+                    }
+                });
+
+                // Kirim data ke server
                 fetch("{{ route('questionnaire.submit', $questionnaire->id) }}", {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
                         },
-                        body: JSON.stringify({
-                            questionnaire_id: questionnaireId
-                        })
+                        body: formData
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -904,11 +1187,14 @@
                             // Clear localStorage
                             localStorage.removeItem(`questionnaire_${questionnaireId}_answers`);
 
-                            // Redirect
+                            // Redirect berdasarkan respons
                             if (data.redirect_url) {
                                 window.location.href = data.redirect_url;
+                            } else if (data.completed) {
+                                window.location.href = "{{ route('questionnaire.completed') }}";
                             } else {
-                                window.location.href = "{{ route('questionnaire.dashboard') }}";
+                                window.location.href = data.redirect_url ||
+                                    "{{ route('questionnaire.dashboard') }}";
                             }
                         } else {
                             alert(data.message || 'Terjadi kesalahan saat mengirim kuesioner.');
@@ -916,23 +1202,9 @@
                     })
                     .catch(error => {
                         loadingModal.hide();
+                        console.error('Error:', error);
                         alert('Terjadi kesalahan jaringan.');
                     });
-            });
-
-            // Auto-save on input change
-            document.querySelectorAll('input, textarea, select').forEach(input => {
-                input.addEventListener('change', function() {
-                    const questionId = this.closest('.question-container')?.id?.replace('question-',
-                        '');
-                    if (questionId) {
-                        const question = questions.find(q => q.id === parseInt(questionId));
-                        if (question) {
-                            const answerValue = getAnswerValue(question.id, question.question_type);
-                            saveAnswer(question.id, answerValue);
-                        }
-                    }
-                });
             });
 
             // Initialize first question

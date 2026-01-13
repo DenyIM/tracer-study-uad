@@ -39,10 +39,10 @@ class QuestionnaireSeeder extends Seeder
             'time_estimate' => 10,
         ]);
 
-        // Pertanyaan 1: Kompetensi dengan skala per baris
+        // Pertanyaan 1: Kompetensi dengan skala Likert per baris
         Question::create([
             'questionnaire_id' => $questionnaire->id,
-            'question_text' => 'Pada saat lulus, pada tingkat mana Anda menguasai kompetensi berikut? (1=Sangat Rendah, 5=Sangat Tinggi)',
+            'question_text' => 'Pada saat lulus, pada tingkat mana Anda menguasai kompetensi berikut?',
             'question_type' => 'likert_per_row',
             'row_items' => [
                 'ethics' => 'Etika',
@@ -58,15 +58,15 @@ class QuestionnaireSeeder extends Seeder
             'scale_label_high' => 'Sangat Tinggi',
             'is_required' => true,
             'order' => 1,
-            'points' => 10,
-            'helper_text' => 'Pilih skala 1-5 untuk setiap kompetensi',
+            'points' => 1000,
+            'helper_text' => 'Pilih skala 1-5 (1=Sangat Rendah, 2=Rendah, 3=Cukup, 4=Tinggi, 5=Sangat Tinggi) untuk setiap kompetensi',
         ]);
 
-        // Pertanyaan 2: Metode pembelajaran dengan radio per baris
+        // Pertanyaan 2: Metode pembelajaran dengan skala Likert per baris
         Question::create([
             'questionnaire_id' => $questionnaire->id,
             'question_text' => 'Menurut Anda, seberapa besar penekanan metode pembelajaran berikut di prodi Anda?',
-            'question_type' => 'radio_per_row',
+            'question_type' => 'likert_per_row',
             'row_items' => [
                 'lecture' => 'Perkuliahan',
                 'demonstration' => 'Demonstrasi',
@@ -76,10 +76,13 @@ class QuestionnaireSeeder extends Seeder
                 'field_work' => 'Kerja Lapangan',
                 'discussion' => 'Diskusi',
             ],
-            'options' => ['Sangat Besar', 'Besar', 'Cukup', 'Kurang', 'Tidak Sama Sekali'],
+            'scale_options' => [1, 2, 3, 4, 5],
+            'scale_label_low' => 'Tidak Sama Sekali',
+            'scale_label_high' => 'Sangat Besar',
             'is_required' => true,
             'order' => 2,
-            'points' => 10,
+            'points' => 1000,
+            'helper_text' => 'Pilih skala 1-5 (1=Tidak Sama Sekali, 2=Kurang, 3=Cukup, 4=Besar, 5=Sangat Besar) untuk setiap metode pembelajaran',
         ]);
 
         return $questionnaire;
@@ -134,6 +137,7 @@ class QuestionnaireSeeder extends Seeder
             'options' => ['3-<6 bulan', '6-<9 bulan', '9-<12 bulan', '>12 bulan'],
             'is_required' => true,
             'order' => 1,
+            'points' => 1000,
             'helper_text' => 'Pilih satu opsi yang sesuai',
         ]);
 
@@ -145,6 +149,7 @@ class QuestionnaireSeeder extends Seeder
             'options' => ['0-<3 juta', '3-<6 juta', '6-<10 juta', '>10 juta'],
             'is_required' => true,
             'order' => 2,
+            'points' => 1000,
         ]);
 
         $questionnaires[] = $bagian1;
@@ -222,7 +227,7 @@ class QuestionnaireSeeder extends Seeder
             'order' => 2,
             'rows' => 4,
             'placeholder' => 'Tuliskan setiap mata kuliah dalam baris terpisah',
-            'helper_text' => 'Contoh: 1. Pemrograman Berorientasi Objek<br>2. Basis Data<br>3. Rekayasa Perangkat Lunak',
+            'helper_text' => 'Contoh: \n1. Pemrograman Berorientasi Objek\n2. Basis Data\n3. Rekayasa Perangkat Lunak',
         ]);
 
         $questionnaires[] = $bagian3;
@@ -246,7 +251,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'rows' => 5,
-            'placeholder' => 'Contoh: - Penggunaan framework Laravel<br>- Kemampuan DevOps<br>- Cloud computing',
+            'placeholder' => 'Contoh: \n- Penggunaan framework Laravel\n- Kemampuan DevOps\n- Cloud computing',
         ]);
 
         // Pertanyaan 9
@@ -257,7 +262,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => false,
             'order' => 2,
             'rows' => 4,
-            'placeholder' => 'Contoh: - AWS Certified Developer<br>- Laravel Certified Developer',
+            'placeholder' => 'Contoh: \n- AWS Certified Developer\n- Laravel Certified Developer',
             'helper_text' => 'Opsional: Isi jika ada sertifikat yang diperoleh',
         ]);
 
@@ -394,7 +399,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'rows' => 5,
-            'placeholder' => 'Contoh: - Manajemen keuangan<br>- Digital marketing<br>- Networking',
+            'placeholder' => 'Contoh: \n- Manajemen keuangan\n- Digital marketing\n- Networking',
         ]);
 
         // Pertanyaan 8

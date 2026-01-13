@@ -447,9 +447,7 @@ class QuestionController extends Controller
         return true;
     }
     
-    /**
-     * Update progress kuesioner
-     */
+    // Di method storeAnswer(), setelah menyimpan jawaban:
     private function updateQuestionnaireProgress($alumni, $questionnaire): void
     {
         // Update questionnaire progress
@@ -458,6 +456,12 @@ class QuestionController extends Controller
             ->whereIn('question_id', $questionnaire->questions()->pluck('id'))
             ->where('is_skipped', false)
             ->count();
+        
+        // HITUNG TOTAL POINTS DARI ANSWER_QUESTIONS
+        $totalPoints = AnswerQuestion::where('alumni_id', $alumni->id)
+            ->whereIn('question_id', $questionnaire->questions()->pluck('id'))
+            ->where('is_skipped', false)
+            ->sum('points');
         
         $progressPercentage = $totalQuestions > 0 ? round(($answeredQuestions / $totalQuestions) * 100) : 0;
         
@@ -472,11 +476,11 @@ class QuestionController extends Controller
                 'total_questions' => $totalQuestions,
                 'progress_percentage' => $progressPercentage,
                 'status' => $progressPercentage >= 100 ? 'completed' : 
-                           ($progressPercentage > 0 ? 'in_progress' : 'not_started'),
+                        ($progressPercentage > 0 ? 'in_progress' : 'not_started'),
             ]
         );
         
-        // Update overall status
+        // Update overall status dengan points
         $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
             ->where('category_id', $questionnaire->category_id)
             ->first();
@@ -490,13 +494,22 @@ class QuestionController extends Controller
                 ->where('is_skipped', false)
                 ->count();
             
+            // HITUNG TOTAL POINTS UNTUK KATEGORI
+            $totalCategoryPoints = AnswerQuestion::where('alumni_id', $alumni->id)
+                ->whereHas('question.questionnaire', function ($query) use ($questionnaire) {
+                    $query->where('category_id', $questionnaire->category_id);
+                })
+                ->where('is_skipped', false)
+                ->sum('points');
+            
             $categoryProgress = $totalCategoryQuestions > 0 ? 
                 round(($totalAnsweredCategory / $totalCategoryQuestions) * 100) : 0;
             
             $statusQuestionnaire->update([
                 'progress_percentage' => $categoryProgress,
+                'total_points' => $totalCategoryPoints, // UPDATE TOTAL POINTS
                 'status' => $categoryProgress >= 100 ? 'completed' : 
-                           ($categoryProgress > 0 ? 'in_progress' : 'not_started'),
+                        ($categoryProgress > 0 ? 'in_progress' : 'not_started'),
             ]);
         }
     }

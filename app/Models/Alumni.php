@@ -61,4 +61,20 @@ class Alumni extends Model
     {
         return $this->graduation_date ? $this->graduation_date->format('d F Y') : null;
     }
+
+        /**
+     * Get all answers for this alumni
+     */
+    public function answers()
+    {
+        return $this->hasMany(AnswerQuestion::class, 'alumni_id');
+    }
+
+    /**
+     * Get status questionnaires for this alumni
+     */
+    public function statuses()
+    {
+        return $this->hasMany(StatusQuestionnaire::class, 'alumni_id');
+    }
 }
