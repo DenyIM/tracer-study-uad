@@ -9,6 +9,7 @@ use App\Models\QuestionnaireProgress;
 use App\Models\QuestionnaireSequence;
 use App\Models\AlumniAchievement;
 use App\Models\AnswerQuestion;
+use App\Models\Alumni;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -45,7 +46,8 @@ class DashboardController extends Controller
                     'total_sections' => 0,
                     'achievements_count' => 0,
                     'categories_completed' => 0,
-                    'current_rank' => 'Beginner',
+                    'current_rank_number' => 0,
+                    'total_participants' => 0,
                 ],
                 'progressRecords' => [],
                 'totalPoints' => 0,
@@ -137,19 +139,55 @@ class DashboardController extends Controller
         
         // Statistik
         $progressPercentage = $totalQuestions > 0 ? round(($totalAnswered / $totalQuestions) * 100) : 0;
+        
+        // Hitung ranking
+        $currentRank = $this->getCurrentRank($alumni);
+        $totalParticipants = Alumni::count();
+        
         $stats = [
             'categories_completed' => StatusQuestionnaire::where('alumni_id', $alumni->id)
                 ->where('status', 'completed')
                 ->count(),
             'total_questions_answered' => $totalAnswered,
             'total_questions' => $totalQuestions,
-            'achievements_count' => $achievements->count(),
-            'current_rank' => $this->calculateRank($alumni),
+            'current_rank_number' => $currentRank,
+            'total_participants' => $totalParticipants,
             'sections_completed' => $sectionsCompleted,
             'total_sections' => count($sequences),
             'progress_percentage' => $progressPercentage,
         ];
         
+        // Hitung bagian mana yang sudah selesai
+        $generalCompleted = false;
+        $part1Completed = false;
+        $part2Completed = false;
+        $part3Completed = false;
+        $part4Completed = false;
+
+        foreach ($progressRecords as $record) {
+            if ($record['is_general'] && $record['progress'] && $record['progress']->status === 'completed') {
+                $generalCompleted = true;
+            }
+            
+            if (!$record['is_general']) {
+                switch ($record['section_number']) {
+                    case 1:
+                        $part1Completed = $record['progress'] && $record['progress']->status === 'completed';
+                        break;
+                    case 2:
+                        $part2Completed = $record['progress'] && $record['progress']->status === 'completed';
+                        break;
+                    case 3:
+                        $part3Completed = $record['progress'] && $record['progress']->status === 'completed';
+                        break;
+                    case 4:
+                        $part4Completed = $record['progress'] && $record['progress']->status === 'completed';
+                        break;
+                }
+            }
+        }
+
+        // Tambahkan ke array data yang dikirim ke view
         return view('questionnaire.dashboard.index', [
             'statusQuestionnaire' => $statusQuestionnaire,
             'category' => $category,
@@ -163,6 +201,13 @@ class DashboardController extends Controller
             'showCategorySelection' => false,
             'categories' => collect(),
             'alumni' => $alumni,
+            
+            // Tambahkan variabel untuk fitur yang terbuka
+            'generalCompleted' => $generalCompleted,
+            'part1Completed' => $part1Completed,
+            'part2Completed' => $part2Completed,
+            'part3Completed' => $part3Completed,
+            'part4Completed' => $part4Completed,
         ]);
     }
     
@@ -196,7 +241,8 @@ class DashboardController extends Controller
                 'total_sections' => 0,
                 'achievements_count' => 0,
                 'categories_completed' => 0,
-                'current_rank' => 'Beginner',
+                'current_rank_number' => 0,
+                'total_participants' => 0,
             ],
             'progressRecords' => [],
             'totalPoints' => 0,
@@ -208,9 +254,40 @@ class DashboardController extends Controller
     }
     
     /**
-     * Calculate alumni rank
+     * Get current ranking dari leaderboard
      */
-    private function calculateRank($alumni)
+    private function getCurrentRank($alumni)
+    {
+        // Logika untuk mendapatkan ranking dari leaderboard
+        // Untuk implementasi nyata, Anda perlu query tabel leaderboard
+        
+        // Contoh: Ambil ranking berdasarkan total points
+        $currentUserPoints = StatusQuestionnaire::where('alumni_id', $alumni->id)
+            ->sum('total_points') ?? 0;
+        
+        // Hitung berapa banyak alumni yang memiliki points lebih tinggi
+        $higherRanked = StatusQuestionnaire::select('alumni_id')
+            ->selectRaw('SUM(total_points) as total_points_sum')
+            ->groupBy('alumni_id')
+            ->havingRaw('SUM(total_points) > ?', [$currentUserPoints])
+            ->count();
+        
+        // Ranking adalah posisi user + 1
+        $rank = $higherRanked + 1;
+        
+        // Jika belum ada points, beri ranking berdasarkan jumlah peserta
+        if ($currentUserPoints <= 0) {
+            $totalParticipants = Alumni::count();
+            $rank = max(1, $totalParticipants); // Posisi terakhir
+        }
+        
+        return $rank;
+    }
+    
+    /**
+     * Calculate alumni rank category (tetap untuk kompatibilitas jika diperlukan)
+     */
+    private function calculateRankCategory($alumni)
     {
         $totalPoints = StatusQuestionnaire::where('alumni_id', $alumni->id)
             ->sum('total_points');

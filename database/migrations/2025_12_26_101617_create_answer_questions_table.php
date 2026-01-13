@@ -15,6 +15,7 @@ return new class extends Migration
             $table->text('answer')->nullable(); // Jawaban text biasa
             $table->json('selected_options')->nullable(); // Untuk multiple choice (disimpan sebagai JSON)
             $table->integer('scale_value')->nullable(); // Untuk skala (1-5)
+            $table->integer('points')->default(0); // TAMBAHKAN DI SINI
             $table->boolean('is_skipped')->default(false);
             $table->timestamp('answered_at')->nullable();
             $table->timestamps();

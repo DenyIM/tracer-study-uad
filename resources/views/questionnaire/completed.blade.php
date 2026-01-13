@@ -220,6 +220,23 @@
             color: white;
         }
 
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-green), #20c997);
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+
         .rank-badge {
             display: inline-block;
             background: linear-gradient(135deg, #ffd700, #ffed4e);
@@ -256,6 +273,29 @@
             margin-top: 10px;
         }
 
+        /* Styles untuk fitur yang terbuka */
+        .feature-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .feature-badge.open {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+
+        .feature-badge.locked {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+
         @media (max-width: 768px) {
             .completion-card {
                 padding: 25px 20px;
@@ -282,10 +322,12 @@
                 grid-template-columns: 1fr;
             }
 
-            .btn-home {
+            .btn-home,
+            .btn-success {
                 padding: 12px 30px;
                 font-size: 1rem;
                 width: 100%;
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -351,11 +393,14 @@
                             <div class="stat-item" data-aos="fade-left" data-aos-delay="100">
                                 <div class="stat-value" id="rankValue">
                                     @php
-                                        $rank = $stats['current_rank'] ?? 'Beginner';
+                                        // Ambil ranking dari controller
+                                        $currentRank = $stats['current_rank_number'] ?? 1;
+                                        $totalParticipants = $stats['total_participants'] ?? 100;
                                     @endphp
-                                    {{ $rank }}
+                                    #{{ $currentRank }}
                                 </div>
-                                <div class="stat-label">Ranking Terkini</div>
+                                <div class="stat-label">Ranking Global</div>
+                                <small class="text-muted">Dari {{ $totalParticipants }} peserta</small>
                             </div>
                         </div>
 
@@ -374,60 +419,71 @@
 
                         <div class="next-steps" data-aos="fade-up" data-aos-delay="300">
                             <h4 class="fw-bold mb-4 text-center" style="color: var(--primary-blue);">
-                                <i class="fas fa-arrow-right me-2"></i>Langkah Selanjutnya
+                                <i class="fas fa-gift me-2"></i>Fitur yang Telah Terbuka
                             </h4>
 
                             <div class="steps-grid">
                                 <div class="step-card">
                                     <div class="step-icon">
-                                        <i class="fas fa-users"></i>
+                                        <i class="fas fa-crown"></i>
                                     </div>
-                                    <h5 class="fw-bold mb-3">Lihat Hasil Jawaban</h5>
-                                    <p class="mb-0 small">
-                                        <a href="{{ route('questionnaire.answers.category', ['categorySlug' => $statusQuestionnaire->category->slug]) }}"
-                                            class="text-decoration-none">
-                                            Lihat detail jawaban Anda
-                                        </a>
-                                    </p>
+                                    <h5 class="fw-bold mb-3">Leaderboard</h5>
+                                    <p class="mb-3">Akses fitur leaderboard untuk melihat peringkat Anda dan kumpulkan
+                                        points untuk mendapatkan keuntungan eksklusif.</p>
+                                    <span class="feature-badge open">
+                                        <i class="fas fa-check me-1"></i> Terbuka
+                                    </span>
                                 </div>
 
                                 <div class="step-card">
                                     <div class="step-icon">
-                                        <i class="fas fa-bullseye"></i>
+                                        <i class="fas fa-comments"></i>
                                     </div>
-                                    <h5 class="fw-bold mb-3">Ekspor Hasil</h5>
-                                    <p class="mb-0 small">
-                                        <a href="{{ route('questionnaire.answers.export', ['categorySlug' => $statusQuestionnaire->category->slug]) }}"
-                                            class="text-decoration-none">
-                                            Unduh PDF hasil kuesioner
-                                        </a>
-                                    </p>
+                                    <h5 class="fw-bold mb-3">Forum Alumni</h5>
+                                    <p class="mb-3">Bergabung dengan forum diskusi alumni untuk berbagi pengalaman,
+                                        informasi event, seminar, dan diskusi lainnya.</p>
+                                    <span class="feature-badge open">
+                                        <i class="fas fa-check me-1"></i> Terbuka
+                                    </span>
+                                </div>
+
+                                <div class="step-card">
+                                    <div class="step-icon">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-3">Konsultasi Mentor</h5>
+                                    <p class="mb-3">Akses layanan konsultasi terkait rencana karir dan bisnis dengan
+                                        para mentor via Email/WA.</p>
+                                    <span class="feature-badge open">
+                                        <i class="fas fa-check me-1"></i> Terbuka
+                                    </span>
                                 </div>
 
                                 <div class="step-card">
                                     <div class="step-icon">
                                         <i class="fas fa-briefcase"></i>
                                     </div>
-                                    <h5 class="fw-bold mb-3">Jelajahi Lowongan</h5>
-                                    <p class="mb-0 small">Temukan peluang karir terbaru di bagian lowongan kerja
-                                        eksklusif untuk alumni UAD.</p>
-                                </div>
-
-                                <div class="step-card">
-                                    <div class="step-icon">
-                                        <i class="fas fa-coins"></i>
-                                    </div>
-                                    <h5 class="fw-bold mb-3">Forum Alumni</h5>
-                                    <p class="mb-0 small">Bergabung dengan forum diskusi alumni untuk berbagi pengalaman
-                                        dan informasi.</p>
+                                    <h5 class="fw-bold mb-3">Lowongan Kerja</h5>
+                                    <p class="mb-3">Temukan peluang karir terbaru di bagian lowongan kerja eksklusif
+                                        untuk alumni UAD.</p>
+                                    <span class="feature-badge open">
+                                        <i class="fas fa-check me-1"></i> Terbuka
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-center mt-5" data-aos="fade-up" data-aos-delay="400">
-                            <a href="{{ route('questionnaire.dashboard') }}" class="btn btn-home" id="backToHomeBtn">
-                                <i class="fas fa-home me-2"></i> Kembali ke Dashboard
-                            </a>
+                            <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+                                <a href="{{ route('questionnaire.answers.category', ['categorySlug' => $statusQuestionnaire->category->slug]) }}"
+                                    class="btn btn-success">
+                                    <i class="fas fa-eye me-2"></i> Lihat Hasil Kuesioner
+                                </a>
+                                <a href="{{ route('questionnaire.dashboard') }}" class="btn btn-home"
+                                    id="backToHomeBtn">
+                                    <i class="fas fa-home me-2"></i> Kembali ke Dashboard
+                                </a>
+                            </div>
                         </div>
 
                         <div class="mt-5 p-3 bg-light rounded" data-aos="fade-up" data-aos-delay="500">
@@ -435,8 +491,8 @@
                                 <i class="fas fa-info-circle text-primary fs-4 me-3"></i>
                                 <p class="mb-0 small">
                                     <strong>Info:</strong> Semua fitur platform Tracer Study UAD sekarang telah terbuka
-                                    untuk Anda.
-                                    Jelajahi menu utama untuk mulai menggunakan berbagai fitur yang tersedia.
+                                    untuk Anda. Jelajahi menu utama untuk mulai menggunakan berbagai fitur yang
+                                    tersedia.
                                 </p>
                             </div>
                         </div>

@@ -31,10 +31,14 @@
             $activeQuestionnaire = $activeQuestionnaire ?? null;
             $otherCategories = $otherCategories ?? collect();
             $achievements = $achievements ?? collect();
+
+            // Ambil ranking dari leaderboard (dummy data untuk sekarang)
+            $currentRank = $stats['current_rank_number'] ?? 1;
+            $totalParticipants = $stats['total_participants'] ?? 100;
         }
     @endphp
 
-    <div class="container py-5">
+    <div class="container py-5" style="min-height: 80vh;">
         @if ($showCategorySelection && $categories->isNotEmpty())
             <!-- KONDISI 1: TAMPILKAN FORM PEMILIHAN KATEGORI -->
             <div class="row mb-5">
@@ -123,9 +127,12 @@
 
                     <div class="row g-4">
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-                            <div class="feature-card p-4 position-relative">
+                            <div class="feature-card p-4 position-relative feature-locked">
+                                <div class="lock-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
                                 <div class="text-center">
-                                    <div class="feature-icon mx-auto pulse-animation">
+                                    <div class="feature-icon mx-auto">
                                         <i class="fas fa-crown"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 1</h5>
@@ -133,15 +140,18 @@
                                         keuntungan eksklusif</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i> Terbuka</span>
+                                    <span class="badge bg-warning"><i class="fas fa-lock me-1"></i> Kuesioner 1</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-                            <div class="feature-card p-4 position-relative">
+                            <div class="feature-card p-4 position-relative feature-locked">
+                                <div class="lock-icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
                                 <div class="text-center">
-                                    <div class="feature-icon mx-auto pulse-animation">
+                                    <div class="feature-icon mx-auto">
                                         <i class="fas fa-comments"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 2</h5>
@@ -149,7 +159,7 @@
                                         lainnya di Forum Tracer Study UAD</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i> Terbuka</span>
+                                    <span class="badge bg-warning"><i class="fas fa-lock me-1"></i> Kuesioner 2</span>
                                 </div>
                             </div>
                         </div>
@@ -264,6 +274,14 @@
                             <span class="badge bg-info px-3 py-2 fs-6 ms-2">
                                 <i class="fas {{ $category->icon ?? 'fa-folder' }} me-1"></i> {{ $category->name }}
                             </span>
+
+                            <!-- Tombol Batalkan Kategori -->
+                            @if (!$isInProgress && !$isCompleted)
+                                <button type="button" class="btn btn-outline-danger btn-sm ms-2"
+                                    data-bs-toggle="modal" data-bs-target="#cancelCategoryModal">
+                                    <i class="fas fa-times me-1"></i> Batalkan Pilihan
+                                </button>
+                            @endif
                         </div>
 
                         <!-- Progress Bar -->
@@ -364,152 +382,124 @@
                                     <i class="fas fa-trophy"></i>
                                 </div>
                                 <div class="stats-number fw-bold mb-2" style="color: #28a745; font-size: 2.5rem;">
-                                    {{ $stats['achievements_count'] ?? 0 }}
+                                    {{ $currentRank }}
                                 </div>
-                                <div class="stats-label">Achievements</div>
-                                <small class="text-muted">Dicapai</small>
+                                <div class="stats-label">Ranking</div>
+                                <small class="text-muted">Dari {{ $totalParticipants }} peserta</small>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
                             <div class="stats-card p-4 text-center">
                                 <div class="stats-icon mx-auto mb-3">
-                                    <i class="fas fa-medal"></i>
+                                    <i class="fas fa-clock"></i>
                                 </div>
                                 <div class="stats-number fw-bold mb-2" style="color: #fd7e14; font-size: 2.5rem;">
-                                    {{ $stats['current_rank'] ?? 'Beginner' }}
+                                    {{ round($progressPercentage) }}%
                                 </div>
-                                <div class="stats-label">Ranking</div>
-                                <small class="text-muted">Terkini</small>
+                                <div class="stats-label">Progress</div>
+                                <small class="text-muted">Penyelesaian</small>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Urutan Kuesioner -->
+            <!-- Urutan Kuesioner (Alur) -->
             <div class="row mb-5">
                 <div class="col-12">
                     <h3 class="fw-bold mb-4 text-center" style="color: var(--primary-blue);" data-aos="fade-up">
-                        Urutan Kuesioner</h3>
+                        Alur Kuesioner {{ $category->name }}
+                    </h3>
 
-                    <div class="modal fade category-modal" id="categoryModal" tabindex="-1"
-                        aria-labelledby="categoryModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header"
-                                    style="background-color: var(--primary-blue); color: white;">
-                                    <h5 class="modal-title" id="categoryModalLabel">Daftar Kuesioner</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <h4 class="fw-bold mb-4 text-center" id="modalCategoryTitle">
-                                        {{ $category->name }}</h4>
-                                    <p class="text-center mb-4">Berikut adalah daftar kuesioner yang perlu Anda isi
-                                        berdasarkan kategori status Anda saat ini.</p>
+                    <div class="timeline-container" data-aos="fade-up">
+                        <div class="timeline">
+                            @php
+                                // Tentukan urutan kuesioner berdasarkan kategori
+                                $questionnaireTitles = [
+                                    'bekerja' => [
+                                        'Kuesioner Bagian Umum',
+                                        'Bagian 1: Informasi Karir Awal',
+                                        'Bagian 2: Identitas Perusahaan & Bidang Kerja',
+                                        'Bagian 3: Relevansi Studi & Dukungan Kurikulum',
+                                        'Bagian 4: Pengembangan Kompetensi Setelah Lulus',
+                                    ],
+                                    'wirausaha' => [
+                                        'Kuesioner Bagian Umum',
+                                        'Bagian 1: Profil Usaha',
+                                        'Bagian 2: Proses Memulai Usaha',
+                                        'Bagian 3: Relevansi Studi & Keterampilan',
+                                        'Bagian 4: Rencana Pengembangan Usaha',
+                                    ],
+                                    'pendidikan' => [
+                                        'Kuesioner Bagian Umum',
+                                        'Bagian 1: Jenis Pendidikan Lanjutan',
+                                        'Bagian 2: Institusi & Program Studi',
+                                        'Bagian 3: Motivasi & Tujuan',
+                                        'Bagian 4: Persiapan & Dukungan',
+                                    ],
+                                    'pencari' => [
+                                        'Kuesioner Bagian Umum',
+                                        'Bagian 1: Aktivitas Pencarian Kerja',
+                                        'Bagian 2: Hambatan & Tantangan',
+                                        'Bagian 3: Keterampilan & Persiapan',
+                                        'Bagian 4: Harapan & Rencana',
+                                    ],
+                                    'tidak-kerja' => [
+                                        'Kuesioner Bagian Umum',
+                                        'Bagian 1: Kondisi Saat Ini',
+                                        'Bagian 2: Rencana Ke Depan',
+                                        'Bagian 3: Keterampilan yang Dimiliki',
+                                        'Bagian 4: Dukungan yang Diperlukan',
+                                    ],
+                                ];
 
-                                    <div class="row g-4">
-                                        @foreach ($progressRecords as $record)
-                                            @php
-                                                $isCompleted =
-                                                    $record['progress'] && $record['progress']->status === 'completed';
-                                                $isInProgress =
-                                                    $record['progress'] &&
-                                                    $record['progress']->status === 'in_progress';
-                                                $isCurrent =
-                                                    $record['questionnaire']->id === ($activeQuestionnaire->id ?? null);
+                                $titles = $questionnaireTitles[$category->slug] ?? [
+                                    'Kuesioner Bagian Umum',
+                                    'Bagian 1',
+                                    'Bagian 2',
+                                    'Bagian 3',
+                                    'Bagian 4',
+                                ];
+                            @endphp
 
-                                                $statusColor = $isCompleted
-                                                    ? 'success'
-                                                    : ($isInProgress || $isCurrent
-                                                        ? 'warning'
-                                                        : 'secondary');
-                                                $statusIcon = $isCompleted
-                                                    ? 'fa-check'
-                                                    : ($isInProgress || $isCurrent
-                                                        ? 'fa-spinner fa-spin'
-                                                        : 'fa-clock');
-                                                $statusText = $isCompleted
-                                                    ? 'Selesai'
-                                                    : ($isInProgress || $isCurrent
-                                                        ? 'Dalam Proses'
-                                                        : 'Belum');
-                                            @endphp
+                            @foreach ($progressRecords as $record)
+                                @php
+                                    $isCompleted = $record['progress'] && $record['progress']->status === 'completed';
+                                    $isInProgress =
+                                        $record['progress'] && $record['progress']->status === 'in_progress';
+                                    $titleIndex = $record['is_general'] ? 0 : $record['section_number'];
+                                    $title = $titles[$titleIndex] ?? $record['questionnaire']->name;
+                                @endphp
 
-                                            <div class="col-12" data-aos="fade-up"
-                                                data-aos-delay="{{ $loop->index * 100 }}">
-                                                <div
-                                                    class="questionnaire-card p-4 h-100 position-relative {{ $isCompleted ? 'completed' : '' }}">
-                                                    <div class="questionnaire-status">
-                                                        <span class="badge bg-{{ $statusColor }}">
-                                                            <i class="fas {{ $statusIcon }} me-1"></i>
-                                                            {{ $statusText }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="d-flex align-items-start mb-3">
-                                                        <div class="questionnaire-number me-3">
-                                                            {{ $record['sequence']->order }}</div>
-                                                        <div>
-                                                            <h4 class="fw-bold mb-1">
-                                                                {{ $record['questionnaire']->name }}</h4>
-                                                            <p class="text-muted mb-0">
-                                                                @if ($record['is_general'])
-                                                                    (Bagian Umum)
-                                                                @else
-                                                                    (Bagian {{ $record['section_number'] }})
-                                                                @endif
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    @if ($record['questionnaire']->description)
-                                                        <p class="mb-3">{{ $record['questionnaire']->description }}
-                                                        </p>
-                                                    @endif
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <span
-                                                            class="{{ $isCompleted ? 'text-success' : 'text-warning' }}">
-                                                            <i
-                                                                class="fas {{ $isCompleted ? 'fa-check-circle' : 'fa-clock' }} me-1"></i>
-                                                            {{ $record['answered_count'] }} dari
-                                                            {{ $record['total_questions'] }} pertanyaan terjawab
-                                                        </span>
-                                                        @if ($isCompleted)
-                                                            <button class="btn btn-outline-primary btn-sm">
-                                                                <i class="fas fa-eye me-1"></i> Lihat Hasil
-                                                            </button>
-                                                        @else
-                                                            <a href="{{ route('questionnaire.fill', ['categorySlug' => $category->slug, 'questionnaireSlug' => $record['questionnaire']->slug]) }}"
-                                                                class="btn btn-primary-custom btn-sm">
-                                                                <i class="fas fa-play me-1"></i>
-                                                                {{ $isInProgress || $isCurrent ? 'Lanjutkan' : 'Mulai' }}
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
+                                <div
+                                    class="timeline-item {{ $isCompleted ? 'completed' : '' }} {{ $isInProgress ? 'current' : '' }}">
+                                    <div class="timeline-marker">
+                                        @if ($isCompleted)
+                                            <i class="fas fa-check-circle"></i>
+                                        @elseif($isInProgress)
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                        @else
+                                            <i class="fas fa-circle"></i>
+                                        @endif
                                     </div>
-
-                                    <div class="mt-4 text-center">
-                                        <p class="text-muted"><small>Kuesioner 1 adalah kuesioner umum yang wajib diisi
-                                                oleh semua alumni. Kuesioner 2-4 disesuaikan dengan kategori status Anda
-                                                saat ini.</small></p>
+                                    <div class="timeline-content">
+                                        <h5 class="fw-bold mb-1">{{ $title }}</h5>
+                                        <p class="mb-0 text-muted">
+                                            {{ $record['answered_count'] }} dari {{ $record['total_questions'] }}
+                                            pertanyaan terjawab
+                                        </p>
+                                        @if ($record['is_general'])
+                                            <span class="badge bg-info mt-1">Wajib untuk semua kategori</span>
+                                        @endif
                                     </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Tutup</button>
-                                </div>
-                            </div>
+
+                                @if (!$loop->last)
+                                    <div class="timeline-connector"></div>
+                                @endif
+                            @endforeach
                         </div>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <button class="btn btn-outline-primary" data-bs-toggle="modal"
-                            data-bs-target="#categoryModal">
-                            <i class="fas fa-list-ol me-2"></i> Lihat Detail Urutan Kuesioner
-                        </button>
                     </div>
                 </div>
             </div>
@@ -523,10 +513,58 @@
                         kategori status anda untuk membuka fitur-fitur eksklusif berikut:</p>
 
                     <div class="row g-4">
+                        @php
+                            // Hitung bagian mana yang sudah selesai
+                            $generalCompleted = false;
+                            $part1Completed = false;
+                            $part2Completed = false;
+                            $part3Completed = false;
+                            $part4Completed = false;
+
+                            foreach ($progressRecords as $record) {
+                                if (
+                                    $record['is_general'] &&
+                                    $record['progress'] &&
+                                    $record['progress']->status === 'completed'
+                                ) {
+                                    $generalCompleted = true;
+                                }
+
+                                if (!$record['is_general']) {
+                                    switch ($record['section_number']) {
+                                        case 1:
+                                            $part1Completed =
+                                                $record['progress'] && $record['progress']->status === 'completed';
+                                            break;
+                                        case 2:
+                                            $part2Completed =
+                                                $record['progress'] && $record['progress']->status === 'completed';
+                                            break;
+                                        case 3:
+                                            $part3Completed =
+                                                $record['progress'] && $record['progress']->status === 'completed';
+                                            break;
+                                        case 4:
+                                            $part4Completed =
+                                                $record['progress'] && $record['progress']->status === 'completed';
+                                            break;
+                                    }
+                                }
+                            }
+                        @endphp
+
+                        <!-- Fitur 1: Terbuka setelah Bagian 1 -->
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-                            <div class="feature-card p-4 position-relative">
+                            <div
+                                class="feature-card p-4 position-relative {{ $generalCompleted && $part1Completed ? '' : 'feature-locked' }}">
+                                @if (!$generalCompleted || !$part1Completed)
+                                    <div class="lock-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                @endif
                                 <div class="text-center">
-                                    <div class="feature-icon mx-auto pulse-animation">
+                                    <div
+                                        class="feature-icon mx-auto {{ $generalCompleted && $part1Completed ? 'pulse-animation' : '' }}">
                                         <i class="fas fa-crown"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 1</h5>
@@ -534,15 +572,34 @@
                                         keuntungan eksklusif</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i> Terbuka</span>
+                                    <span
+                                        class="badge {{ $generalCompleted && $part1Completed ? 'bg-success' : 'bg-warning' }}">
+                                        <i
+                                            class="fas {{ $generalCompleted && $part1Completed ? 'fa-check' : 'fa-lock' }} me-1"></i>
+                                        {{ $generalCompleted && $part1Completed ? 'Terbuka' : 'Kuesioner 1' }}
+                                    </span>
                                 </div>
+                                @if (!$generalCompleted)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner umum terlebih dahulu</small>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
+                        <!-- Fitur 2: Terbuka setelah Bagian 2 -->
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-                            <div class="feature-card p-4 position-relative">
+                            <div
+                                class="feature-card p-4 position-relative {{ $generalCompleted && $part1Completed && $part2Completed ? '' : 'feature-locked' }}">
+                                @if (!$generalCompleted || !$part1Completed || !$part2Completed)
+                                    <div class="lock-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                @endif
                                 <div class="text-center">
-                                    <div class="feature-icon mx-auto pulse-animation">
+                                    <div
+                                        class="feature-icon mx-auto {{ $generalCompleted && $part1Completed && $part2Completed ? 'pulse-animation' : '' }}">
                                         <i class="fas fa-comments"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 2</h5>
@@ -550,22 +607,39 @@
                                         lainnya di Forum Tracer Study UAD</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i> Terbuka</span>
+                                    <span
+                                        class="badge {{ $generalCompleted && $part1Completed && $part2Completed ? 'bg-success' : 'bg-warning' }}">
+                                        <i
+                                            class="fas {{ $generalCompleted && $part1Completed && $part2Completed ? 'fa-check' : 'fa-lock' }} me-1"></i>
+                                        {{ $generalCompleted && $part1Completed && $part2Completed ? 'Terbuka' : 'Kuesioner 2' }}
+                                    </span>
                                 </div>
+                                @if (!$generalCompleted)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner umum terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part1Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 1 terlebih dahulu</small>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
+                        <!-- Fitur 3: Terbuka setelah Bagian 3 -->
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
                             <div
-                                class="feature-card p-4 position-relative {{ $sectionsCompleted < 2 ? 'feature-locked' : '' }}">
-                                @if ($sectionsCompleted < 2)
+                                class="feature-card p-4 position-relative {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed ? '' : 'feature-locked' }}">
+                                @if (!$generalCompleted || !$part1Completed || !$part2Completed || !$part3Completed)
                                     <div class="lock-icon">
                                         <i class="fas fa-lock"></i>
                                     </div>
                                 @endif
                                 <div class="text-center">
                                     <div
-                                        class="feature-icon mx-auto {{ $sectionsCompleted >= 2 ? 'pulse-animation' : '' }}">
+                                        class="feature-icon mx-auto {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed ? 'pulse-animation' : '' }}">
                                         <i class="fas fa-chalkboard-teacher"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 3</h5>
@@ -573,26 +647,44 @@
                                         dengan para Mentor via Email/WA</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge {{ $sectionsCompleted >= 2 ? 'bg-success' : 'bg-warning' }}">
+                                    <span
+                                        class="badge {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed ? 'bg-success' : 'bg-warning' }}">
                                         <i
-                                            class="fas {{ $sectionsCompleted >= 2 ? 'fa-check' : 'fa-lock' }} me-1"></i>
-                                        {{ $sectionsCompleted >= 2 ? 'Terbuka' : 'Kuesioner 3' }}
+                                            class="fas {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed ? 'fa-check' : 'fa-lock' }} me-1"></i>
+                                        {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed ? 'Terbuka' : 'Kuesioner 3' }}
                                     </span>
                                 </div>
+                                @if (!$generalCompleted)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner umum terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part1Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 1 terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part2Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 2 terlebih dahulu</small>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
+                        <!-- Fitur 4: Terbuka setelah Bagian 4 -->
                         <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
                             <div
-                                class="feature-card p-4 position-relative {{ $sectionsCompleted < 3 ? 'feature-locked' : '' }}">
-                                @if ($sectionsCompleted < 3)
+                                class="feature-card p-4 position-relative {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed && $part4Completed ? '' : 'feature-locked' }}">
+                                @if (!$generalCompleted || !$part1Completed || !$part2Completed || !$part3Completed || !$part4Completed)
                                     <div class="lock-icon">
                                         <i class="fas fa-lock"></i>
                                     </div>
                                 @endif
                                 <div class="text-center">
                                     <div
-                                        class="feature-icon mx-auto {{ $sectionsCompleted >= 3 ? 'pulse-animation' : '' }}">
+                                        class="feature-icon mx-auto {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed && $part4Completed ? 'pulse-animation' : '' }}">
                                         <i class="fas fa-briefcase"></i>
                                     </div>
                                     <h5 class="fw-bold mb-3">Bagian 4</h5>
@@ -600,12 +692,34 @@
                                         direkomendasikan oleh UAD</p>
                                 </div>
                                 <div class="mt-3 text-center">
-                                    <span class="badge {{ $sectionsCompleted >= 3 ? 'bg-success' : 'bg-warning' }}">
+                                    <span
+                                        class="badge {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed && $part4Completed ? 'bg-success' : 'bg-warning' }}">
                                         <i
-                                            class="fas {{ $sectionsCompleted >= 3 ? 'fa-check' : 'fa-lock' }} me-1"></i>
-                                        {{ $sectionsCompleted >= 3 ? 'Terbuka' : 'Kuesioner 4' }}
+                                            class="fas {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed && $part4Completed ? 'fa-check' : 'fa-lock' }} me-1"></i>
+                                        {{ $generalCompleted && $part1Completed && $part2Completed && $part3Completed && $part4Completed ? 'Terbuka' : 'Kuesioner 4' }}
                                     </span>
                                 </div>
+                                @if (!$generalCompleted)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner umum terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part1Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 1 terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part2Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 2 terlebih dahulu</small>
+                                    </div>
+                                @elseif(!$part3Completed)
+                                    <div class="mt-2">
+                                        <small class="text-muted"><i class="fas fa-info-circle me-1"></i> Harap
+                                            selesaikan kuesioner bagian 3 terlebih dahulu</small>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -644,7 +758,7 @@
             @endif
 
             <!-- Call to Action -->
-            <div class="row">
+            <div class="row mb-5">
                 <div class="col-12">
                     <div class="text-center p-5 rounded"
                         style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); color: white;"
@@ -669,12 +783,54 @@
         @endif
     </div>
 
+    <!-- Modal Batalkan Kategori -->
+    <div class="modal fade" id="cancelCategoryModal" tabindex="-1" aria-labelledby="cancelCategoryModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelCategoryModalLabel">Batalkan Pilihan Kategori</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Apakah Anda yakin ingin membatalkan pilihan kategori
+                        <strong>{{ $category->name ?? '' }}</strong>?
+                    </p>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Jika Anda sudah mulai mengisi kuesioner, data jawaban akan dihapus dan tidak dapat dikembalikan.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <form action="{{ route('questionnaire.category.cancel') }}" method="POST"
+                        id="cancelCategoryForm">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger">Ya, Batalkan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('styles')
         <style>
             :root {
                 --primary-blue: #003366;
                 --secondary-blue: #3b82f6;
                 --accent-yellow: #fab300;
+            }
+
+            body {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .main-content {
+                flex: 1;
+                margin-bottom: auto;
             }
 
             .progress-section {
@@ -861,6 +1017,75 @@
                 background-color: var(--secondary-blue);
                 color: white;
             }
+
+            /* Timeline Styles */
+            .timeline-container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .timeline {
+                position: relative;
+                padding-left: 30px;
+            }
+
+            .timeline-item {
+                position: relative;
+                margin-bottom: 30px;
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                border-left: 4px solid #ddd;
+            }
+
+            .timeline-item.completed {
+                border-left-color: #28a745;
+                background-color: rgba(40, 167, 69, 0.05);
+            }
+
+            .timeline-item.current {
+                border-left-color: var(--accent-yellow);
+                background-color: rgba(250, 179, 0, 0.05);
+            }
+
+            .timeline-marker {
+                position: absolute;
+                left: -40px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .timeline-item.completed .timeline-marker {
+                background: #28a745;
+                color: white;
+            }
+
+            .timeline-item.current .timeline-marker {
+                background: var(--accent-yellow);
+                color: white;
+            }
+
+            .timeline-connector {
+                position: absolute;
+                left: -25px;
+                top: 60px;
+                bottom: -30px;
+                width: 2px;
+                background: #ddd;
+            }
+
+            .timeline-item:last-child .timeline-connector {
+                display: none;
+            }
         </style>
     @endpush
 
@@ -909,6 +1134,16 @@
                             return false;
                         }
                         return true;
+                    });
+                }
+
+                // Cancel category form confirmation
+                const cancelForm = document.getElementById('cancelCategoryForm');
+                if (cancelForm) {
+                    cancelForm.addEventListener('submit', function(e) {
+                        if (!confirm('Apakah Anda yakin ingin membatalkan pilihan kategori?')) {
+                            e.preventDefault();
+                        }
                     });
                 }
 
