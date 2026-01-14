@@ -25,6 +25,57 @@
                         </li>
                     @else
                         @if (auth()->user()->role == 'alumni')
+                            @php
+                                // Ambil data progress alumni
+                                $user = auth()->user();
+                                $alumni = $user->alumni;
+                                $statusQuestionnaire = $alumni->statuses()->first();
+                                $isCompleted = false;
+                                $progressParts = [
+                                    'part1' => false,
+                                    'part2' => false,
+                                    'part3' => false,
+                                    'part4' => false,
+                                ];
+
+                                if ($statusQuestionnaire) {
+                                    // Cek progress kuesioner untuk menentukan bagian mana yang sudah selesai
+                                    $progressRecords = $alumni
+                                        ->answers()
+                                        ->whereHas('question.questionnaire', function ($q) use ($statusQuestionnaire) {
+                                            $q->where('category_id', $statusQuestionnaire->category_id);
+                                        })
+                                        ->get()
+                                        ->groupBy(function ($answer) {
+                                            return $answer->question->questionnaire->slug;
+                                        });
+
+                                    // Logika sederhana untuk menentukan bagian yang terbuka
+                                    $totalAnswered = $alumni
+                                        ->answers()
+                                        ->whereHas('question.questionnaire', function ($q) use ($statusQuestionnaire) {
+                                            $q->where('category_id', $statusQuestionnaire->category_id);
+                                        })
+                                        ->count();
+
+                                    $totalQuestions = \App\Models\Question::whereHas('questionnaire', function (
+                                        $q,
+                                    ) use ($statusQuestionnaire) {
+                                        $q->where('category_id', $statusQuestionnaire->category_id);
+                                    })->count();
+
+                                    $progressPercentage =
+                                        $totalQuestions > 0 ? ($totalAnswered / $totalQuestions) * 100 : 0;
+
+                                    // Asumsi: Setiap 25% progress membuka satu fitur
+                                    $progressParts['part1'] = $progressPercentage >= 25;
+                                    $progressParts['part2'] = $progressPercentage >= 50;
+                                    $progressParts['part3'] = $progressPercentage >= 75;
+                                    $progressParts['part4'] = $progressPercentage >= 100;
+                                    $isCompleted = $progressPercentage >= 100;
+                                }
+                            @endphp
+
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('main') ? 'active' : '' }}"
                                     href="{{ route('main') }}">
@@ -32,27 +83,47 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('nav-leaderboard') ? 'active' : '' }}"
-                                    href="{{ route('nav-leaderboard') }}">
+                                <a class="nav-link {{ request()->routeIs('nav-leaderboard') ? 'active' : '' }} 
+                                    {{ !$progressParts['part1'] ? 'disabled text-muted' : '' }}"
+                                    href="{{ $progressParts['part1'] ? route('nav-leaderboard') : '#' }}"
+                                    @if (!$progressParts['part1']) onclick="return false;" @endif>
                                     <i class="fas fa-crown me-1"></i> Leaderboard
+                                    @if (!$progressParts['part1'])
+                                        <span class="badge bg-warning ms-1"><i class="fas fa-lock"></i></span>
+                                    @endif
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('nav-forum') ? 'active' : '' }}"
-                                    href="{{ route('nav-forum') }}">
+                                <a class="nav-link {{ request()->routeIs('nav-forum') ? 'active' : '' }}
+                                    {{ !$progressParts['part2'] ? 'disabled text-muted' : '' }}"
+                                    href="{{ $progressParts['part2'] ? route('nav-forum') : '#' }}"
+                                    @if (!$progressParts['part2']) onclick="return false;" @endif>
                                     <i class="fas fa-comments me-1"></i> Forum
+                                    @if (!$progressParts['part2'])
+                                        <span class="badge bg-warning ms-1"><i class="fas fa-lock"></i></span>
+                                    @endif
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('nav-mentor') ? 'active' : '' }}"
-                                    href="{{ route('nav-mentor') }}">
+                                <a class="nav-link {{ request()->routeIs('nav-mentor') ? 'active' : '' }}
+                                    {{ !$progressParts['part3'] ? 'disabled text-muted' : '' }}"
+                                    href="{{ $progressParts['part3'] ? route('nav-mentor') : '#' }}"
+                                    @if (!$progressParts['part3']) onclick="return false;" @endif>
                                     <i class="fas fa-chalkboard-teacher me-1"></i> Mentorship
+                                    @if (!$progressParts['part3'])
+                                        <span class="badge bg-warning ms-1"><i class="fas fa-lock"></i></span>
+                                    @endif
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('nav-lowongan') ? 'active' : '' }}"
-                                    href="{{ route('nav-lowongan') }}">
+                                <a class="nav-link {{ request()->routeIs('nav-lowongan') ? 'active' : '' }}
+                                    {{ !$progressParts['part4'] ? 'disabled text-muted' : '' }}"
+                                    href="{{ $progressParts['part4'] ? route('nav-lowongan') : '#' }}"
+                                    @if (!$progressParts['part4']) onclick="return false;" @endif>
                                     <i class="fas fa-briefcase me-1"></i> Lowongan Kerja
+                                    @if (!$progressParts['part4'])
+                                        <span class="badge bg-warning ms-1"><i class="fas fa-lock"></i></span>
+                                    @endif
                                 </a>
                             </li>
                         @endif
@@ -102,24 +173,41 @@
 
                             @php
                                 $user = auth()->user();
-                                $fullname = optional($user->alumni)->fullname ?? 'User';
+                                $alumni = $user->alumni;
+                                $fullname = $alumni->fullname ?? 'User';
                                 $initials = $fullname
                                     ? strtoupper(substr($fullname, 0, 2))
                                     : strtoupper(substr($user->email, 0, 2));
-                                $study_program = optional($user->alumni)->study_program ?? '';
-                                $graduation_year = optional($user->alumni)->graduation_date
-                                    ? date('Y', strtotime($user->alumni->graduation_date))
+                                $study_program = $alumni->study_program ?? '';
+                                $graduation_year = $alumni->graduation_date
+                                    ? date('Y', strtotime($alumni->graduation_date))
                                     : '';
-                                $points = optional($user->alumni)->points ?? 0;
+                                $points = $alumni->points ?? 0;
+                                $ranking = $alumni->ranking ?? 0;
+
+                                // Cek apakah ada foto profil
+                                $hasProfilePhoto = !empty($user->pp_url);
+                                $profilePhotoUrl = $hasProfilePhoto ? asset('storage/' . $user->pp_url) : '';
+
+                                // CSS untuk avatar dengan background image
+                                $avatarStyle = $hasProfilePhoto
+                                    ? "background-image: url('$profilePhotoUrl'); background-size: cover; background-position: center; background-color: transparent;"
+                                    : 'background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));';
+
+                                $avatarTextStyle = $hasProfilePhoto
+                                    ? 'color: transparent;' // Transparan karena ada background image
+                                    : 'color: white;'; // Putih untuk gradient background
                             @endphp
 
                             <!-- Profil Dropdown -->
                             <div class="dropdown">
                                 <button class="btn btn-outline-primary d-flex align-items-center dropdown-toggle"
                                     type="button" id="profileDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-                                        style="width: 32px; height: 32px; font-size: 12px; font-weight: bold;">
-                                        {{ $initials }}
+                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px; font-size: 12px; font-weight: bold; {{ $avatarStyle }} {{ $avatarTextStyle ?? '' }}">
+                                        @if (!$hasProfilePhoto)
+                                            {{ $initials }}
+                                        @endif
                                     </div>
                                     <span>{{ Str::limit($fullname, 15) }}</span>
                                 </button>
@@ -128,9 +216,11 @@
                                     <li>
                                         <div class="p-3 border-bottom">
                                             <div class="d-flex align-items-center">
-                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
-                                                    style="width: 48px; height: 48px; font-size: 18px; font-weight: bold;">
-                                                    {{ $initials }}
+                                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
+                                                    style="width: 48px; height: 48px; font-size: 18px; font-weight: bold; {{ $avatarStyle }} {{ $avatarTextStyle ?? '' }}">
+                                                    @if (!$hasProfilePhoto)
+                                                        {{ $initials }}
+                                                    @endif
                                                 </div>
                                                 <div>
                                                     <div class="fw-bold">{{ $fullname }}</div>
@@ -149,8 +239,7 @@
                                                 <i class="fas fa-coins text-warning me-2"></i>
                                                 <span class="fw-bold">{{ number_format($points) }}</span> Poin
                                             </div>
-                                            <span class="badge bg-secondary">Rank
-                                                #{{ optional($user->alumni)->ranking ?? '-' }}</span>
+                                            <span class="badge bg-secondary">Rank #{{ $ranking }}</span>
                                         </div>
                                     </li>
 
@@ -216,7 +305,7 @@
     </div>
 @endauth
 
-<!-- Script untuk memastikan Bootstrap berjalan -->
+<!-- Script untuk refresh foto profil setelah upload -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Inisialisasi semua dropdown
@@ -225,7 +314,67 @@
             new bootstrap.Dropdown(dropdownElement);
         });
 
-        // Debug: Cek jika Bootstrap berjalan
-        console.log('Bootstrap dropdown diinisialisasi');
+        // Tambahkan tooltip untuk menu terkunci
+        var lockedMenuItems = document.querySelectorAll('.nav-link.disabled');
+        lockedMenuItems.forEach(function(item) {
+            if (item.classList.contains('disabled')) {
+                item.setAttribute('title',
+                    'Selesaikan kuesioner bagian sebelumnya untuk membuka fitur ini');
+                item.setAttribute('data-bs-toggle', 'tooltip');
+                item.setAttribute('data-bs-placement', 'bottom');
+            }
+        });
+
+        // Inisialisasi tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Fungsi untuk update avatar di header
+        window.updateHeaderAvatar = function(photoUrl) {
+            const timestamp = new Date().getTime();
+            const avatarUrl = photoUrl + '?t=' + timestamp;
+
+            // Update avatar kecil di tombol dropdown
+            const smallAvatar = document.querySelector('#profileDropdownBtn .rounded-circle');
+            if (smallAvatar) {
+                smallAvatar.style.backgroundImage = `url(${avatarUrl})`;
+                smallAvatar.style.backgroundSize = 'cover';
+                smallAvatar.style.backgroundPosition = 'center';
+                // Hapus teks initials jika ada
+                if (smallAvatar.textContent) {
+                    smallAvatar.textContent = '';
+                }
+            }
+
+            // Update avatar besar di dropdown menu
+            const largeAvatar = document.querySelector('.dropdown-menu .rounded-circle');
+            if (largeAvatar) {
+                largeAvatar.style.backgroundImage = `url(${avatarUrl})`;
+                largeAvatar.style.backgroundSize = 'cover';
+                largeAvatar.style.backgroundPosition = 'center';
+                // Hapus teks initials jika ada
+                if (largeAvatar.textContent) {
+                    largeAvatar.textContent = '';
+                }
+            }
+        };
+
+        // Jika ada pesan dari profile page setelah upload foto
+        if (sessionStorage.getItem('photoUploaded')) {
+            // Tunggu sebentar untuk memastikan halaman sudah load
+            setTimeout(() => {
+                // Ambil URL foto dari session storage atau reload data
+                const photoUrl = sessionStorage.getItem('lastPhotoUrl');
+                if (photoUrl) {
+                    window.updateHeaderAvatar(photoUrl);
+                }
+
+                // Hapus data dari session storage
+                sessionStorage.removeItem('photoUploaded');
+                sessionStorage.removeItem('lastPhotoUrl');
+            }, 500);
+        }
     });
 </script>

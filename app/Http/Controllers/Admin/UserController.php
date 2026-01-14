@@ -21,6 +21,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
+
 class UserController extends Controller
 {
     /**
@@ -89,7 +90,11 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($alumni->user_id)],
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($alumni->user->id),
+            ],
             'nim' => 'required|string|max:20',
             'study_program' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
@@ -100,31 +105,24 @@ class UserController extends Controller
             'email_verified' => 'nullable|boolean',
         ]);
 
-        // Update user email
-        $userData = ['email' => $validated['email']];
-        
-        // Update email verification status
-        if ($request->has('email_verified')) {
-            $userData['email_verified_at'] = now();
-        } else {
-            $userData['email_verified_at'] = null;
-        }
-        
-        $alumni->user->update($userData);
+        $alumni->user->update([
+            'email' => $validated['email'],
+            'email_verified_at' => $request->has('email_verified') ? now() : null,
+        ]);
 
-        // Update alumni data
         $alumni->update([
             'fullname' => $validated['fullname'],
             'nim' => $validated['nim'],
             'study_program' => $validated['study_program'],
             'phone' => $validated['phone'],
             'graduation_date' => $validated['graduation_date'],
-            'npwp' => $validated['npwp'],
-            'ranking' => $validated['ranking'],
-            'points' => $validated['points'],
+            'npwp' => $validated['npwp'] ?? null,
+            'ranking' => $validated['ranking'] ?? null,
+            'points' => $validated['points'] ?? null,
         ]);
 
-        return redirect()->route('admin.views.users.alumni.show', $alumni->id)
+        return redirect()
+            ->route('admin.views.users.alumni.show', $alumni)
             ->with('success', 'Data alumni berhasil diperbarui');
     }
 

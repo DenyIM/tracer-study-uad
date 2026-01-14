@@ -137,7 +137,7 @@ class StatusQuestionnaire extends Model
             ->where('is_skipped', false)
             ->count();
 
-        // HITUNG TOTAL POINTS
+        // Hitung total points untuk kategori ini
         $totalPoints = AnswerQuestion::where('alumni_id', $this->alumni_id)
             ->whereHas('question.questionnaire', function ($query) {
                 $query->where('category_id', $this->category_id);
@@ -149,7 +149,7 @@ class StatusQuestionnaire extends Model
         
         $this->update([
             'progress_percentage' => min($progress, 100),
-            'total_points' => $totalPoints, // UPDATE TOTAL POINTS
+            'total_points' => $totalPoints, // Ini akan trigger observer
         ]);
 
         // Update status based on progress
