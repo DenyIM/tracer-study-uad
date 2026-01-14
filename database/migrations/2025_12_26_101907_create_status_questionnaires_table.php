@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->unique(['alumni_id', 'category_id']); // Satu kategori per alumni
+            $table->index(['alumni_id', 'total_points']);
         });
     }
 

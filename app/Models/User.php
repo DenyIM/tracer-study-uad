@@ -22,7 +22,8 @@ class User extends Authenticatable
         'last_login_at',
         'otp_code',
         'otp_expires_at',
-        'email_verified_at'
+        'email_verified_at',
+        'theme_preference'
     ];
 
     protected $hidden = ['password'];
@@ -41,11 +42,6 @@ class User extends Authenticatable
     public function admin()
     {
         return $this->hasOne(Admin::class);
-    }
-
-    public function userResponses()
-    {
-        return $this->hasMany(UserResponse::class);
     }
 
     // Helper methods

@@ -60,9 +60,9 @@ Route::get('/nav-lowongan', function () {
     return view('pages.list-lowongan');
 })->name('nav-lowongan');
 
-Route::get('/nav-profile', function () {
-    return view('pages.profile');
-})->name('nav-profile');
+// Route::get('/nav-profile', function () {
+//     return view('profile.profile');
+// })->name('nav-profile');
 
 Route::get('/nav-bookmark', function () {
     return view('pages.bookmark');
@@ -96,15 +96,34 @@ Route::get('/next-section3', function () {
 // AUTHENTICATION ROUTES
 // ==============================================
 
-Route::middleware('auth')->group(function () {
-    // Profile (Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])
-        ->name('profile.update');
+// Route::middleware('auth')->group(function () {
+//     // Profile (Breeze)
+//     Route::get('/profile', [ProfileController::class, 'edit'])
+//         ->name('profile.edit');
+//     Route::patch('/profile', [ProfileController::class, 'update'])
+//         ->name('profile.update');
+//     Route::delete('/profile', [ProfileController::class, 'destroy'])
+//         ->name('profile.destroy');
+// });
+
+Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
+    // Profile routes - semua bisa handle JSON response
+    Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+    Route::patch('/update', [ProfileController::class, 'update'])->name('update');
+    Route::post('/password/update', [ProfileController::class, 'updatePassword'])->name('password.update');
+    Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])
+        ->name('profile.theme.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
+    Route::post('/photo/upload', [ProfileController::class, 'uploadPhoto'])->name('photo.upload');
+        
 });
+
+
+// Route untuk nav-profile
+Route::get('/nav-profile', function () {
+    return redirect()->route('profile.edit');
+})->name('nav-profile')->middleware('auth');
 
 Route::middleware(['guest'])->group(function () {
     Route::get('/verify-otp', [OtpVerificationController::class, 'show'])->name('otp.show');
@@ -154,9 +173,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [UserController::class, 'alumniIndex'])->name('index');
             Route::get('/create', [UserController::class, 'alumniCreate'])->name('create');
             Route::post('/store', [UserController::class, 'alumniStore'])->name('store');
-            Route::get('/{alumni}', [UserController::class, 'alumniShow'])->name('show');
             Route::get('/{alumni}/edit', [UserController::class, 'alumniEdit'])->name('edit');
             Route::put('/{alumni}', [UserController::class, 'alumniUpdate'])->name('update');
+            Route::get('/{alumni}', [UserController::class, 'alumniShow'])->name('show');
             Route::delete('/{alumni}', [UserController::class, 'alumniDestroy'])->name('destroy');
             
             // Additional Alumni Actions
@@ -229,74 +248,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/export-summary/{categoryId?}', [AdminQuestionnaireController::class, 'exportSummaryCSV'])->name('export.summary');
     });
 });
-
-// Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
-//     // Cek manual apakah user adalah admin
-//     Route::middleware([\App\Http\Middleware\EnsureUserIsAdmin::class])->group(function () {
-//         // Admin Dashboard
-//         Route::get('/dashboard', [UserController::class, 'dashboard'])->name('views.dashboard');
-        
-//         // User Management
-//         Route::prefix('users')->name('views.users.')->group(function () {
-//             // Alumni Management
-//             Route::prefix('alumni')->name('alumni.')->group(function () {
-//                 Route::get('/', [UserController::class, 'alumniIndex'])->name('index');
-//                 Route::get('/create', [UserController::class, 'alumniCreate'])->name('create');
-//                 Route::post('/store', [UserController::class, 'alumniStore'])->name('store');
-//                 Route::get('/{alumni}', [UserController::class, 'alumniShow'])->name('show');
-//                 Route::get('/{alumni}/edit', [UserController::class, 'alumniEdit'])->name('edit');
-//                 Route::put('/{alumni}', [UserController::class, 'alumniUpdate'])->name('update');
-//                 Route::delete('/{alumni}', [UserController::class, 'alumniDestroy'])->name('destroy');
-                
-//                 // Additional Alumni Actions
-//                 Route::post('/{alumni}/verify-email', [UserController::class, 'verifyAlumniEmail'])->name('verify-email');
-//                 Route::post('/{alumni}/reset-password', [UserController::class, 'resetAlumniPassword'])->name('reset-password');
-//             });
-            
-//             // Admin Management
-//             Route::prefix('admins')->name('admin.')->group(function () {
-//                 Route::get('/', [UserController::class, 'adminIndex'])->name('index');
-//                 Route::get('/create', [UserController::class, 'adminCreate'])->name('create');
-//                 Route::post('/', [UserController::class, 'adminStore'])->name('store');
-//                 Route::get('/{admin}', [UserController::class, 'adminShow'])->name('show');
-//                 Route::get('/{admin}/edit', [UserController::class, 'adminEdit'])->name('edit');
-//                 Route::put('/{admin}', [UserController::class, 'adminUpdate'])->name('update');
-//                 Route::delete('/{admin}', [UserController::class, 'adminDestroy'])->name('destroy');
-//             });
-//         });
-        
-//         // Questionnaire Management (Admin)
-//         Route::prefix('questionnaire')->name('questionnaire.')->group(function () {
-//             // Categories Management
-//             Route::get('/categories', [AdminQuestionnaireController::class, 'categories'])->name('categories');
-//             Route::post('/categories', [AdminQuestionnaireController::class, 'storeCategory'])->name('categories.store');
-//             Route::put('/categories/{id}', [AdminQuestionnaireController::class, 'updateCategory'])->name('categories.update');
-//             Route::delete('/categories/{id}', [AdminQuestionnaireController::class, 'destroyCategory'])->name('categories.destroy');
-            
-//             // Questionnaires Management - PERBAIKI NAMA ROUTE YANG BENTROK
-//             Route::get('/categories/{category}/questionnaires', [AdminQuestionnaireController::class, 'questionnaires'])->name('questionnaires.index');
-//             Route::post('/categories/{category}/questionnaires', [AdminQuestionnaireController::class, 'storeQuestionnaire'])->name('questionnaires.store');
-//             Route::put('/categories/{category}/questionnaires/{id}', [AdminQuestionnaireController::class, 'updateQuestionnaire'])->name('questionnaires.update');
-//             Route::delete('/categories/{category}/questionnaires/{id}', [AdminQuestionnaireController::class, 'destroyQuestionnaire'])->name('questionnaires.destroy');
-            
-//             // ROUTE ORDER YANG BARU - GUNAKAN NAMA YANG BERBEDA
-//             Route::post('/categories/{category}/questionnaires/update-order', [AdminQuestionnaireController::class, 'updateQuestionnaireOrder'])->name('questionnaires.updateOrder');
-            
-//             // Questions Management
-//             Route::get('/categories/{category}/questionnaires/{questionnaire}/questions', [AdminQuestionnaireController::class, 'questions'])->name('questions.index');
-//             Route::post('/categories/{category}/questionnaires/{questionnaire}/questions', [AdminQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
-//             Route::put('/categories/{category}/questionnaires/{questionnaire}/questions/{id}', [AdminQuestionnaireController::class, 'updateQuestion'])->name('questions.update');
-//             Route::delete('/categories/{category}/questionnaires/{questionnaire}/questions/{id}', [AdminQuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
-            
-//             // ROUTE ORDER YANG BARU - GUNAKAN NAMA YANG BERBEDA
-//             Route::post('/categories/{category}/questionnaires/{questionnaire}/questions/update-order', [AdminQuestionnaireController::class, 'updateQuestionOrder'])->name('questions.updateOrder');
-            
-//             // Statistics & Reports
-//             Route::get('/statistics', [AdminQuestionnaireController::class, 'statistics'])->name('statistics');
-//             Route::get('/export/{category?}', [AdminQuestionnaireController::class, 'exportData'])->name('export');
-//         });
-//     });
-// });
 
 // ==============================================
 // ALUMNI QUESTIONNAIRE ROUTES (SEDERHANAKAN)

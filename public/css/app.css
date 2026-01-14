@@ -486,3 +486,17 @@
          width: 100%;
      }
  }
+
+ .nav-link.disabled {
+     opacity: 0.6;
+     cursor: not-allowed;
+ }
+
+ .nav-link.disabled:hover {
+     color: inherit !important;
+ }
+
+ .nav-link .badge.bg-warning {
+     font-size: 0.6rem;
+     padding: 0.2rem 0.3rem;
+ }
