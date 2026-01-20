@@ -16,6 +16,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AlumniRegistrationController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\Admin\LeaderboardAdminController;
 
 require __DIR__.'/auth.php';
 
@@ -48,9 +49,9 @@ Route::get('/nav-kuesioner', function () {
     return view('questionnaire.dashboard.index');
 })->name('main');
 
-Route::get('/nav-leaderboard', function () {
-    return view('pages.leaderboard');
-})->name('nav-leaderboard');
+// Route::get('/nav-leaderboard', function () {
+//     return view('pages.leaderboard');
+// })->name('nav-leaderboard');
 
 Route::get('/nav-forum', function () {
     return view('pages.forum');
@@ -149,7 +150,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // ==============================================
-// ADMIN ROUTES (SEDERHANAKAN - HAPUS MIDDLEWARE YANG BERMASALAH)
+// ADMIN ROUTES 
 // ==============================================
 
 // Hapus middleware ['auth', 'verified'] dari group utama
@@ -249,8 +250,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/statistics', [AdminQuestionnaireController::class, 'statistics'])->name('statistics');
         Route::get('/export/{categoryId?}', [AdminQuestionnaireController::class, 'exportData'])->name('export');
     });
-});
 
+    // ==============================================
+    // LEADERBOARD ADMIN ROUTE
+    // ==============================================
+
+    Route::prefix('leaderboard')->name('leaderboard.')->group(function () {
+        Route::get('dashboard', [LeaderboardAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('alumni', [LeaderboardAdminController::class, 'alumniLeaderboard'])->name('alumni');
+        Route::get('forum-submissions', [LeaderboardAdminController::class, 'forumSubmissions'])->name('forum.submissions');
+        Route::get('forum-submissions/{id}', [LeaderboardAdminController::class, 'showForumSubmission'])->name('forum.show');
+        Route::post('forum-submissions/{id}/approve', [LeaderboardAdminController::class, 'approveForumSubmission'])->name('forum.approve');
+        
+        Route::get('job-submissions', [LeaderboardAdminController::class, 'jobSubmissions'])->name('job.submissions');
+        Route::get('job-submissions/{id}', [LeaderboardAdminController::class, 'showJobSubmission'])->name('job.show');
+        Route::post('job-submissions/{id}/approve', [LeaderboardAdminController::class, 'approveJobSubmission'])->name('job.approve');
+        Route::delete('forum-submissions/{id}', [LeaderboardAdminController::class, 'deleteForumSubmission'])->name('forum.delete');
+        Route::delete('job-submissions/{id}', [LeaderboardAdminController::class, 'deleteJobSubmission'])->name('job.delete');
+
+        Route::post('submissions/{type}/{id}/reject', [LeaderboardAdminController::class, 'rejectSubmission'])->name('reject');
+        Route::post('bulk-approve', [LeaderboardAdminController::class, 'bulkApprove'])->name('bulk.approve');
+        Route::post('alumni/{id}/edit-points', [LeaderboardAdminController::class, 'editAlumniPoints'])->name('edit.points');
+        Route::get('statistics', [LeaderboardAdminController::class, 'getStatistics'])->name('statistics');
+        Route::get('pending-counts', [LeaderboardAdminController::class, 'getPendingCounts'])->name('pending.counts');
+    });
+});
     
 
 // ==============================================
@@ -334,12 +358,14 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')-
 // LEADERBOARD ROUTE
 // ==============================================
 
-// Route::middleware(['auth', 'verified', 'role:alumni'])->group(function () {
-//     Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('nav-leaderboard');
-//     Route::post('/leaderboard/submit-forum', [LeaderboardController::class, 'submitForum'])->name('leaderboard.submit.forum');
-//     Route::post('/leaderboard/submit-job', [LeaderboardController::class, 'submitJob'])->name('leaderboard.submit.job');
-//     Route::get('/leaderboard/data', [LeaderboardController::class, 'getLeaderboardData'])->name('leaderboard.data');
-// });
+Route::middleware(['auth', 'verified', 'role:alumni'])->group(function () {
+    // Leaderboard routes
+    Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('leaderboard');
+    Route::post('/leaderboard/submit-forum', [LeaderboardController::class, 'submitForum'])->name('leaderboard.submit.forum');
+    Route::post('/leaderboard/submit-job', [LeaderboardController::class, 'submitJob'])->name('leaderboard.submit.job');
+    Route::get('/leaderboard/submission-history', [LeaderboardController::class, 'getSubmissionHistory'])->name('leaderboard.submission.history');
+    Route::get('/leaderboard/user/{id}', [LeaderboardController::class, 'getUserRankInfo'])->name('leaderboard.user.info');
+});
 
 // ==============================================
 // ADDITIONAL STATIC ROUTES (for blade testing)

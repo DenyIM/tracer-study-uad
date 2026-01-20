@@ -79,9 +79,9 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('nav-leaderboard') ? 'active' : '' }} 
+                                <a class="nav-link {{ request()->routeIs('leaderboard') ? 'active' : '' }} 
                                     {{ !$progressParts['part1'] ? 'disabled text-muted' : '' }}"
-                                    href="{{ $progressParts['part1'] ? route('nav-leaderboard') : '#' }}"
+                                    href="{{ $progressParts['part1'] ? route('leaderboard') : '#' }}"
                                     @if (!$progressParts['part1']) onclick="return false;" @endif>
                                     <i class="fas fa-crown me-1"></i> Leaderboard
                                     @if (!$progressParts['part1'])

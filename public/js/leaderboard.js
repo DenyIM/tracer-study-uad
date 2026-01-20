@@ -1,4 +1,6 @@
-// LEADERBOARD FUNCTIONALITY - COMPATIBLE VERSION
+// LEADERBOARD FUNCTIONALITY - SIMPLE WORKING VERSION
+
+let isSubmitting = false;
 
 // Fungsi untuk menginisialisasi leaderboard
 function initializeLeaderboard() {
@@ -13,58 +15,54 @@ function initializeLeaderboard() {
     // 3. Initialize podium animations
     initializePodiumAnimations();
 
-    // 4. Initialize current user highlight
-    // initializeCurrentUserHighlight();
-
-    // 5. Initialize button effects
+    // 4. Initialize button effects
     initializeButtonEffects();
 
-    // 6. Initialize AOS animations if available
+    // 5. Initialize AOS animations if available
     initializeAOS();
+
+    // 6. Initialize search functionality
+    initializeSearch();
 
     console.log('Leaderboard functionality initialized successfully');
 }
 
 // 1. Initialize form submissions
 function initializeFormSubmissions() {
-    // Cek elemen form forum
+    // Forum form
     const forumForm = document.getElementById('forumForm');
     if (forumForm) {
         forumForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            handleFormSubmit(this, 'forumSuccessMessage');
+            handleFormSubmit(this, 'forumSuccessMessage', 'forum');
         });
     }
 
-    // Cek elemen form job
+    // Job form
     const jobForm = document.getElementById('jobForm');
     if (jobForm) {
         jobForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            handleFormSubmit(this, 'jobSuccessMessage');
+            handleFormSubmit(this, 'jobSuccessMessage', 'job');
         });
     }
-
-    // Setup form input validation
-    setupFormValidation();
 }
 
 // 2. Initialize pagination
 function initializePagination() {
-    const pageLinks = document.querySelectorAll('.page-link');
+    const pageLinks = document.querySelectorAll('.pagination .page-link:not([href="#"])');
     if (pageLinks.length > 0) {
         pageLinks.forEach(link => {
-            link.addEventListener('click', function (e) {
-                if (this.getAttribute('href') === '#') {
-                    e.preventDefault();
-                    showNotification('Fitur pagination sedang dalam pengembangan. Pada implementasi nyata, halaman akan berubah sesuai data.', 'info');
-                }
+            link.addEventListener('click', function () {
+                setTimeout(() => {
+                    scrollToTable();
+                }, 100);
             });
         });
     }
 }
 
-// 4. Initialize podium animations
+// 3. Initialize podium animations
 function initializePodiumAnimations() {
     const podiumStands = document.querySelectorAll('.podium-stand');
     podiumStands.forEach(stand => {
@@ -76,62 +74,17 @@ function initializePodiumAnimations() {
         stand.addEventListener('mouseleave', function () {
             this.style.transform = 'translateY(0)';
         });
-
-        // Add click effect
-        stand.addEventListener('click', function () {
-            const podiumPlace = this.closest('.podium-place');
-            const podiumName = podiumPlace.querySelector('.podium-name').textContent;
-            const podiumPoints = podiumPlace.querySelector('.podium-points').textContent;
-
-            showNotification(`${podiumName} - ${podiumPoints}`, 'info');
-        });
     });
 }
 
-// 5. Initialize current user highlight
-// function initializeCurrentUserHighlight() {
-//     const currentUserRow = document.querySelector('.current-user');
-//     if (currentUserRow) {
-//         // Add initial animation
-//         setTimeout(() => {
-//             currentUserRow.style.transition = 'background-color 1.5s ease';
-//         }, 500);
-
-//         // Add pulsing animation
-//         let pulseState = false;
-//         setInterval(() => {
-//             if (pulseState) {
-//                 currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.1)';
-//             } else {
-//                 currentUserRow.style.backgroundColor = 'rgba(250, 179, 0, 0.15)';
-//             }
-//             pulseState = !pulseState;
-//         }, 1500);
-
-//         // Add click to scroll
-//         currentUserRow.addEventListener('click', function () {
-//             this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-//         });
-
-//         // Scroll to current user on load (only if not on submit tab)
-//         if (window.location.hash !== '#submit') {
-//             setTimeout(() => {
-//                 currentUserRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-//             }, 1000);
-//         }
-//     }
-// }
-
-// 6. Initialize button effects
+// 4. Initialize button effects
 function initializeButtonEffects() {
-    // Add ripple effect to all submit buttons
+    // Ripple effect
     const submitButtons = document.querySelectorAll('.submit-btn');
     submitButtons.forEach(button => {
         button.addEventListener('click', function (e) {
-            // Don't add ripple effect if button is disabled
             if (this.disabled) return;
 
-            // Add ripple effect
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
             const size = Math.max(rect.width, rect.height);
@@ -156,7 +109,6 @@ function initializeButtonEffects() {
             this.style.overflow = 'hidden';
             this.appendChild(ripple);
 
-            // Remove ripple after animation
             setTimeout(() => {
                 if (ripple.parentNode === this) {
                     this.removeChild(ripple);
@@ -165,23 +117,20 @@ function initializeButtonEffects() {
         });
     });
 
-    // Add CSS for ripple animation if not already present
+    // Add ripple animation style
     if (!document.querySelector('#ripple-animation-style')) {
         const style = document.createElement('style');
         style.id = 'ripple-animation-style';
         style.textContent = `
             @keyframes ripple-animation {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
+                to { transform: scale(4); opacity: 0; }
             }
         `;
         document.head.appendChild(style);
     }
 }
 
-// 7. Initialize AOS animations
+// 5. Initialize AOS animations
 function initializeAOS() {
     if (typeof AOS !== 'undefined') {
         AOS.init({
@@ -193,250 +142,249 @@ function initializeAOS() {
     }
 }
 
-// Setup form validation
-function setupFormValidation() {
-    // Add validation styles to required inputs
-    const requiredInputs = document.querySelectorAll('input[required], textarea[required], select[required]');
-    requiredInputs.forEach(input => {
-        input.addEventListener('blur', function () {
-            if (!this.value.trim()) {
-                this.style.borderColor = '#dc3545';
-                this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
-            } else {
-                this.style.borderColor = '#28a745';
-                this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
-            }
+// 6. Initialize search functionality
+function initializeSearch() {
+    const searchForm = document.getElementById('searchForm');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function () {
+            setTimeout(() => {
+                scrollToTable();
+            }, 100);
         });
-
-        input.addEventListener('input', function () {
-            this.style.borderColor = '#e9ecef';
-            this.style.boxShadow = 'none';
-        });
-    });
+    }
 }
 
-// Fungsi untuk menangani submit form
-function handleFormSubmit(form, successMessageId) {
-    console.log('Submitting form:', form.id);
+// Fungsi utama untuk handle form submit
+function handleFormSubmit(form, successMessageId, type) {
+    console.log('Submitting', type, 'form...');
+
+    if (isSubmitting) {
+        showNotification('Sedang mengirim data, harap tunggu...', 'warning');
+        return;
+    }
 
     const submitButton = form.querySelector('button[type="submit"]');
     const originalText = submitButton.innerHTML;
     const successMessage = document.getElementById(successMessageId);
 
-    // Validasi form
-    if (!validateForm(form)) {
-        showNotification('Harap isi semua bidang yang wajib diisi!', 'error');
+    // Validasi form sederhana
+    if (!validateFormSimple(form)) {
+        showNotification('Harap isi semua field yang wajib diisi!', 'error');
         return;
     }
 
-    // Show loading state
-    showLoadingState(submitButton);
+    // Set loading state
+    isSubmitting = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
+    submitButton.disabled = true;
 
-    // Simulate API call
-    setTimeout(() => {
-        // Show success message
-        if (successMessage) {
-            showSuccessMessage(successMessage, form, submitButton, originalText);
-        }
-    }, 2000);
+    // Collect form data
+    const formData = new FormData(form);
+    const data = {};
+
+    // Convert FormData to plain object
+    for (let [key, value] of formData.entries()) {
+        // Skip CSRF token dan method
+        if (key === '_token' || key === '_method') continue;
+        data[key] = value;
+    }
+
+    console.log('Data to send:', data);
+
+    // Determine endpoint
+    const endpoint = type === 'forum'
+        ? '/leaderboard/submit-forum'
+        : '/leaderboard/submit-job';
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+        form.querySelector('input[name="_token"]')?.value;
+
+    // Send request menggunakan Fetch API
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken || '',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(data)
+    })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json().then(data => ({
+                status: response.status,
+                ok: response.ok,
+                data: data
+            }));
+        })
+        .then(result => {
+            console.log('Response:', result);
+
+            if (result.ok) {
+                // Success
+                showSuccessMessage(successMessage, form, submitButton, originalText, result.data.message);
+                showNotification(result.data.message, 'success');
+            } else {
+                // Error handling
+                if (result.status === 422 && result.data.errors) {
+                    // Show validation errors
+                    let errorMessages = [];
+                    Object.values(result.data.errors).forEach(errors => {
+                        errorMessages = errorMessages.concat(errors);
+                    });
+                    showNotification(errorMessages.join('<br>'), 'error');
+                } else {
+                    showNotification(result.data.message || 'Gagal mengirim data!', 'error');
+                }
+            }
+
+            // Reset button state
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+            isSubmitting = false;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat mengirim data!', 'error');
+
+            // Reset button state
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+            isSubmitting = false;
+        });
 }
 
-// Validate form function
-function validateForm(form) {
-    const requiredInputs = form.querySelectorAll('[required]');
+// Simple form validation
+function validateFormSimple(form) {
     let isValid = true;
+    const requiredFields = form.querySelectorAll('[required]');
 
-    requiredInputs.forEach(input => {
-        if (!input.value.trim()) {
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
             isValid = false;
-            input.style.borderColor = '#dc3545';
-            input.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
-
-            // Reset on input
-            input.addEventListener('input', function resetValidation() {
-                this.style.borderColor = '#e9ecef';
-                this.style.boxShadow = 'none';
-                this.removeEventListener('input', resetValidation);
-            });
+        } else {
+            field.classList.remove('is-invalid');
         }
     });
 
     return isValid;
 }
 
-// Show loading state function
-function showLoadingState(button) {
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
-    button.disabled = true;
-    button.style.opacity = '0.7';
-    button.style.cursor = 'not-allowed';
-}
-
-// Show success message function
-function showSuccessMessage(successMessage, form, submitButton, originalText) {
-    successMessage.style.display = 'flex';
-
-    // Scroll to success message
-    successMessage.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-    });
-
-    // Reset form
-    form.reset();
-
-    // Reset validation styles
-    const requiredInputs = form.querySelectorAll('[required]');
-    requiredInputs.forEach(input => {
-        input.style.borderColor = '#e9ecef';
-        input.style.boxShadow = 'none';
-    });
-
-    // Reset button
-    submitButton.innerHTML = originalText;
-    submitButton.disabled = false;
-    submitButton.style.opacity = '1';
-    submitButton.style.cursor = 'pointer';
-
-    // Show notification
-    const formType = form.id.includes('forum') ? 'forum' : 'lowongan kerja';
-    showNotification(`Informasi ${formType} berhasil dikirim! Tim admin akan memverifikasi dalam 1-2 hari kerja.`, 'success');
-
-    // Hide success message after 5 seconds
-    setTimeout(() => {
-        successMessage.style.display = 'none';
-    }, 5000);
-}
-
-// Fungsi untuk menampilkan notifikasi
-function showNotification(message, type = 'info') {
-    // Fallback jika Bootstrap tidak tersedia
-    if (typeof bootstrap === 'undefined' || !bootstrap.Toast) {
-        console.log(`${type.toUpperCase()}: ${message}`);
-
-        // Create custom notification
-        const notification = document.createElement('div');
-        notification.className = `custom-notification ${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-                <span>${message}</span>
-            </div>
-        `;
-
-        // Add styles
-        if (!document.querySelector('#custom-notification-style')) {
-            const style = document.createElement('style');
-            style.id = 'custom-notification-style';
-            style.textContent = `
-                .custom-notification {
-                    position: fixed;
-                    bottom: 20px;
-                    right: 20px;
-                    background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
-                    color: white;
-                    padding: 15px 20px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    z-index: 9999;
-                    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s forwards;
-                    max-width: 400px;
-                }
-                .custom-notification .notification-content {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                }
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes fadeOut {
-                    to { opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
+// Show success message
+function showSuccessMessage(successMessage, form, submitButton, originalText, message) {
+    if (successMessage) {
+        successMessage.style.display = 'flex';
+        if (successMessage.querySelector('p')) {
+            successMessage.querySelector('p').textContent = message;
         }
 
-        document.body.appendChild(notification);
+        // Scroll to success message
+        successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // Remove after 5 seconds
+        // Reset form
         setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
+            form.reset();
+            const invalidFields = form.querySelectorAll('.is-invalid');
+            invalidFields.forEach(field => field.classList.remove('is-invalid'));
+        }, 100);
+
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+            successMessage.style.display = 'none';
         }, 5000);
-
-        return;
     }
+}
 
-    // Gunakan Bootstrap Toast jika tersedia
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+// Show notification
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.custom-notification').forEach(notification => {
+        notification.remove();
+    });
+
+    // Create notification
+    const notification = document.createElement('div');
+    notification.className = `custom-notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
         </div>
     `;
 
-    // Tambahkan ke container toast
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-        toastContainer.style.zIndex = '1060';
-        document.body.appendChild(toastContainer);
+    // Add styles if needed
+    if (!document.querySelector('#custom-notification-style')) {
+        const style = document.createElement('style');
+        style.id = 'custom-notification-style';
+        style.textContent = `
+            .custom-notification {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s forwards;
+                max-width: 400px;
+            }
+            .custom-notification .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
-    toastContainer.appendChild(toast);
+    document.body.appendChild(notification);
 
-    // Inisialisasi dan tampilkan toast
-    const bsToast = new bootstrap.Toast(toast, {
-        autohide: true,
-        delay: 5000
-    });
-
-    bsToast.show();
-
-    // Hapus toast setelah ditutup
-    toast.addEventListener('hidden.bs.toast', function () {
-        if (toast.parentNode === toastContainer) {
-            toastContainer.removeChild(toast);
+    // Remove after delay
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
         }
-    });
+    }, 5000);
 }
 
-// Tunggu DOM siap
+// Scroll to table
+function scrollToTable() {
+    const tableElement = document.getElementById('leaderboardTable');
+    if (tableElement) {
+        setTimeout(() => {
+            tableElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 100);
+    }
+}
+
+// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function () {
     initializeLeaderboard();
 
-    // Refresh AOS on load
-    setTimeout(() => {
-        if (typeof AOS !== 'undefined') {
-            AOS.refresh();
-        }
-    }, 500);
-});
-
-// Handle window resize for AOS
-window.addEventListener('resize', function () {
-    if (typeof AOS !== 'undefined') {
-        AOS.refreshHard();
+    // Auto scroll to table if URL has parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('search') || urlParams.has('per_page') || urlParams.has('page')) {
+        setTimeout(() => {
+            scrollToTable();
+        }, 300);
     }
 });
 
-// Export untuk testing (opsional)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        initializeLeaderboard,
-        handleFormSubmit,
-        showNotification
-    };
-}
+// Make functions globally available
+window.scrollToTable = scrollToTable;
+window.showNotification = showNotification;

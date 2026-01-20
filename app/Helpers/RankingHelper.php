@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use App\Models\Alumni; // TAMBAHKAN INI
+use App\Models\Alumni; 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
