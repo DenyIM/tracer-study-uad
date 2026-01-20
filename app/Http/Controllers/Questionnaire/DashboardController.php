@@ -11,6 +11,7 @@ use App\Models\AlumniAchievement;
 use App\Models\AnswerQuestion;
 use App\Models\Alumni;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\RankingHelper;
 
 class DashboardController extends Controller
 {
@@ -141,9 +142,9 @@ class DashboardController extends Controller
         $progressPercentage = $totalQuestions > 0 ? round(($totalAnswered / $totalQuestions) * 100) : 0;
         
         // Hitung ranking
-        $currentRank = $this->getCurrentRank($alumni);
-        $totalParticipants = Alumni::count();
-        
+        $currentRank = RankingHelper::getAlumniRank($alumni->id);
+        $totalParticipants = RankingHelper::getTotalParticipants();
+
         $stats = [
             'categories_completed' => StatusQuestionnaire::where('alumni_id', $alumni->id)
                 ->where('status', 'completed')
@@ -258,30 +259,33 @@ class DashboardController extends Controller
      */
     private function getCurrentRank($alumni)
     {
-        // Logika untuk mendapatkan ranking dari leaderboard
-        // Untuk implementasi nyata, Anda perlu query tabel leaderboard
-        
-        // Contoh: Ambil ranking berdasarkan total points
-        $currentUserPoints = StatusQuestionnaire::where('alumni_id', $alumni->id)
-            ->sum('total_points') ?? 0;
-        
-        // Hitung berapa banyak alumni yang memiliki points lebih tinggi
-        $higherRanked = StatusQuestionnaire::select('alumni_id')
-            ->selectRaw('SUM(total_points) as total_points_sum')
-            ->groupBy('alumni_id')
-            ->havingRaw('SUM(total_points) > ?', [$currentUserPoints])
-            ->count();
-        
-        // Ranking adalah posisi user + 1
-        $rank = $higherRanked + 1;
-        
-        // Jika belum ada points, beri ranking berdasarkan jumlah peserta
-        if ($currentUserPoints <= 0) {
-            $totalParticipants = Alumni::count();
-            $rank = max(1, $totalParticipants); // Posisi terakhir
+        try {
+            // Solusi 1: Gunakan alias bukan reserved keyword
+            $currentUserPoints = StatusQuestionnaire::where('alumni_id', $alumni->id)
+                ->sum('total_points') ?? 0;
+            
+            // Hitung berapa banyak alumni yang memiliki points lebih tinggi
+            $higherRankedCount = StatusQuestionnaire::select('alumni_id')
+                ->selectRaw('SUM(total_points) as total_points_sum')
+                ->groupBy('alumni_id')
+                ->havingRaw('SUM(total_points) > ?', [$currentUserPoints])
+                ->count();
+            
+            // Ranking adalah jumlah yang lebih tinggi + 1
+            return $higherRankedCount + 1;
+            
+        } catch (\Exception $e) {
+            // Fallback jika ada error
+            return 1;
         }
-        
-        return $rank;
+    }
+
+    /**
+     * Get total participants
+     */
+    private function getTotalParticipants()
+    {
+        return StatusQuestionnaire::select('alumni_id')->distinct()->count();
     }
     
     /**

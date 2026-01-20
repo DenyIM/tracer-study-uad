@@ -22,6 +22,37 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+
+        /* Tombol Kembali ke Homepage */
+        .back-to-home {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-to-home:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            color: var(--light-yellow);
+            text-decoration: none;
         }
 
         .login-container {
@@ -88,18 +119,6 @@
             color: #dc3545;
             font-size: 0.875rem;
             margin-top: 0.25rem;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #6b7280;
-            cursor: pointer;
-            z-index: 10;
         }
 
         .btn-login {
@@ -203,13 +222,122 @@
             margin-top: 0.25rem;
         }
 
-        .password-wrapper {
+        /* Perbaikan untuk password input */
+        .password-container {
             position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            z-index: 10;
+            height: 30px;
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #003366;
+        }
+
+        /* Padding untuk input password agar tidak tertutup tombol toggle */
+        .password-container input[type="password"],
+        .password-container input[type="text"] {
+            padding-right: 45px !important;
+        }
+
+        /* Menghilangkan toggle built-in browser untuk password */
+        input[type="password"]::-webkit-textfield-decoration-container {
+            display: none !important;
+        }
+
+        input[type="password"]::-webkit-caps-lock-indicator {
+            display: none !important;
+        }
+
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            display: none !important;
+            visibility: hidden;
+            pointer-events: none;
+            position: absolute;
+            right: 0;
+        }
+
+        /* Untuk Chrome, Safari, Edge */
+        input[type="password"]::-webkit-reveal-password-button,
+        input[type="password"]::-webkit-reveal-password {
+            display: none !important;
+            -webkit-appearance: none;
+        }
+
+        /* Untuk Firefox */
+        input[type="password"][type="password"]::-ms-reveal,
+        input[type="password"][type="password"]::-ms-clear {
+            display: none !important;
+        }
+
+        /* Umum */
+        input[type="password"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Responsif untuk mobile */
+        @media (max-width: 768px) {
+            .back-to-home {
+                left: 10px;
+                top: 10px;
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .login-logo {
+                width: 180px;
+                margin-top: 3rem;
+            }
+
+            .login-card {
+                margin: 0 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .back-to-home {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .back-to-home span {
+                display: none;
+            }
+
+            .back-to-home i {
+                margin-right: 0;
+            }
+
+            .login-logo {
+                width: 160px;
+            }
         }
     </style>
 </head>
 
 <body>
+    <!-- Tombol Kembali ke Homepage -->
+    <a href="{{ url('/') }}" class="back-to-home">
+        <i class="fas fa-arrow-left"></i>
+        <span>Kembali ke Homepage</span>
+    </a>
+
     <img src="{{ asset('logo-tracer-study.png') }}" alt="Logo Tracer Study" class="login-logo">
 
     <div class="login-container">
@@ -243,7 +371,7 @@
                         <input type="email" class="form-control" id="email" name="email"
                             value="{{ old('email') }}" placeholder="namanim@webmail.uad.ac.id" required>
                         <div class="email-help">
-                            Gunakan email UAD
+                            Gunakan email UAD: namanim@webmail.uad.ac.id
                         </div>
                         @error('email')
                             <div class="text-danger mt-1">{{ $message }}</div>
@@ -251,13 +379,15 @@
                     </div>
 
                     <!-- Password Input -->
-                    <div class="mb-3 password-wrapper">
+                    <div class="mb-3">
                         <label for="password" class="form-label fw-semibold">Password</label>
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Masukkan password Anda" required>
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                        <div class="password-container">
+                            <input type="password" class="form-control" id="password" name="password"
+                                placeholder="Masukkan password Anda" required>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         @error('password')
                             <div class="text-danger mt-1">{{ $message }}</div>
                         @enderror
@@ -349,7 +479,40 @@
                 return false;
             }
 
+            // Tampilkan loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Memproses...';
+            submitBtn.disabled = true;
+
             return true;
+        });
+
+        // Solusi JavaScript tambahan untuk menghilangkan toggle built-in
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+
+            passwordInputs.forEach(input => {
+                // Atur attribute untuk mencegah autocomplete yang memicu toggle
+                input.setAttribute('autocomplete', 'current-password');
+                input.setAttribute('autocapitalize', 'off');
+                input.setAttribute('autocorrect', 'off');
+            });
+
+            // Validasi email saat input
+            const emailInput = document.getElementById('email');
+            if (emailInput) {
+                emailInput.addEventListener('input', function(e) {
+                    const email = e.target.value;
+
+                    if (email && !validateUADEmail(email)) {
+                        e.target.classList.add('is-invalid');
+                    } else {
+                        e.target.classList.remove('is-invalid');
+                        e.target.classList.add('is-valid');
+                    }
+                });
+            }
         });
     </script>
 </body>

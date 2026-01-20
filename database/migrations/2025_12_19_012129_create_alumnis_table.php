@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('study_program', 100);
             $table->date('graduation_date');
             $table->string('npwp', 50)->nullable();
-            $table->integer('ranking')->nullable(); 
             $table->integer('points')->default(0); 
             $table->timestamps();
         });

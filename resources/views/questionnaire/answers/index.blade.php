@@ -138,12 +138,40 @@
             border: 1px solid #ffecb5;
         }
 
+        .badge-whatsapp {
+            background-color: #25d366;
+            color: white;
+            border: 1px solid #128c7e;
+        }
+
+        .badge-other {
+            background-color: #6f42c1;
+            color: white;
+            border: 1px solid #5a32a3;
+        }
+
         .email-display {
             margin-top: 10px;
             padding: 10px;
             background-color: #f8f9fa;
             border-radius: 6px;
-            border-left: 3px solid #007bff;
+            border-left: 3px solid #ffc107;
+        }
+
+        .whatsapp-display {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #dcf8c6;
+            border-radius: 6px;
+            border-left: 3px solid #25d366;
+        }
+
+        .other-display {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e9d8fd;
+            border-radius: 6px;
+            border-left: 3px solid #6f42c1;
         }
 
         .empty-state {
@@ -280,6 +308,18 @@
                                         5 => 'Sangat Tinggi',
                                     ];
                                 }
+
+                                // Parse answer data
+                                $answerText = $answer->answer;
+                                $selectedOptions = $answer->selected_options;
+                                $scaleValue = $answer->scale_value;
+
+                                if (is_string($selectedOptions)) {
+                                    $selectedOptions = json_decode($selectedOptions, true) ?? [];
+                                }
+                                if (!is_array($selectedOptions)) {
+                                    $selectedOptions = [$selectedOptions];
+                                }
                             @endphp
 
                             <div class="question-item">
@@ -294,7 +334,7 @@
 
                                         <div class="answer-content">
                                             @if (in_array($question->question_type, ['likert_scale', 'competency_scale']))
-                                                @if ($answer->scale_value)
+                                                @if ($scaleValue)
                                                     <div class="answer-text">
                                                         <table class="scale-table">
                                                             <tr>
@@ -302,43 +342,56 @@
                                                                 <th width="50%">Keterangan</th>
                                                             </tr>
                                                             <tr>
-                                                                <td class="scale-value">{{ $answer->scale_value }}</td>
-                                                                <td>{{ $scaleLabels[$answer->scale_value] ?? 'Tidak tersedia' }}
+                                                                <td class="scale-value">{{ $scaleValue }}</td>
+                                                                <td>{{ $scaleLabels[$scaleValue] ?? 'Tidak tersedia' }}
                                                                 </td>
                                                             </tr>
                                                         </table>
                                                     </div>
                                                 @endif
                                             @elseif(in_array($question->question_type, ['checkbox', 'checkbox_per_row']))
-                                                @if ($answer->selected_options)
+                                                @if (count($selectedOptions) > 0)
                                                     <div class="answer-text">
-                                                        @php
-                                                            // Handle both array and JSON string
-                                                            $selectedOptions = $answer->selected_options;
-                                                            if (is_string($selectedOptions)) {
-                                                                $selectedOptions =
-                                                                    json_decode($selectedOptions, true) ?? [];
-                                                            }
-
-                                                            if (!is_array($selectedOptions)) {
-                                                                $selectedOptions = [$selectedOptions];
-                                                            }
-                                                        @endphp
                                                         @foreach ($selectedOptions as $option)
-                                                            @if (strpos($option, 'email') !== false || strpos($option, 'Ya,') !== false)
+                                                            @if (is_string($option) && str_contains($option, ':'))
                                                                 @php
                                                                     $parts = explode(':', $option, 2);
                                                                     $mainText = trim($parts[0]);
-                                                                    $emailValue = isset($parts[1])
+                                                                    $additionalValue = isset($parts[1])
                                                                         ? trim($parts[1])
                                                                         : '';
                                                                 @endphp
-                                                                <span
-                                                                    class="answer-badge badge-email">{{ $mainText }}</span>
-                                                                @if ($emailValue)
-                                                                    <div class="email-display">
-                                                                        <strong>Email:</strong> {{ $emailValue }}
-                                                                    </div>
+
+                                                                @if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,'))
+                                                                    <span
+                                                                        class="answer-badge badge-email">{{ $mainText }}</span>
+                                                                    @if ($additionalValue)
+                                                                        <div class="email-display">
+                                                                            <strong>Email:</strong>
+                                                                            {{ $additionalValue }}
+                                                                        </div>
+                                                                    @endif
+                                                                @elseif(str_contains($mainText, 'WhatsApp'))
+                                                                    <span
+                                                                        class="answer-badge badge-whatsapp">{{ $mainText }}</span>
+                                                                    @if ($additionalValue)
+                                                                        <div class="whatsapp-display">
+                                                                            <strong>WhatsApp:</strong>
+                                                                            {{ $additionalValue }}
+                                                                        </div>
+                                                                    @endif
+                                                                @elseif(str_contains($mainText, 'Lainnya'))
+                                                                    <span
+                                                                        class="answer-badge badge-other">{{ $mainText }}</span>
+                                                                    @if ($additionalValue)
+                                                                        <div class="other-display">
+                                                                            <strong>Keterangan:</strong>
+                                                                            {{ $additionalValue }}
+                                                                        </div>
+                                                                    @endif
+                                                                @else
+                                                                    <span
+                                                                        class="answer-badge badge-checkbox">{{ $option }}</span>
                                                                 @endif
                                                             @else
                                                                 <span
@@ -348,30 +401,62 @@
                                                     </div>
                                                 @endif
                                             @elseif(in_array($question->question_type, ['radio', 'dropdown', 'radio_per_row']))
-                                                @if ($answer->answer)
+                                                @if ($answerText)
                                                     <div class="answer-text">
-                                                        @if (strpos($answer->answer, 'email') !== false || strpos($answer->answer, 'Ya,') !== false)
-                                                            @php
-                                                                $parts = explode(':', $answer->answer, 2);
+                                                        @php
+                                                            if (
+                                                                is_string($answerText) &&
+                                                                str_contains($answerText, ':')
+                                                            ) {
+                                                                $parts = explode(':', $answerText, 2);
                                                                 $mainText = trim($parts[0]);
-                                                                $emailValue = isset($parts[1]) ? trim($parts[1]) : '';
-                                                            @endphp
-                                                            <span
-                                                                class="answer-badge badge-email">{{ $mainText }}</span>
-                                                            @if ($emailValue)
-                                                                <div class="email-display">
-                                                                    <strong>Email:</strong> {{ $emailValue }}
-                                                                </div>
-                                                            @endif
-                                                        @else
-                                                            {{ $answer->answer }}
-                                                        @endif
+                                                                $additionalValue = isset($parts[1])
+                                                                    ? trim($parts[1])
+                                                                    : '';
+
+                                                                if (
+                                                                    str_contains($mainText, 'email') ||
+                                                                    str_contains($mainText, 'Ya,')
+                                                                ) {
+                                                                    echo '<span class="answer-badge badge-email">' .
+                                                                        $mainText .
+                                                                        '</span>';
+                                                                    if ($additionalValue) {
+                                                                        echo '<div class="email-display"><strong>Email:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
+                                                                    }
+                                                                } elseif (str_contains($mainText, 'WhatsApp')) {
+                                                                    echo '<span class="answer-badge badge-whatsapp">' .
+                                                                        $mainText .
+                                                                        '</span>';
+                                                                    if ($additionalValue) {
+                                                                        echo '<div class="whatsapp-display"><strong>WhatsApp:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
+                                                                    }
+                                                                } elseif (str_contains($mainText, 'Lainnya')) {
+                                                                    echo '<span class="answer-badge badge-other">' .
+                                                                        $mainText .
+                                                                        '</span>';
+                                                                    if ($additionalValue) {
+                                                                        echo '<div class="other-display"><strong>Keterangan:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
+                                                                    }
+                                                                } else {
+                                                                    echo $answerText;
+                                                                }
+                                                            } else {
+                                                                echo $answerText;
+                                                            }
+                                                        @endphp
                                                     </div>
                                                 @endif
                                             @elseif($question->question_type === 'likert_per_row')
                                                 @php
                                                     // Handle both array and JSON string for answer
-                                                    $answerValues = $answer->answer;
+                                                    $answerValues = $answerText;
                                                     if (is_string($answerValues)) {
                                                         $answerValues = json_decode($answerValues, true) ?? [];
                                                     }
@@ -387,7 +472,7 @@
                                                     }
                                                 @endphp
 
-                                                @if (count($answerValues) > 0)
+                                                @if (count($answerValues) > 0 && is_array($answerValues))
                                                     <div class="answer-text">
                                                         <table class="scale-table">
                                                             <tr>
@@ -419,13 +504,13 @@
                                                     </div>
                                                 @endif
                                             @elseif(in_array($question->question_type, ['textarea']))
-                                                @if ($answer->answer)
+                                                @if ($answerText)
                                                     <div class="answer-text" style="white-space: pre-line;">
-                                                        {{ $answer->answer }}</div>
+                                                        {{ $answerText }}</div>
                                                 @endif
                                             @else
-                                                @if ($answer->answer)
-                                                    <div class="answer-text">{{ $answer->answer }}</div>
+                                                @if ($answerText)
+                                                    <div class="answer-text">{{ $answerText }}</div>
                                                 @endif
                                             @endif
 
@@ -433,6 +518,13 @@
                                                 <div class="text-muted small mt-3">
                                                     <i class="fas fa-clock me-1"></i>
                                                     Diisi: {{ $answer->answered_at->format('d/m/Y H:i') }}
+                                                </div>
+                                            @endif
+
+                                            @if ($question->points && $answer->points)
+                                                <div class="text-success small mt-1">
+                                                    <i class="fas fa-star me-1"></i>
+                                                    Poin: {{ $answer->points }}
                                                 </div>
                                             @endif
                                         </div>

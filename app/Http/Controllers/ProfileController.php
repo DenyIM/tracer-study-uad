@@ -16,6 +16,7 @@ use App\Models\AnswerQuestion;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
@@ -27,9 +28,9 @@ class ProfileController extends Controller
         $user = $request->user();
         $alumni = $user->alumni;
         
-        // Hitung ranking dan points
+        // Hitung ranking dan points yang benar
         $ranking = $this->calculateRanking($alumni);
-        $totalPoints = $this->calculateTotalPoints($alumni);
+        $totalPoints = $alumni->points ?? 0;
         
         return view('profile.profile', [
             'user' => $user,
@@ -40,30 +41,31 @@ class ProfileController extends Controller
     }
 
     /**
-     * Hitung ranking alumni
+     * Hitung ranking alumni berdasarkan points
      */
     private function calculateRanking($alumni): int
     {
         if (!$alumni) return 0;
         
-        // Logika sederhana untuk ranking
-        // Anda bisa sesuaikan dengan logika ranking yang sebenarnya
-        return $alumni->ranking ?? rand(1, 100);
-    }
-
-    /**
-     * Hitung total points dari jawaban
-     */
-    private function calculateTotalPoints($alumni): int
-    {
-        if (!$alumni) return 0;
+        $currentPoints = $alumni->points ?? 0;
         
-        // Hitung total points dari semua jawaban yang sudah diisi
-        $totalPoints = AnswerQuestion::where('alumni_id', $alumni->id)
-            ->where('is_skipped', false)
-            ->sum('points');
+        // PERBAIKAN: Ganti 'alumni' menjadi 'alumnis'
+        // Hitung berapa banyak alumni yang memiliki points lebih tinggi
+        $higherCount = DB::table('alumnis')  // <-- PERBAIKAN DI SINI
+            ->where('points', '>', $currentPoints)
+            ->count();
         
-        return $totalPoints ?: ($alumni->points ?? 0);
+        $ranking = $higherCount + 1;
+        
+        // Total peserta
+        $totalParticipants = DB::table('alumnis')->count();  // <-- PERBAIKAN DI SINI
+        
+        // Jika points 0, ranking terakhir
+        if ($currentPoints <= 0 && $totalParticipants > 0) {
+            $ranking = $totalParticipants;
+        }
+        
+        return $ranking;
     }
 
     /**
@@ -128,6 +130,10 @@ class ProfileController extends Controller
                 ]);
             }
 
+            // Hitung ranking baru setelah update
+            $ranking = $this->calculateRanking($alumni);
+            $totalPoints = $alumni->points ?? 0;
+
             // Response untuk AJAX
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -140,8 +146,8 @@ class ProfileController extends Controller
                         'phone' => $alumni->fresh()->phone,
                         'npwp' => $alumni->fresh()->npwp,
                         'graduation_year' => date('Y', strtotime($alumni->fresh()->graduation_date)),
-                        'ranking' => $this->calculateRanking($alumni),
-                        'points' => $this->calculateTotalPoints($alumni),
+                        'ranking' => $ranking,
+                        'points' => $totalPoints,
                     ]
                 ]);
             }

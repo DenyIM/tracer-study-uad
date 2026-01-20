@@ -12,6 +12,10 @@ use App\Http\Controllers\Questionnaire\QuestionController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\OtpVerificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\AlumniRegistrationController;
+use App\Http\Controllers\LeaderboardController;
 
 require __DIR__.'/auth.php';
 
@@ -23,21 +27,21 @@ Route::get('/', function () {
     return view('pages.homepage');
 })->name('public');
 
+Route::get('/homepage-login', function () {
+    return view('auth.login');
+})->name('login');
+
 Route::get('/homepage-register', function () {
     return view('auth.register');
 });
 
 Route::get('/lupa-pass', function () {
-    return view('auth.lupa-pass');
+    return view('auth.reset-password');
 })->name('lupa-pass');
 
 // Static Pages (for development/testing)
 Route::get('/go-to-kuesioner1', function () {
     return view('questionnaire.dashboard.index');
-});
-
-Route::get('/go-to-register-form', function () {
-    return view('pages.register-form');
 });
 
 Route::get('/nav-kuesioner', function () {
@@ -96,16 +100,6 @@ Route::get('/next-section3', function () {
 // AUTHENTICATION ROUTES
 // ==============================================
 
-// Route::middleware('auth')->group(function () {
-//     // Profile (Breeze)
-//     Route::get('/profile', [ProfileController::class, 'edit'])
-//         ->name('profile.edit');
-//     Route::patch('/profile', [ProfileController::class, 'update'])
-//         ->name('profile.update');
-//     Route::delete('/profile', [ProfileController::class, 'destroy'])
-//         ->name('profile.destroy');
-// });
-
 Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
     // Profile routes - semua bisa handle JSON response
     Route::get('/', [ProfileController::class, 'edit'])->name('edit');
@@ -119,11 +113,13 @@ Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function
         
 });
 
-
 // Route untuk nav-profile
 Route::get('/nav-profile', function () {
     return redirect()->route('profile.edit');
 })->name('nav-profile')->middleware('auth');
+
+Route::get('/homepage-login', [AuthenticatedSessionController::class, 'create'])->name('homepage-login');
+Route::post('/homepage-login', [AuthenticatedSessionController::class, 'store'])->name('login.post'); 
 
 Route::middleware(['guest'])->group(function () {
     Route::get('/verify-otp', [OtpVerificationController::class, 'show'])->name('otp.show');
@@ -131,11 +127,26 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/resend-otp', [OtpVerificationController::class, 'resend'])->name('otp.resend');
 });
 
+Route::get('/forgot-password', [ResetPasswordController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [ResetPasswordController::class, 'sendResetLink'])->name('password.email');
+Route::post('/forgot-password/verify', [ResetPasswordController::class, 'verifyCode'])->name('password.verify-code');
+Route::post('/forgot-password/reset', [ResetPasswordController::class, 'resetPassword'])->name('password.reset');
+Route::post('/forgot-password/resend', [ResetPasswordController::class, 'resendCode'])->name('password.resend');
+
 // Google Authentication
 Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])
     ->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
     ->name('google.callback');
+
+// Alumni Registration
+Route::middleware(['auth'])->group(function () {
+    Route::get('/alumni/registration', [AlumniRegistrationController::class, 'showForm'])
+        ->name('alumni.registration.form');
+    
+    Route::post('/alumni/registration', [AlumniRegistrationController::class, 'submitForm'])
+        ->name('alumni.registration.submit');
+});
 
 // ==============================================
 // ADMIN ROUTES (SEDERHANAKAN - HAPUS MIDDLEWARE YANG BERMASALAH)
@@ -211,43 +222,36 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/categories', [AdminQuestionnaireController::class, 'categories'])->name('categories');
         Route::post('/categories', [AdminQuestionnaireController::class, 'storeCategory'])->name('categories.store');
         Route::put('/categories/{id}', [AdminQuestionnaireController::class, 'updateCategory'])->name('categories.update');
-        Route::delete('/categories/{id}', [AdminQuestionnaireController::class, 'destroyCategory'])->name('categories.destroy');
-        Route::delete('/categories/delete-all', [AdminQuestionnaireController::class, 'destroyAllCategories'])->name('categories.delete-all');
+        Route::delete('/categories/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedCategories'])->name('categories.delete-selected');
         
-        // ============ QUESTIONNAIRES MANAGEMENT ============
-        // List questionnaires by category
+        // ============ GENERAL QUESTIONNAIRES MANAGEMENT ============
+        Route::get('/general-questionnaires', [AdminQuestionnaireController::class, 'generalQuestionnaires'])->name('general-questionnaires');
+        Route::put('/general-questionnaires/{id}', [AdminQuestionnaireController::class, 'updateGeneralQuestionnaire'])->name('general-questionnaires.update');
+        Route::post('/general-questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'storeGeneralQuestion'])->name('general-questions.store');
+        Route::put('/general-questionnaires/{questionnaireId}/questions/{id}', [AdminQuestionnaireController::class, 'updateGeneralQuestion'])->name('general-questions.update');
+        Route::delete('/general-questionnaires/{questionnaireId}/questions/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedGeneralQuestions'])->name('general-questions.delete-selected');
+        
+        // ============ SPECIFIC QUESTIONNAIRES MANAGEMENT ============
         Route::get('/categories/{categoryId}/questionnaires', [AdminQuestionnaireController::class, 'questionnaires'])->name('questionnaires');
-        
-        // CRUD for questionnaires
         Route::post('/categories/{categoryId}/questionnaires', [AdminQuestionnaireController::class, 'storeQuestionnaire'])->name('questionnaires.store');
         Route::put('/categories/{categoryId}/questionnaires/{id}', [AdminQuestionnaireController::class, 'updateQuestionnaire'])->name('questionnaires.update');
-        Route::delete('/categories/{categoryId}/questionnaires/{id}', [AdminQuestionnaireController::class, 'destroyQuestionnaire'])->name('questionnaires.destroy');
-        Route::delete('/categories/{categoryId}/questionnaires/delete-all', [AdminQuestionnaireController::class, 'destroyAllQuestionnaires'])->name('questionnaires.delete-all');
-        
-        // Update questionnaire order
+        Route::delete('/categories/{categoryId}/questionnaires/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedQuestionnaires'])->name('questionnaires.delete-selected');
         Route::post('/categories/{categoryId}/questionnaires/order', [AdminQuestionnaireController::class, 'updateQuestionnaireOrder'])->name('questionnaires.update-order');
         
-        // ============ QUESTIONS MANAGEMENT ============
-        // List questions by questionnaire
+        // ============ SPECIFIC QUESTIONS MANAGEMENT ============
         Route::get('/categories/{categoryId}/questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'questions'])->name('questions');
-        
-        // CRUD for questions
         Route::post('/categories/{categoryId}/questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
         Route::put('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/{id}', [AdminQuestionnaireController::class, 'updateQuestion'])->name('questions.update');
-        Route::delete('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/{id}', [AdminQuestionnaireController::class, 'destroyQuestion'])->name('questions.destroy');
-        Route::delete('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/delete-all', [AdminQuestionnaireController::class, 'destroyAllQuestions'])->name('questions.delete-all');
-        
-        // Update question order
+        Route::delete('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedQuestions'])->name('questions.delete-selected');
         Route::post('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/order', [AdminQuestionnaireController::class, 'updateQuestionOrder'])->name('questions.update-order');
         
         // ============ STATISTICS & REPORTS ============
         Route::get('/statistics', [AdminQuestionnaireController::class, 'statistics'])->name('statistics');
         Route::get('/export/{categoryId?}', [AdminQuestionnaireController::class, 'exportData'])->name('export');
-        Route::get('/export-excel/{categoryId?}', [AdminQuestionnaireController::class, 'exportExcel'])->name('export.excel');
-        Route::get('/export-csv/{categoryId?}', [AdminQuestionnaireController::class, 'exportCSV'])->name('export.csv');
-        Route::get('/export-summary/{categoryId?}', [AdminQuestionnaireController::class, 'exportSummaryCSV'])->name('export.summary');
     });
 });
+
+    
 
 // ==============================================
 // ALUMNI QUESTIONNAIRE ROUTES (SEDERHANAKAN)
@@ -275,6 +279,7 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')-
     // ===== DASHBOARD =====
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
+    Route::get('/question/{questionId}', [QuestionController::class, 'show'])->name('question.show');
     Route::post('/answer/{questionId}', [QuestionController::class, 'storeAnswer'])->name('answer.store');
     Route::post('/answer/{questionId}/skip', [QuestionController::class, 'skipQuestion'])->name('answer.skip');
     Route::delete('/answer/{questionId}', [QuestionController::class, 'clearAnswer'])->name('answer.clear');
@@ -304,6 +309,7 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')-
         ->name('question.detail');
     Route::get('/question/{questionId}/validate', [QuestionController::class, 'validateAnswer'])
         ->name('question.validate');
+
     
     // ===== API ROUTES FOR AJAX =====
     Route::prefix('api')->name('api.')->group(function () {
@@ -323,6 +329,17 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')-
             ->name('question.prev');
     });
 });
+
+// ==============================================
+// LEADERBOARD ROUTE
+// ==============================================
+
+// Route::middleware(['auth', 'verified', 'role:alumni'])->group(function () {
+//     Route::get('/leaderboard', [LeaderboardController::class, 'index'])->name('nav-leaderboard');
+//     Route::post('/leaderboard/submit-forum', [LeaderboardController::class, 'submitForum'])->name('leaderboard.submit.forum');
+//     Route::post('/leaderboard/submit-job', [LeaderboardController::class, 'submitJob'])->name('leaderboard.submit.job');
+//     Route::get('/leaderboard/data', [LeaderboardController::class, 'getLeaderboardData'])->name('leaderboard.data');
+// });
 
 // ==============================================
 // ADDITIONAL STATIC ROUTES (for blade testing)

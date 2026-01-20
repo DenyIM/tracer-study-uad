@@ -382,9 +382,9 @@
                                     <i class="fas fa-trophy"></i>
                                 </div>
                                 <div class="stats-number fw-bold mb-2" style="color: #28a745; font-size: 2.5rem;">
-                                    {{ $currentRank }}
+                                    #{{ $currentRank }}
                                 </div>
-                                <div class="stats-label">Ranking</div>
+                                <div class="stats-label">Ranking Global</div>
                                 <small class="text-muted">Dari {{ $totalParticipants }} peserta</small>
                             </div>
                         </div>

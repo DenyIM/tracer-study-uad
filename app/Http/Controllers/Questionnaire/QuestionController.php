@@ -79,6 +79,34 @@ class QuestionController extends Controller
         $alumni = Auth::user()->alumni;
         $question = Question::with(['questionnaire.category'])->findOrFail($questionId);
         
+        // Validasi khusus untuk likert_per_row
+        if ($question->question_type === 'likert_per_row' && $question->is_required) {
+            if ($request->has('scale_value')) {
+                $answerValues = $request->scale_value;
+                if (is_array($answerValues)) {
+                    $rowItems = $question->row_items;
+                    if (is_string($rowItems)) {
+                        $rowItems = json_decode($rowItems, true) ?? [];
+                    }
+                    
+                    // Cek apakah semua baris terisi
+                    foreach ($rowItems as $key => $item) {
+                        if (!isset($answerValues[$key]) || empty($answerValues[$key])) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Harap isi semua skala untuk pertanyaan ini.'
+                            ], 422);
+                        }
+                    }
+                }
+            } elseif (!$request->boolean('is_skipped', false)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Harap isi semua skala untuk pertanyaan ini.'
+                ], 422);
+            }
+        }
+        
         // Validasi apakah alumni boleh menjawab pertanyaan ini
         $statusQuestionnaire = StatusQuestionnaire::where('alumni_id', $alumni->id)
             ->where('category_id', $question->questionnaire->category_id)
@@ -341,32 +369,78 @@ class QuestionController extends Controller
                 break;
                 
             case 'dropdown':
-                $answerData['answer'] = $request->answer;
+                $answerValue = $request->answer;
                 // Handle other option
-                if ($question->has_other_option && $request->answer === 'Lainnya, sebutkan!') {
+                if ($question->has_other_option && 
+                    ($answerValue === 'Lainnya, sebutkan!' || $answerValue === 'Lainnya') && 
+                    $request->has('other_input')) {
                     $answerData['answer'] = 'Lainnya: ' . $request->other_input;
+                } else {
+                    $answerData['answer'] = $answerValue;
                 }
                 break;
                 
             case 'radio':
             case 'radio_per_row':
-                $answerData['answer'] = $request->answer;
-                // Handle other option
-                if ($question->has_other_option && $request->answer === 'Lainnya, sebutkan!') {
+                $answerValue = $request->answer;
+                // Handle jawaban dengan input tambahan
+                if (str_contains($answerValue, 'email') || 
+                    (str_contains($answerValue, 'Ya,') && str_contains($answerValue, 'email'))) {
+                    if ($request->has('email_input') && !empty($request->email_input)) {
+                        $answerData['answer'] = $answerValue . ': ' . $request->email_input;
+                    } else {
+                        $answerData['answer'] = $answerValue;
+                    }
+                } elseif (str_contains($answerValue, 'WhatsApp') || 
+                        str_contains($answerValue, 'nomor WhatsApp') ||
+                        str_contains($answerValue, 'nomor WA')) {
+                    if ($request->has('whatsapp_input') && !empty($request->whatsapp_input)) {
+                        // FIXED: Pastikan format konsisten
+                        $answerData['answer'] = $answerValue . ': ' . $request->whatsapp_input;
+                    } else {
+                        $answerData['answer'] = $answerValue;
+                    }
+                } elseif (($answerValue === 'Lainnya, sebutkan!' || $answerValue === 'Lainnya') && 
+                        $request->has('other_input')) {
                     $answerData['answer'] = 'Lainnya: ' . $request->other_input;
+                } else {
+                    $answerData['answer'] = $answerValue;
                 }
                 break;
                 
             case 'checkbox':
             case 'checkbox_per_row':
-                $answerData['selected_options'] = $request->selected_options ?? [];
-                // Handle other option
-                if ($question->has_other_option && in_array('Lainnya', $request->selected_options ?? [])) {
-                    $otherIndex = array_search('Lainnya', $answerData['selected_options']);
-                    if ($otherIndex !== false && $request->other_input) {
-                        $answerData['selected_options'][$otherIndex] = 'Lainnya: ' . $request->other_input;
+                $selectedOptions = $request->selected_options ?? [];
+                $processedOptions = [];
+                
+                foreach ($selectedOptions as $option) {
+                    // Handle other option
+                    if (($option === 'Lainnya' || $option === 'Lainnya, sebutkan!') && 
+                        $request->has("other_input")) {
+                        $processedOptions[] = 'Lainnya: ' . $request->other_input;
+                    }
+                    // Handle email input
+                    elseif ((str_contains($option, 'email') || 
+                            (str_contains($option, 'Ya,') && str_contains($option, 'email'))) && 
+                        $request->has("email_input")) {
+                        $processedOptions[] = $option . ': ' . $request->email_input;
+                    }
+                    // Handle WhatsApp input - FIXED: format yang benar
+                    elseif (str_contains($option, 'WhatsApp') || 
+                        str_contains($option, 'nomor WhatsApp') ||
+                        str_contains($option, 'nomor WA')) {
+                        if ($request->has("whatsapp_input")) {
+                            $processedOptions[] = $option . ': ' . $request->whatsapp_input;
+                        } else {
+                            $processedOptions[] = $option;
+                        }
+                    }
+                    else {
+                        $processedOptions[] = $option;
                     }
                 }
+                
+                $answerData['selected_options'] = $processedOptions;
                 break;
                 
             case 'likert_scale':

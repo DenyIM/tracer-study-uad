@@ -29,15 +29,14 @@ class AlumniSeeder extends Seeder
             'nim' => '20190001',
             'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
             'phone' => '081298765432',
-            'study_program' => 'Teknik Informatika',
+            'study_program' => 'Informatika',
             'graduation_date' => '2024-09-15',
             'npwp' => '12.345.678.9-012.345',
-            'ranking' => 1,
             'points' => 100,
         ]);
 
         // Data dummy tambahan
-        $studyPrograms = ['Teknik Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
+        $studyPrograms = ['Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
         
         for ($i = 1; $i <= 20; $i++) {
             $user = User::create([
@@ -60,7 +59,6 @@ class AlumniSeeder extends Seeder
                 'study_program' => $studyPrograms[array_rand($studyPrograms)],
                 'graduation_date' => now()->subYears(rand(1, 5))->format('Y-m-d'),
                 'npwp' => rand(0, 1) ? '12.' . rand(100, 999) . '.' . rand(100, 999) . '.' . rand(1, 9) . '-0' . rand(10, 99) . '.' . rand(100, 999) : null,
-                'ranking' => rand(1, 100),
                 'points' => rand(0, 500),
             ]);
         }

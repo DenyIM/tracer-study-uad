@@ -825,7 +825,7 @@ class QuestionnaireSeeder extends Seeder
         // Pertanyaan 3
         Question::create([
             'questionnaire_id' => $bagian2->id,
-            'question_text' => 'Menurut Anda, tingkat kebutuhan kompetensi berikut jika Anda akan bekerja/wirausaha nanti? (Skala 1-5, 1=Sangat Rendah, 5=Sangat Tinggi)',
+            'question_text' => ' Berbeda dengan pertanyaan sebelumnya yang menanyakan kemampuan Anda saat lulus, pertanyaan ini tentang dunia kerja yang akan Anda masuki. Menurut Anda, dalam pekerjaan atau usaha yang Anda cita-citakan, seberapa TINGGI tuntutan terhadap kompetensi-kompetensi berikut?',
             'question_type' => 'likert_per_row',
             'row_items' => [
                 'ethics' => 'Etika',
@@ -841,7 +841,7 @@ class QuestionnaireSeeder extends Seeder
             'scale_label_high' => 'Sangat Tinggi',
             'is_required' => true,
             'order' => 1,
-            'helper_text' => 'Pilih skala 1-5 untuk setiap kompetensi (dalam konteks rencana masa depan)',
+            'helper_text' => 'Pilih skala 1-5 (1=Sangat Rendah, 2=Rendah, 3=Sedang, 4=Tinggi, 5=Sangat Tinggi) untuk setiap kompetensi.',
         ]);
 
         $questionnaires[] = $bagian2;
@@ -906,8 +906,8 @@ class QuestionnaireSeeder extends Seeder
             'question_text' => 'Apakah Anda bersedia dihubungi jika ada kesempatan yang sesuai?',
             'question_type' => 'radio',
             'options' => [
-                'Ya, email: _____',
-                'Ya, nomor WhatsApp: _____',
+                'Ya, email',
+                'Ya, nomor WhatsApp',
                 'Tidak'
             ],
             'is_required' => true,

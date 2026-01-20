@@ -301,6 +301,201 @@
                 justify-content: space-between;
             }
         }
+
+        .whatsapp-input-container {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .whatsapp-input-container.show {
+            display: block;
+        }
+
+        /* Style untuk input container */
+        .email-input-container,
+        .whatsapp-input-container,
+        .other-input-container {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .email-input-container.show,
+        .whatsapp-input-container.show,
+        .other-input-container.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .competency-item.unanswered {
+            border: 2px solid #dc3545 !important;
+            background-color: rgba(220, 53, 69, 0.05) !important;
+            animation: pulseWarning 1.5s infinite;
+        }
+
+        .competency-item.answered {
+            border: 2px solid #28a745 !important;
+            background-color: rgba(40, 167, 69, 0.05) !important;
+        }
+
+        @keyframes pulseWarning {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        .validation-message {
+            color: #dc3545;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .validation-message.show {
+            display: block;
+        }
+
+        /* Styles untuk semua tipe pertanyaan */
+        .text-answer-input {
+            width: 100%;
+        }
+
+        .textarea-answer-input {
+            min-height: 120px;
+        }
+
+        .number-answer-input {
+            max-width: 300px;
+        }
+
+        .date-answer-input {
+            max-width: 250px;
+        }
+
+        .dropdown-answer-select {
+            max-width: 400px;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .scale-options-grid {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .scale-option-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .row-item-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .row-item-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .row-item-label {
+            min-width: 200px;
+            font-weight: 500;
+            color: var(--primary-blue);
+        }
+
+        .row-item-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .radio-per-row-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .radio-per-row-label {
+            min-width: 250px;
+            font-weight: 500;
+        }
+
+        .checkbox-per-row-item {
+            display: flex;
+            align-items: start;
+            gap: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-per-row-label {
+            min-width: 250px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .checkbox-per-row-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            flex-grow: 1;
+        }
+
+        .likert-per-row-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .likert-per-row-label {
+            min-width: 250px;
+            font-weight: 500;
+        }
+
+        .likert-per-row-scale {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 
@@ -423,7 +618,7 @@
                                             {{ Str::limit($question->question_text, 30) }}
                                         </span>
                                         <small class="text-muted d-block">
-                                            {{ $question->question_type }}
+                                            {{ $question->type_label }}
                                             @if ($question->is_required)
                                                 <span class="text-danger ms-1">*</span>
                                             @endif
@@ -508,6 +703,7 @@
 
                                 <!-- Dynamic Answer Area -->
                                 <div class="answer-area mb-4" id="answer-area-{{ $question->id }}">
+                                    <!-- Gunakan partial untuk semua tipe pertanyaan -->
                                     @include('questionnaire.answers.partials.answer-input', [
                                         'question' => $question,
                                         'answer' => $answer,
@@ -660,62 +856,106 @@
             if (!container) return null;
 
             switch (questionType) {
+                case 'text':
+                    const textInput = container.querySelector('input[type="text"]');
+                    return textInput ? textInput.value : null;
+
+                case 'textarea':
+                    const textarea = container.querySelector('textarea');
+                    return textarea ? textarea.value : null;
+
+                case 'number':
+                    const numberInput = container.querySelector('input[type="number"]');
+                    return numberInput ? numberInput.value : null;
+
+                case 'date':
+                    const dateInput = container.querySelector('input[type="date"]');
+                    return dateInput ? dateInput.value : null;
+
                 case 'radio':
                 case 'radio_per_row':
                     const selectedRadio = container.querySelector('input[type="radio"]:checked');
                     if (selectedRadio) {
-                        // Handle jawaban dengan input tambahan (email)
-                        if (selectedRadio.value.includes('email') || selectedRadio.value.includes('Ya,')) {
-                            const emailInput = container.querySelector('.email-input');
-                            if (emailInput && emailInput.value) {
-                                return selectedRadio.value + ': ' + emailInput.value;
+                        const optionValue = selectedRadio.value;
+                        const answerOption = selectedRadio.closest('.answer-option');
+
+                        // Handle jawaban dengan input tambahan
+                        if (answerOption) {
+                            const hasEmail = answerOption.getAttribute('data-has-email') === 'true';
+                            const hasWhatsapp = answerOption.getAttribute('data-has-whatsapp') === 'true';
+                            const hasOther = answerOption.getAttribute('data-has-other') === 'true';
+
+                            if (hasEmail) {
+                                const emailInput = answerOption.querySelector('.email-input');
+                                if (emailInput && emailInput.value) {
+                                    return optionValue + ': ' + emailInput.value;
+                                }
                             }
-                            return selectedRadio.value;
+                            if (hasWhatsapp) {
+                                const whatsappInput = answerOption.querySelector('.whatsapp-input');
+                                if (whatsappInput && whatsappInput.value) {
+                                    return optionValue + ': ' + whatsappInput.value;
+                                }
+                            }
+                            if (hasOther) {
+                                const otherInput = answerOption.querySelector('.other-input');
+                                if (otherInput && otherInput.value) {
+                                    return 'Lainnya: ' + otherInput.value;
+                                }
+                            }
                         }
-                        return selectedRadio.value;
+                        return optionValue;
                     }
                     return null;
 
                 case 'dropdown':
                     const select = container.querySelector('select');
                     if (select && select.value) {
-                        // Handle other option for dropdown
-                        if (select.value === 'Lainnya, sebutkan!') {
-                            const otherInput = container.querySelector('input[name^="other_"]');
-                            if (otherInput && otherInput.value) {
-                                return 'Lainnya: ' + otherInput.value;
+                        const selectedValue = select.value;
+                        // Handle other option
+                        if ((selectedValue === 'Lainnya, sebutkan!' || selectedValue === 'Lainnya') &&
+                            container.querySelector('.other-input')) {
+                            const otherInput = container.querySelector('.other-input').value;
+                            if (otherInput) {
+                                return 'Lainnya: ' + otherInput;
                             }
                         }
-                        return select.value;
+                        return selectedValue;
                     }
                     return null;
-
-                case 'text':
-                case 'textarea':
-                case 'date':
-                case 'number':
-                    const input = container.querySelector('input, textarea');
-                    return input ? input.value : null;
 
                 case 'checkbox':
                 case 'checkbox_per_row':
                     const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
                     const values = Array.from(checkboxes).map(cb => {
-                        // Handle other option for checkbox
-                        if (cb.value === 'Lainnya') {
-                            const otherInput = container.querySelector('input[name^="other_"]');
-                            if (otherInput && otherInput.value) {
-                                return 'Lainnya: ' + otherInput.value;
+                        const optionValue = cb.value;
+                        const formCheck = cb.closest('.form-check');
+
+                        if (formCheck) {
+                            const hasEmail = formCheck.getAttribute('data-has-email') === 'true';
+                            const hasWhatsapp = formCheck.getAttribute('data-has-whatsapp') === 'true';
+                            const hasOther = formCheck.getAttribute('data-has-other') === 'true';
+
+                            if (hasEmail) {
+                                const emailInput = formCheck.querySelector('.email-input');
+                                if (emailInput && emailInput.value) {
+                                    return optionValue + ': ' + emailInput.value;
+                                }
+                            }
+                            if (hasWhatsapp) {
+                                const whatsappInput = formCheck.querySelector('.whatsapp-input');
+                                if (whatsappInput && whatsappInput.value) {
+                                    return optionValue + ': ' + whatsappInput.value;
+                                }
+                            }
+                            if (hasOther) {
+                                const otherInput = formCheck.querySelector('.other-input');
+                                if (otherInput && otherInput.value) {
+                                    return 'Lainnya: ' + otherInput.value;
+                                }
                             }
                         }
-                        // Handle jawaban dengan input tambahan
-                        if (cb.value.includes('email') || cb.value.includes('Ya,')) {
-                            const emailInput = container.querySelector('.email-input');
-                            if (emailInput && emailInput.value) {
-                                return cb.value + ': ' + emailInput.value;
-                            }
-                        }
-                        return cb.value;
+                        return optionValue;
                     }).filter(value => value);
                     return values.length > 0 ? values : null;
 
@@ -761,6 +1001,73 @@
             return false;
         }
 
+        // Event listener untuk update visual feedback pada likert_per_row
+        document.addEventListener('change', function(e) {
+            const target = e.target;
+
+            // Handle radio changes pada likert_per_row
+            if (target.type === 'radio' && target.name.includes('[') && target.name.includes(']')) {
+                const competencyItem = target.closest('.competency-item');
+                if (competencyItem) {
+                    // Update visual state
+                    competencyItem.classList.remove('unanswered');
+                    competencyItem.classList.add('answered');
+
+                    // Check if all competencies are answered
+                    const questionId = competencyItem.getAttribute('data-question-id');
+                    if (questionId) {
+                        const validation = validateLikertPerRow(questionId);
+                        const validationMessage = document.getElementById(`validation-${questionId}`);
+
+                        if (validationMessage) {
+                            if (validation.isValid) {
+                                validationMessage.classList.remove('show');
+                            } else {
+                                validationMessage.classList.add('show');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Fungsi untuk update visual state saat question ditampilkan
+        function updateLikertVisualState(questionId) {
+            const container = document.getElementById(`answer-area-${questionId}`);
+            if (!container) return;
+
+            const competencyItems = container.querySelectorAll('.competency-item');
+            competencyItems.forEach(item => {
+                const radios = item.querySelectorAll('input[type="radio"]');
+                let answered = false;
+
+                radios.forEach(radio => {
+                    if (radio.checked) {
+                        answered = true;
+                    }
+                });
+
+                if (answered) {
+                    item.classList.remove('unanswered');
+                    item.classList.add('answered');
+                } else {
+                    item.classList.remove('answered');
+                    item.classList.add('unanswered');
+                }
+            });
+
+            // Tampilkan/sembunyikan pesan validasi
+            const validationMessage = document.getElementById(`validation-${questionId}`);
+            if (validationMessage) {
+                const validation = validateLikertPerRow(questionId);
+                if (validation.isValid) {
+                    validationMessage.classList.remove('show');
+                } else {
+                    validationMessage.classList.add('show');
+                }
+            }
+        }
+
         // Show question
         function showQuestion(index) {
             // Hide all questions
@@ -782,6 +1089,11 @@
 
                 // Handle email input visibility
                 handleEmailInputVisibility(questions[index].id, questions[index].question_type);
+
+                // Update likert visual state jika tipe likert_per_row
+                if (questions[index].question_type === 'likert_per_row') {
+                    updateLikertVisualState(questions[index].id);
+                }
             }
         }
 
@@ -888,49 +1200,113 @@
             const container = document.getElementById(`answer-area-${questionId}`);
             if (!container) return;
 
-            const emailInputContainers = container.querySelectorAll('.email-input-container');
-            emailInputContainers.forEach(emailContainer => {
-                const isVisible = emailContainer.classList.contains('show');
-                if (isVisible) {
-                    // Cek apakah option yang memerlukan email dipilih
-                    const relatedOption = container.querySelector(
-                        'input[type="radio"]:checked, input[type="checkbox"]:checked');
-                    if (relatedOption) {
-                        const optionValue = relatedOption.value;
-                        if (optionValue.includes('email') || optionValue.includes('Ya,')) {
+            // Reset semua input container
+            const inputContainers = container.querySelectorAll(
+                '.email-input-container, .whatsapp-input-container, .other-input-container');
+            inputContainers.forEach(inputContainer => {
+                inputContainer.classList.remove('show');
+            });
+
+            // Handle radio buttons
+            const selectedRadio = container.querySelector('input[type="radio"]:checked');
+            if (selectedRadio) {
+                const optionValue = selectedRadio.value;
+                const answerOption = selectedRadio.closest('.answer-option');
+
+                if (answerOption) {
+                    const hasEmail = answerOption.getAttribute('data-has-email') === 'true';
+                    const hasWhatsapp = answerOption.getAttribute('data-has-whatsapp') === 'true';
+                    const hasOther = answerOption.getAttribute('data-has-other') === 'true';
+
+                    if (hasEmail) {
+                        const emailContainer = answerOption.querySelector('.email-input-container');
+                        if (emailContainer) {
                             emailContainer.classList.add('show');
-                            return;
                         }
                     }
-                    emailContainer.classList.remove('show');
+                    if (hasWhatsapp) {
+                        const whatsappContainer = answerOption.querySelector('.whatsapp-input-container');
+                        if (whatsappContainer) {
+                            whatsappContainer.classList.add('show');
+                        }
+                    }
+                    if (hasOther) {
+                        const otherContainer = answerOption.querySelector('.other-input-container');
+                        if (otherContainer) {
+                            otherContainer.classList.add('show');
+                        }
+                    }
+                }
+            }
+
+            // Handle checkboxes
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(checkbox => {
+                const formCheck = checkbox.closest('.form-check');
+                if (formCheck) {
+                    const hasEmail = formCheck.getAttribute('data-has-email') === 'true';
+                    const hasWhatsapp = formCheck.getAttribute('data-has-whatsapp') === 'true';
+                    const hasOther = formCheck.getAttribute('data-has-other') === 'true';
+
+                    if (hasEmail) {
+                        const emailContainer = formCheck.querySelector('.email-input-container');
+                        if (emailContainer) {
+                            emailContainer.classList.add('show');
+                        }
+                    }
+                    if (hasWhatsapp) {
+                        const whatsappContainer = formCheck.querySelector('.whatsapp-input-container');
+                        if (whatsappContainer) {
+                            whatsappContainer.classList.add('show');
+                        }
+                    }
+                    if (hasOther) {
+                        const otherContainer = formCheck.querySelector('.other-input-container');
+                        if (otherContainer) {
+                            otherContainer.classList.add('show');
+                        }
+                    }
                 }
             });
+
+            // Handle dropdown
+            const select = container.querySelector('select');
+            if (select && select.value && (select.value.includes('Lainnya') || select.value === 'Lainnya, sebutkan!')) {
+                const otherContainer = container.querySelector('.other-input-container');
+                if (otherContainer) {
+                    otherContainer.classList.add('show');
+                }
+            }
         }
 
-        // Handle jawaban dengan input email
+        // Handle jawaban dengan input email dan wa
         function handleEmailAnswerInput(questionId, questionType) {
             const container = document.getElementById(`answer-area-${questionId}`);
             if (!container) return;
 
-            const inputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
-            inputs.forEach(input => {
+            // Handle radio button changes
+            const radioInputs = container.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => {
                 input.addEventListener('change', function() {
-                    const emailContainers = container.querySelectorAll('.email-input-container');
-                    emailContainers.forEach(emailContainer => {
-                        if (this.value.includes('email') || this.value.includes('Ya,')) {
-                            emailContainer.classList.add('show');
-
-                            // Focus ke input email
-                            const emailInput = emailContainer.querySelector('.email-input');
-                            if (emailInput) {
-                                setTimeout(() => emailInput.focus(), 100);
-                            }
-                        } else {
-                            emailContainer.classList.remove('show');
-                        }
-                    });
+                    handleEmailInputVisibility(questionId, questionType);
                 });
             });
+
+            // Handle checkbox changes
+            const checkboxInputs = container.querySelectorAll('input[type="checkbox"]');
+            checkboxInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    handleEmailInputVisibility(questionId, questionType);
+                });
+            });
+
+            // Handle dropdown changes
+            const select = container.querySelector('select');
+            if (select) {
+                select.addEventListener('change', function() {
+                    handleEmailInputVisibility(questionId, questionType);
+                });
+            }
         }
 
         // Event Listeners
@@ -943,27 +1319,158 @@
                 handleEmailAnswerInput(question.id, question.question_type);
             });
 
+            // Inisialisasi visibility untuk pertanyaan pertama
+            if (questions.length > 0) {
+                const firstQuestion = questions[0];
+                handleInputContainerVisibility(firstQuestion.id);
+            }
+
             // Handle answer changes
             document.addEventListener('change', function(e) {
                 const target = e.target;
-                const questionContainer = target.closest('.question-container');
 
-                if (questionContainer) {
-                    const questionId = questionContainer.id.replace('question-', '');
-                    const question = questions.find(q => q.id == questionId);
+                // Handle radio button changes
+                if (target.type === 'radio') {
+                    const container = target.closest('.radio-options');
+                    if (container) {
+                        // Sembunyikan semua input container dulu
+                        container.querySelectorAll(
+                                '.email-input-container, .whatsapp-input-container, .other-input-container')
+                            .forEach(el => el.classList.remove('show'));
 
-                    if (question) {
-                        // Handle email input visibility
-                        handleEmailInputVisibility(question.id, question.question_type);
+                        // Tampilkan container yang sesuai
+                        const answerOption = target.closest('.answer-option');
+                        if (answerOption) {
+                            const hasEmail = answerOption.getAttribute('data-has-email') === 'true';
+                            const hasWhatsapp = answerOption.getAttribute('data-has-whatsapp') === 'true';
+                            const hasOther = answerOption.getAttribute('data-has-other') === 'true';
 
-                        // Auto-save answer
-                        const answerValue = getAnswerValue(question.id, question.question_type);
-                        if (answerValue !== null) {
-                            saveAnswer(question.id, answerValue);
+                            if (hasEmail) {
+                                const emailContainer = answerOption.querySelector('.email-input-container');
+                                if (emailContainer) emailContainer.classList.add('show');
+                            }
+                            if (hasWhatsapp) {
+                                const whatsappContainer = answerOption.querySelector(
+                                    '.whatsapp-input-container');
+                                if (whatsappContainer) whatsappContainer.classList.add('show');
+                            }
+                            if (hasOther) {
+                                const otherContainer = answerOption.querySelector('.other-input-container');
+                                if (otherContainer) otherContainer.classList.add('show');
+                            }
+                        }
+                    }
+                }
+
+                // Handle checkbox changes
+                if (target.type === 'checkbox') {
+                    const formCheck = target.closest('.form-check');
+                    if (formCheck) {
+                        const hasEmail = formCheck.getAttribute('data-has-email') === 'true';
+                        const hasWhatsapp = formCheck.getAttribute('data-has-whatsapp') === 'true';
+                        const hasOther = formCheck.getAttribute('data-has-other') === 'true';
+
+                        const emailContainer = formCheck.querySelector('.email-input-container');
+                        const whatsappContainer = formCheck.querySelector('.whatsapp-input-container');
+                        const otherContainer = formCheck.querySelector('.other-input-container');
+
+                        if (target.checked) {
+                            if (hasEmail && emailContainer) emailContainer.classList.add('show');
+                            if (hasWhatsapp && whatsappContainer) whatsappContainer.classList.add('show');
+                            if (hasOther && otherContainer) otherContainer.classList.add('show');
+                        } else {
+                            if (emailContainer) emailContainer.classList.remove('show');
+                            if (whatsappContainer) whatsappContainer.classList.remove('show');
+                            if (otherContainer) otherContainer.classList.remove('show');
+                        }
+                    }
+                }
+
+                // Handle dropdown changes
+                if (target.tagName === 'SELECT') {
+                    const container = target.closest('.dropdown-option');
+                    if (container) {
+                        const otherContainer = container.querySelector('.other-input-container');
+                        if (otherContainer) {
+                            if (target.value === 'Lainnya, sebutkan!' || target.value === 'Lainnya') {
+                                otherContainer.classList.add('show');
+                            } else {
+                                otherContainer.classList.remove('show');
+                            }
                         }
                     }
                 }
             });
+
+            // Fungsi untuk mengatur visibilitas input container
+            function handleInputContainerVisibility(questionId) {
+                const container = document.getElementById(`answer-area-${questionId}`);
+                if (!container) return;
+
+                // Reset semua input container
+                const allInputContainers = container.querySelectorAll(
+                    '.email-input-container, .whatsapp-input-container, .other-input-container');
+                allInputContainers.forEach(inputContainer => {
+                    inputContainer.classList.remove('show');
+                });
+
+                // Handle radio buttons
+                const selectedRadio = container.querySelector('input[type="radio"]:checked');
+                if (selectedRadio) {
+                    const answerOption = selectedRadio.closest('.answer-option');
+                    if (answerOption) {
+                        showRelevantInputContainer(answerOption);
+                    }
+                }
+
+                // Handle checkboxes
+                const checkedCheckboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+                checkedCheckboxes.forEach(checkbox => {
+                    const formCheck = checkbox.closest('.form-check');
+                    if (formCheck) {
+                        showRelevantInputContainer(formCheck);
+                    }
+                });
+
+                // Handle dropdown
+                const select = container.querySelector('select');
+                if (select && select.value) {
+                    if (select.value === 'Lainnya, sebutkan!' || select.value === 'Lainnya') {
+                        const otherContainer = container.querySelector('.other-input-container');
+                        if (otherContainer) {
+                            otherContainer.classList.add('show');
+                        }
+                    }
+                }
+            }
+
+            // Fungsi untuk menampilkan input container yang relevan
+            function showRelevantInputContainer(element) {
+                const hasEmail = element.getAttribute('data-has-email') === 'true';
+                const hasWhatsapp = element.getAttribute('data-has-whatsapp') === 'true';
+                const hasOther = element.getAttribute('data-has-other') === 'true';
+
+                if (hasEmail) {
+                    const emailContainer = element.querySelector('.email-input-container');
+                    if (emailContainer) {
+                        emailContainer.classList.add('show');
+                    }
+                }
+
+                if (hasWhatsapp) {
+                    const whatsappContainer = element.querySelector('.whatsapp-input-container');
+                    if (whatsappContainer) {
+                        whatsappContainer.classList.add('show');
+                    }
+                }
+
+                if (hasOther) {
+                    const otherContainer = element.querySelector('.other-input-container');
+                    if (otherContainer) {
+                        otherContainer.classList.add('show');
+                    }
+                }
+            }
 
             // Handle text input changes (email input khusus)
             document.addEventListener('input', function(e) {
@@ -1004,15 +1511,96 @@
                 }
             });
 
+            // Fungsi untuk validasi likert_per_row
+            function validateLikertPerRow(questionId) {
+                const container = document.getElementById(`answer-area-${questionId}`);
+                if (!container) return true;
+
+                const competencyItems = container.querySelectorAll('.competency-item');
+                let allAnswered = true;
+                const unansweredItems = [];
+
+                competencyItems.forEach((item, index) => {
+                    const radios = item.querySelectorAll('input[type="radio"]');
+                    let answered = false;
+
+                    radios.forEach(radio => {
+                        if (radio.checked) {
+                            answered = true;
+                        }
+                    });
+
+                    if (!answered) {
+                        allAnswered = false;
+                        const competencyName = item.querySelector('.competency-name').textContent;
+                        unansweredItems.push(`${index + 1}. ${competencyName}`);
+                    }
+                });
+
+                return {
+                    isValid: allAnswered,
+                    unansweredItems: unansweredItems
+                };
+            }
+
+            // Fungsi untuk validasi semua pertanyaan sebelum submit
+            function validateAllQuestions() {
+                let isValid = true;
+                let errorMessages = [];
+
+                questions.forEach((question, index) => {
+                    if (question.is_required) {
+                        // Validasi khusus untuk likert_per_row
+                        if (question.question_type === 'likert_per_row') {
+                            const validation = validateLikertPerRow(question.id);
+                            if (!validation.isValid) {
+                                isValid = false;
+                                errorMessages.push({
+                                    questionNumber: index + 1,
+                                    questionText: question.question_text,
+                                    message: `Harap isi semua skala untuk: ${validation.unansweredItems.join(', ')}`
+                                });
+                            }
+                        }
+                        // Validasi untuk tipe pertanyaan lainnya
+                        else if (!isQuestionAnswered(question.id, question.question_type)) {
+                            isValid = false;
+                            errorMessages.push({
+                                questionNumber: index + 1,
+                                questionText: question.question_text,
+                                message: 'Harap isi jawaban untuk pertanyaan ini'
+                            });
+                        }
+                    }
+                });
+
+                return {
+                    isValid: isValid,
+                    errors: errorMessages
+                };
+            }
+
             // Next question button - Validasi jawaban sebelum lanjut
             document.querySelectorAll('.btn-next-question').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const currentQuestion = questions[currentQuestionIndex];
 
-                    // Validasi pertanyaan wajib
+                    // Validasi khusus untuk likert_per_row
+                    if (currentQuestion.question_type === 'likert_per_row' && currentQuestion
+                        .is_required) {
+                        const validation = validateLikertPerRow(currentQuestion.id);
+                        if (!validation.isValid) {
+                            alert(
+                                `Harap isi semua skala untuk pertanyaan ini!\n\nBelum diisi:\n${validation.unansweredItems.join('\n')}`
+                            );
+                            return;
+                        }
+                    }
+
+                    // Validasi untuk tipe pertanyaan lainnya
                     if (currentQuestion.is_required) {
                         if (!isQuestionAnswered(currentQuestion.id, currentQuestion
-                            .question_type)) {
+                                .question_type)) {
                             alert('Harap isi jawaban untuk pertanyaan ini sebelum melanjutkan.');
                             return;
                         }
@@ -1027,8 +1615,10 @@
                         if (currentQuestion.question_type === 'checkbox' || currentQuestion
                             .question_type === 'checkbox_per_row') {
                             answerData.selected_options = answerValue;
-                        } else if (currentQuestion.is_scale || currentQuestion.question_type ===
-                            'likert_per_row') {
+                        } else if (currentQuestion.question_type === 'likert_scale' ||
+                            currentQuestion.question_type === 'competency_scale') {
+                            answerData.scale_value = answerValue;
+                        } else if (currentQuestion.question_type === 'likert_per_row') {
                             answerData.scale_value = answerValue;
                         } else {
                             answerData.answer = answerValue;
@@ -1077,8 +1667,10 @@
                         if (question.question_type === 'checkbox' || question.question_type ===
                             'checkbox_per_row') {
                             answerData.selected_options = answerValue;
-                        } else if (question.is_scale || question.question_type ===
-                            'likert_per_row') {
+                        } else if (question.question_type === 'likert_scale' ||
+                            question.question_type === 'competency_scale') {
+                            answerData.scale_value = answerValue;
+                        } else if (question.question_type === 'likert_per_row') {
                             answerData.scale_value = answerValue;
                         } else {
                             answerData.answer = answerValue;
@@ -1100,26 +1692,26 @@
 
             // Submit questionnaire button
             document.getElementById('submitQuestionnaireBtn').addEventListener('click', function() {
-                // Validate all required questions
-                let hasErrors = false;
-                let firstErrorQuestion = null;
+                // Validate all questions
+                const validation = validateAllQuestions();
 
-                questions.forEach(question => {
-                    if (question.is_required && !answeredQuestions.has(question.id)) {
-                        if (!isQuestionAnswered(question.id, question.question_type)) {
-                            hasErrors = true;
-                            if (!firstErrorQuestion) {
-                                firstErrorQuestion = question;
-                            }
-                        }
+                if (!validation.isValid) {
+                    const firstError = validation.errors[0];
+                    // Navigate to the question with error
+                    const questionIndex = questions.findIndex(q => q.question_text === firstError
+                        .questionText);
+                    if (questionIndex !== -1) {
+                        showQuestion(questionIndex);
                     }
-                });
 
-                if (hasErrors && firstErrorQuestion) {
-                    navigateToQuestion(firstErrorQuestion.id);
-                    alert(
-                        `Harap isi pertanyaan ${questions.findIndex(q => q.id === firstErrorQuestion.id) + 1}: ${firstErrorQuestion.question_text}`
-                    );
+                    // Show alert with detailed message
+                    let errorMessage = 'Harap perbaiki kesalahan berikut sebelum mengirim:\n\n';
+                    validation.errors.forEach((error, index) => {
+                        errorMessage +=
+                            `${index + 1}. Pertanyaan ${error.questionNumber}: ${error.message}\n`;
+                    });
+
+                    alert(errorMessage);
                     return;
                 }
 

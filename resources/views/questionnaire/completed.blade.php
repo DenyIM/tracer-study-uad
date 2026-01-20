@@ -393,9 +393,11 @@
                             <div class="stat-item" data-aos="fade-left" data-aos-delay="100">
                                 <div class="stat-value" id="rankValue">
                                     @php
-                                        // Ambil ranking dari controller
-                                        $currentRank = $stats['current_rank_number'] ?? 1;
-                                        $totalParticipants = $stats['total_participants'] ?? 100;
+                                        use App\Helpers\RankingHelper;
+
+                                        $alumni = auth()->user()->alumni;
+                                        $currentRank = RankingHelper::getAlumniRank($alumni->id);
+                                        $totalParticipants = RankingHelper::getTotalParticipants();
                                     @endphp
                                     #{{ $currentRank }}
                                 </div>

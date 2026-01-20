@@ -22,6 +22,37 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+
+        /* Tombol Kembali ke Homepage */
+        .back-to-home {
+            position: absolute;
+            left: 20px;
+            top: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-to-home:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            color: var(--light-yellow);
+            text-decoration: none;
         }
 
         .register-container {
@@ -92,6 +123,7 @@
             border: none;
             color: #6b7280;
             cursor: pointer;
+            z-index: 10;
         }
 
         .btn-register {
@@ -218,10 +250,102 @@
             font-size: 0.875rem;
             margin-top: 0.25rem;
         }
+
+        /* Perbaikan untuk password input */
+        .password-container {
+            position: relative;
+        }
+
+        /* Menghilangkan toggle built-in browser untuk password */
+        input[type="password"]::-webkit-textfield-decoration-container {
+            display: none !important;
+        }
+
+        input[type="password"]::-webkit-caps-lock-indicator {
+            display: none !important;
+        }
+
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            display: none !important;
+            visibility: hidden;
+            pointer-events: none;
+            position: absolute;
+            right: 0;
+        }
+
+        /* Untuk Chrome, Safari, Edge */
+        input[type="password"]::-webkit-reveal-password-button,
+        input[type="password"]::-webkit-reveal-password {
+            display: none !important;
+            -webkit-appearance: none;
+        }
+
+        /* Untuk Firefox */
+        input[type="password"][type="password"]::-ms-reveal,
+        input[type="password"][type="password"]::-ms-clear {
+            display: none !important;
+        }
+
+        /* Umum */
+        input[type="password"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Menambahkan padding kanan lebih besar untuk memberi ruang toggle button kita */
+        .password-container input[type="password"],
+        .password-container input[type="text"] {
+            padding-right: 45px !important;
+        }
+
+        /* Responsif untuk mobile */
+        @media (max-width: 768px) {
+            .back-to-home {
+                left: 10px;
+                top: 10px;
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .register-logo {
+                width: 180px;
+                margin-top: 3rem;
+            }
+
+            .register-card {
+                margin: 0 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .back-to-home {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .back-to-home span {
+                display: none;
+            }
+
+            .back-to-home i {
+                margin-right: 0;
+            }
+
+            .register-logo {
+                width: 160px;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Tombol Kembali ke Homepage -->
+    <a href="{{ url('/') }}" class="back-to-home">
+        <i class="fas fa-arrow-left"></i>
+        <span>Kembali ke Homepage</span>
+    </a>
+
     <img src="{{ asset('logo-tracer-study.png') }}" alt="Logo Tracer Study" class="register-logo">
 
     <div class="register-container">
@@ -282,8 +406,9 @@
                         <label for="prodi" class="form-label fw-semibold">Program Studi</label>
                         <select name="prodi" class="form-select" required>
                             <option value="" selected disabled>Pilih Program Studi</option>
-                            <option value="Teknik Informatika"
-                                {{ old('prodi') == 'Teknik Informatika' ? 'selected' : '' }}>Teknik Informatika</option>
+                            <option value="Informatika" {{ old('prodi') == 'Informatika' ? 'selected' : '' }}>
+                                Informatika
+                            </option>
                             <option value="Sistem Informasi"
                                 {{ old('prodi') == 'Sistem Informasi' ? 'selected' : '' }}>Sistem Informasi</option>
                             <option value="Manajemen" {{ old('prodi') == 'Manajemen' ? 'selected' : '' }}>Manajemen
@@ -336,26 +461,30 @@
                     </div>
 
                     <!-- Password -->
-                    <div class="mb-3 position-relative">
+                    <div class="mb-3">
                         <label for="password" class="form-label fw-semibold">Password</label>
-                        <input type="password" name="password" class="form-control" id="password"
-                            placeholder="Masukkan password Anda" required>
-                        <button type="button" class="password-toggle" id="togglePassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                        <div class="password-container">
+                            <input type="password" name="password" class="form-control" id="password"
+                                placeholder="Masukkan password Anda" required>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         @error('password')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <!-- Konfirmasi Password -->
-                    <div class="mb-3 position-relative">
+                    <div class="mb-3">
                         <label for="password_confirmation" class="form-label fw-semibold">Konfirmasi Password</label>
-                        <input type="password" name="password_confirmation" class="form-control"
-                            id="confirmPassword" placeholder="Konfirmasi password Anda" required>
-                        <button type="button" class="password-toggle" id="toggleConfirmPassword">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                        <div class="password-container">
+                            <input type="password" name="password_confirmation" class="form-control"
+                                id="confirmPassword" placeholder="Konfirmasi password Anda" required>
+                            <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         @error('password_confirmation')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -536,6 +665,23 @@
         // Set tanggal maksimal untuk input tanggal
         const today = new Date().toISOString().split('T')[0];
         document.querySelector('input[name="tanggal_lulus"]').setAttribute('max', today);
+
+        // Solusi JavaScript tambahan untuk menghilangkan toggle built-in
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInputs = document.querySelectorAll('input[type="password"]');
+
+            passwordInputs.forEach(input => {
+                // Atur attribute untuk mencegah autocomplete yang memicu toggle
+                input.setAttribute('autocomplete', 'new-password');
+                input.setAttribute('autocapitalize', 'off');
+                input.setAttribute('autocorrect', 'off');
+
+                // Kosongkan fungsi, hanya untuk memastikan
+                input.addEventListener('input', function() {
+                    // Kosongkan fungsi, hanya untuk memastikan
+                });
+            });
+        });
     </script>
 </body>
 

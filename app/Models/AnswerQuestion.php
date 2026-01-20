@@ -17,7 +17,7 @@ class AnswerQuestion extends Model
         'answer',
         'selected_options',
         'scale_value',
-        'points', // TAMBAHKAN DI SINI
+        'points',
         'is_skipped',
         'answered_at',
     ];
@@ -27,7 +27,7 @@ class AnswerQuestion extends Model
         'is_skipped' => 'boolean',
         'answered_at' => 'datetime',
         'scale_value' => 'integer',
-        'points' => 'integer', // TAMBAHKAN DI SINI
+        'points' => 'integer',
     ];
 
     protected $dates = [
@@ -106,7 +106,6 @@ class AnswerQuestion extends Model
             return 0;
         }
         
-        // Gunakan points dari answer_questions jika ada, jika tidak gunakan dari question
         return $this->points ?? ($this->question->points ?? 0);
     }
 

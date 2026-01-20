@@ -18,7 +18,6 @@ class Alumni extends Model
         'study_program',
         'graduation_date',
         'npwp',
-        'ranking',
         'points'
     ];
 

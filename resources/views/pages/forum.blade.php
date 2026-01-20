@@ -9,7 +9,7 @@
                         <div class="user-avatar me-3">DI</div>
                         <div>
                             <h6 class="mb-0">Deny Iqbal</h6>
-                            <small class="text-muted">Teknik Informatika 2018</small>
+                            <small class="text-muted">Informatika 2018</small>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -25,7 +25,7 @@
                         Lanjutkan Kuesioner
                     </button>
                 </div>
-                
+
                 <div class="category-filter p-4" data-aos="fade-right" data-aos-delay="100">
                     <h6 class="fw-bold mb-3">Kategori Forum</h6>
                     <div class="d-flex flex-wrap">
@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-6">
                 <div class="post-card p-4 mb-4" data-aos="fade-up" id="post1">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -67,11 +67,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <p class="mb-3" id="postContent1">
                         📢 <strong>PENGUMUMAN PENTING</strong><br><br>
                         Pendaftaran Bootcamp Data Science UAD 2024 telah dibuka!<br><br>
-                        Program ini terbuka untuk semua alumni UAD dengan latar belakang apapun. Bootcamp akan dilaksanakan secara hybrid dengan jadwal fleksibel.<br><br>
+                        Program ini terbuka untuk semua alumni UAD dengan latar belakang apapun. Bootcamp akan
+                        dilaksanakan secara hybrid dengan jadwal fleksibel.<br><br>
                         📅 <strong>Tanggal Penting:</strong><br>
                         - Pendaftaran: 1 - 30 Desember 2024<br>
                         - Seleksi: 2 - 5 Januari 2025<br>
@@ -82,7 +83,7 @@
                         - Peluang magang di perusahaan mitra<br><br>
                         Untuk informasi lebih lanjut dan pendaftaran, kunjungi: tracerstudy.uad.ac.id/bootcamp
                     </p>
-                    
+
                     <div class="post-actions d-flex justify-content-between mt-3">
                         <div class="d-flex gap-3">
                             <button class="like-btn">
@@ -97,7 +98,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="post-card p-4 mb-4" data-aos="fade-up" data-aos-delay="100" id="post2">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center">
@@ -124,22 +125,24 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <p class="mb-3">
                         🎉 <strong>REUNI AKBAR ALUMNI UAD 2024</strong><br><br>
-                        Hai para alumni UAD! Kami dengan senang hati mengundang Anda untuk menghadiri Reuni Akbar Alumni UAD 2024.<br><br>
-                        Acara ini akan menjadi momen spesial untuk bertemu kembali dengan teman-teman seangkatan, berbagi cerita, dan memperluas jaringan profesional.<br><br>
+                        Hai para alumni UAD! Kami dengan senang hati mengundang Anda untuk menghadiri Reuni Akbar Alumni
+                        UAD 2024.<br><br>
+                        Acara ini akan menjadi momen spesial untuk bertemu kembali dengan teman-teman seangkatan,
+                        berbagi cerita, dan memperluas jaringan profesional.<br><br>
                         📍 <strong>Lokasi:</strong> Gedung Auditorium Kampus Utama UAD<br>
                         📅 <strong>Tanggal:</strong> Sabtu, 15 Desember 2024<br>
                         🕒 <strong>Waktu:</strong> 18.00 - 22.00 WIB<br><br>
                         Daftar segera melalui link di bio kami! Tempat terbatas untuk 500 peserta pertama.
                     </p>
-                    
+
                     <div class="post-images-grid">
                         <img src="gambar1.png" alt="Poster Reuni UAD 2024" onclick="openLightbox('post2', 0)">
                         <img src="gambar2.png" alt="Detail Acara Reuni" onclick="openLightbox('post2', 1)">
                     </div>
-                    
+
                     <div class="post-actions d-flex justify-content-between">
                         <div class="d-flex gap-3">
                             <button class="like-btn">
@@ -155,7 +158,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-lg-3">
                 <div class="info-box p-4 mb-4" data-aos="fade-left">
                     <h6 class="fw-bold mb-3">Info Penting</h6>
@@ -172,10 +175,10 @@
                         <p class="mb-0 small">Lengkapi kuesioner untuk akses fitur lengkap platform</p>
                     </div>
                 </div>
-                
+
                 <div class="info-box p-4" data-aos="fade-left" data-aos-delay="100">
                     <h6 class="fw-bold mb-3">Top 3 Alumni Paling Aktif</h6><br><br>
-                    
+
                     <div class="podium-container">
                         <div class="podium">
                             <div class="podium-place podium-2">
@@ -188,7 +191,7 @@
                                 </div>
                                 <div class="place-badge">2nd</div>
                             </div>
-                            
+
                             <div class="podium-place podium-1">
                                 <div class="crown">
                                     <i class="fas fa-crown"></i>
@@ -202,7 +205,7 @@
                                 </div>
                                 <div class="place-badge">1st</div>
                             </div>
-                            
+
                             <div class="podium-place podium-3">
                                 <div class="podium-stand">
                                     <div class="podium-content">
@@ -215,11 +218,11 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="text-center mt-3">
                         <small class="text-muted">Total points berdasarkan kontribusi di platform</small>
                     </div>
-                    
+
                     <button class="leaderboard-btn" onclick="navigateToLeaderboard()">
                         <i class="fas fa-crown me-2"></i> Lihat Leaderboard Lengkap
                     </button>
@@ -249,7 +252,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="reportCommentModal" tabindex="-1" aria-labelledby="reportCommentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="reportCommentModal" tabindex="-1" aria-labelledby="reportCommentModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -258,50 +262,57 @@
                 </div>
                 <div class="modal-body">
                     <p>Mengapa Anda ingin melaporkan komentar ini?</p>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentSpam" value="commentSpam">
+                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentSpam"
+                            value="commentSpam">
                         <label class="form-check-label" for="commentSpam">
                             <strong>Spam atau iklan</strong><br>
                             <small class="text-muted">Komentar berisi promosi atau link yang tidak relevan</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentHarassment" value="commentHarassment">
+                        <input class="form-check-input" type="radio" name="reportCommentReason"
+                            id="commentHarassment" value="commentHarassment">
                         <label class="form-check-label" for="commentHarassment">
                             <strong>Komentar kasar atau pelecehan</strong><br>
-                            <small class="text-muted">Mengandung kata-kata kasar, ujaran kebencian, atau ancaman</small>
+                            <small class="text-muted">Mengandung kata-kata kasar, ujaran kebencian, atau
+                                ancaman</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentMisinformation" value="commentMisinformation">
+                        <input class="form-check-input" type="radio" name="reportCommentReason"
+                            id="commentMisinformation" value="commentMisinformation">
                         <label class="form-check-label" for="commentMisinformation">
                             <strong>Informasi salah</strong><br>
                             <small class="text-muted">Menyebarkan informasi yang tidak benar atau menyesatkan</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentOffensive" value="commentOffensive">
+                        <input class="form-check-input" type="radio" name="reportCommentReason"
+                            id="commentOffensive" value="commentOffensive">
                         <label class="form-check-label" for="commentOffensive">
                             <strong>Konten ofensif</strong><br>
                             <small class="text-muted">Mengandung unsur SARA atau konten yang tidak pantas</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentOther" value="commentOther">
+                        <input class="form-check-input" type="radio" name="reportCommentReason" id="commentOther"
+                            value="commentOther">
                         <label class="form-check-label" for="commentOther">
                             <strong>Lainnya</strong><br>
                             <small class="text-muted">Alasan lain yang perlu diperhatikan admin</small>
                         </label>
                     </div>
-                    
+
                     <div class="mt-3">
                         <label class="form-label">Keterangan tambahan (opsional):</label>
-                        <textarea class="form-control" id="commentReportDetails" rows="3" placeholder="Berikan penjelasan lebih detail..."></textarea>
+                        <textarea class="form-control" id="commentReportDetails" rows="3"
+                            placeholder="Berikan penjelasan lebih detail..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -321,9 +332,10 @@
                 </div>
                 <div class="modal-body">
                     <p>Mengapa Anda ingin melaporkan postingan ini?</p>
-                    
+
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="reportReason" id="misinformation" value="misinformation">
+                        <input class="form-check-input" type="radio" name="reportReason" id="misinformation"
+                            value="misinformation">
                         <label class="form-check-label" for="misinformation">
                             <strong>Postingan mengandung misinformasi</strong><br>
                             <small class="text-muted">Informasi yang diberikan tidak akurat atau menyesatkan</small>
@@ -331,11 +343,13 @@
                     </div>
                     <div class="report-reason-details" id="misinformationDetails">
                         <label class="form-label small mt-2">Apa yang salah dengan informasi ini?</label>
-                        <textarea class="form-control report-textarea" placeholder="Jelaskan bagian mana yang tidak akurat dan berikan informasi yang benar jika memungkinkan..."></textarea>
+                        <textarea class="form-control report-textarea"
+                            placeholder="Jelaskan bagian mana yang tidak akurat dan berikan informasi yang benar jika memungkinkan..."></textarea>
                     </div>
-                    
+
                     <div class="form-check mb-2 mt-3">
-                        <input class="form-check-input" type="radio" name="reportReason" id="cancelledEvent" value="cancelledEvent">
+                        <input class="form-check-input" type="radio" name="reportReason" id="cancelledEvent"
+                            value="cancelledEvent">
                         <label class="form-check-label" for="cancelledEvent">
                             <strong>Kegiatan/informasi sudah tidak berlaku</strong><br>
                             <small class="text-muted">Event sudah dibatalkan atau informasi sudah kedaluwarsa</small>
@@ -343,35 +357,41 @@
                     </div>
                     <div class="report-reason-details" id="cancelledEventDetails">
                         <label class="form-label small mt-2">Informasi tambahan:</label>
-                        <textarea class="form-control report-textarea" placeholder="Berikan informasi tentang pembatalan atau perubahan yang terjadi..."></textarea>
+                        <textarea class="form-control report-textarea"
+                            placeholder="Berikan informasi tentang pembatalan atau perubahan yang terjadi..."></textarea>
                     </div>
-                    
+
                     <div class="form-check mb-2 mt-3">
-                        <input class="form-check-input" type="radio" name="reportReason" id="spam" value="spam">
+                        <input class="form-check-input" type="radio" name="reportReason" id="spam"
+                            value="spam">
                         <label class="form-check-label" for="spam">
                             <strong>Spam atau konten tidak relevan</strong><br>
                             <small class="text-muted">Postingan berisi konten yang tidak sesuai dengan forum</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2 mt-3">
-                        <input class="form-check-input" type="radio" name="reportReason" id="duplicate" value="duplicate">
+                        <input class="form-check-input" type="radio" name="reportReason" id="duplicate"
+                            value="duplicate">
                         <label class="form-check-label" for="duplicate">
                             <strong>Postingan duplikat</strong><br>
                             <small class="text-muted">Informasi yang sama sudah pernah diposting sebelumnya</small>
                         </label>
                     </div>
-                    
+
                     <div class="form-check mb-2 mt-3">
-                        <input class="form-check-input" type="radio" name="reportReason" id="other" value="other">
+                        <input class="form-check-input" type="radio" name="reportReason" id="other"
+                            value="other">
                         <label class="form-check-label" for="other">
                             <strong>Lainnya</strong><br>
-                            <small class="text-muted">Alasan lain yang membantu admin menjaga kualitas informasi</small>
+                            <small class="text-muted">Alasan lain yang membantu admin menjaga kualitas
+                                informasi</small>
                         </label>
                     </div>
                     <div class="report-reason-details" id="otherDetails">
                         <label class="form-label small mt-2">Jelaskan alasan pelaporan:</label>
-                        <textarea class="form-control report-textarea" placeholder="Jelaskan mengapa postingan ini perlu diperbaiki atau dihapus..."></textarea>
+                        <textarea class="form-control report-textarea"
+                            placeholder="Jelaskan mengapa postingan ini perlu diperbaiki atau dihapus..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -409,7 +429,7 @@
                 Post berhasil disimpan.
             </div>
         </div>
-        
+
         <div id="reportToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <i class="fas fa-flag text-success me-2"></i>
@@ -420,7 +440,7 @@
                 Terima kasih! Laporan Anda telah dikirim ke admin.
             </div>
         </div>
-        
+
         <div id="commentReportToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <i class="fas fa-flag text-danger me-2"></i>
@@ -432,16 +452,15 @@
             </div>
         </div>
     </div>
-    
+
 
     @push('styles')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="{{ asset('css/forum.css') }}">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <link rel="stylesheet" href="{{ asset('css/forum.css') }}">
     @endpush
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('js/forum.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="{{ asset('js/forum.js') }}"></script>
     @endpush
 </x-app-layout>
-

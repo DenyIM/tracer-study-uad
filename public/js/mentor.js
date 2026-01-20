@@ -290,7 +290,7 @@ function autoFillUserData() {
     const userData = {
         name: "Deny Iqbal",
         nim: "20200811000",
-        program_studi: "Teknik Informatika",
+        program_studi: "Informatika",
         tahun_lulus: "2022",
         email: "deny.iqbal@example.com"
     };

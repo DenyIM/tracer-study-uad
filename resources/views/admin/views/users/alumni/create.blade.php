@@ -78,9 +78,8 @@
                             <select class="form-select @error('study_program') is-invalid @enderror" id="study_program"
                                 name="study_program" required>
                                 <option value="">Pilih Program Studi</option>
-                                <option value="Teknik Informatika"
-                                    {{ old('study_program') == 'Teknik Informatika' ? 'selected' : '' }}>
-                                    Teknik Informatika
+                                <option value="Informatika" {{ old('study_program') == 'Informatika' ? 'selected' : '' }}>
+                                    Informatika
                                 </option>
                                 <option value="Sistem Informasi"
                                     {{ old('study_program') == 'Sistem Informasi' ? 'selected' : '' }}>

@@ -6,7 +6,8 @@
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <h1 class="display-5 fw-bold mb-3">Temukan Karir Impian Anda</h1>
-                    <p class="lead mb-4">Jelajahi ribuan lowongan kerja eksklusif untuk alumni UAD. Temukan pekerjaan yang sesuai dengan passion dan keahlian Anda.</p>
+                    <p class="lead mb-4">Jelajahi ribuan lowongan kerja eksklusif untuk alumni UAD. Temukan pekerjaan
+                        yang sesuai dengan passion dan keahlian Anda.</p>
                 </div>
                 <div class="col-lg-4 text-center">
                     <div class="hero-icon">
@@ -54,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="row mt-3">
                 <div class="col-12">
                     <button class="btn btn-link p-0 text-decoration-none" id="toggleAdvancedFilter">
@@ -62,7 +63,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <div class="advanced-filter" id="advancedFilter">
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -82,7 +83,7 @@
                             <label class="filter-label">📚 Jurusan UAD</label>
                             <select class="form-select">
                                 <option value="">Semua Jurusan</option>
-                                <option value="informatika">Teknik Informatika</option>
+                                <option value="informatika">Informatika</option>
                                 <option value="sipil">Teknik Sipil</option>
                                 <option value="elektro">Teknik Elektro</option>
                                 <option value="manajemen">Manajemen</option>
@@ -143,7 +144,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="row mt-4">
                 <div class="col-12 text-center">
                     <button class="btn btn-primary-custom btn-lg px-5">
@@ -183,7 +184,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="job-body" href="/detlow">
                     <div class="job-meta">
                         <div class="meta-item">
@@ -199,9 +200,10 @@
                             <span>2-3 tahun</span>
                         </div>
                     </div>
-                    
-                    <p class="mb-3 small text-muted">Kami mencari Software Engineer yang berpengalaman dalam pengembangan aplikasi web menggunakan Laravel dan MySQL.</p>
-                    
+
+                    <p class="mb-3 small text-muted">Kami mencari Software Engineer yang berpengalaman dalam
+                        pengembangan aplikasi web menggunakan Laravel dan MySQL.</p>
+
                     <div class="skills-tags">
                         <span class="skill-tag">Laravel</span>
                         <span class="skill-tag">MySQL</span>
@@ -209,7 +211,7 @@
                         <span class="skill-tag">JavaScript</span>
                     </div>
                 </div>
-                
+
                 <div class="job-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-3">
@@ -227,7 +229,8 @@
                 <div class="job-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="d-flex align-items-center">
-                            <div class="company-logo me-3" style="background: linear-gradient(135deg, #28a745, #20c997);">BI</div>
+                            <div class="company-logo me-3"
+                                style="background: linear-gradient(135deg, #28a745, #20c997);">BI</div>
                             <div>
                                 <h5 class="fw-bold mb-1">Data Analyst</h5>
                                 <p class="text-muted mb-0">Bank Indonesia</p>
@@ -238,7 +241,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="job-body">
                     <div class="job-meta">
                         <div class="meta-item">
@@ -254,9 +257,10 @@
                             <span>1-2 tahun</span>
                         </div>
                     </div>
-                    
-                    <p class="mb-3 small text-muted">Analisis data keuangan dan ekonomi untuk mendukung pengambilan keputusan strategis di bank sentral.</p>
-                    
+
+                    <p class="mb-3 small text-muted">Analisis data keuangan dan ekonomi untuk mendukung pengambilan
+                        keputusan strategis di bank sentral.</p>
+
                     <div class="skills-tags">
                         <span class="skill-tag">Python</span>
                         <span class="skill-tag">SQL</span>
@@ -264,7 +268,7 @@
                         <span class="skill-tag">Statistics</span>
                     </div>
                 </div>
-                
+
                 <div class="job-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-3">
@@ -282,7 +286,8 @@
                 <div class="job-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="d-flex align-items-center">
-                            <div class="company-logo me-3" style="background: linear-gradient(135deg, #dc3545, #e83e8c);">TP</div>
+                            <div class="company-logo me-3"
+                                style="background: linear-gradient(135deg, #dc3545, #e83e8c);">TP</div>
                             <div>
                                 <h5 class="fw-bold mb-1">UI/UX Designer</h5>
                                 <p class="text-muted mb-0">Tokopedia</p>
@@ -293,7 +298,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="job-body">
                     <div class="job-meta">
                         <div class="meta-item">
@@ -309,9 +314,10 @@
                             <span>3-5 tahun</span>
                         </div>
                     </div>
-                    
-                    <p class="mb-3 small text-muted">Mendesain pengalaman pengguna yang luar biasa untuk produk e-commerce terkemuka di Indonesia.</p>
-                    
+
+                    <p class="mb-3 small text-muted">Mendesain pengalaman pengguna yang luar biasa untuk produk
+                        e-commerce terkemuka di Indonesia.</p>
+
                     <div class="skills-tags">
                         <span class="skill-tag">Figma</span>
                         <span class="skill-tag">Adobe XD</span>
@@ -319,7 +325,7 @@
                         <span class="skill-tag">Prototyping</span>
                     </div>
                 </div>
-                
+
                 <div class="job-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-3">
@@ -337,7 +343,8 @@
                 <div class="job-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="d-flex align-items-center">
-                            <div class="company-logo me-3" style="background: linear-gradient(135deg, #6f42c1, #d63384);">GP</div>
+                            <div class="company-logo me-3"
+                                style="background: linear-gradient(135deg, #6f42c1, #d63384);">GP</div>
                             <div>
                                 <h5 class="fw-bold mb-1">Product Manager</h5>
                                 <p class="text-muted mb-0">GoPay</p>
@@ -348,7 +355,7 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="job-body">
                     <div class="job-meta">
                         <div class="meta-item">
@@ -364,9 +371,10 @@
                             <span>4-6 tahun</span>
                         </div>
                     </div>
-                    
-                    <p class="mb-3 small text-muted">Memimpin pengembangan produk fintech inovatif untuk jutaan pengguna di Indonesia.</p>
-                    
+
+                    <p class="mb-3 small text-muted">Memimpin pengembangan produk fintech inovatif untuk jutaan
+                        pengguna di Indonesia.</p>
+
                     <div class="skills-tags">
                         <span class="skill-tag">Product Strategy</span>
                         <span class="skill-tag">Agile</span>
@@ -374,7 +382,7 @@
                         <span class="skill-tag">Stakeholder Mgmt</span>
                     </div>
                 </div>
-                
+
                 <div class="job-footer">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-3">
@@ -395,18 +403,15 @@
             </button>
         </div>
     </div>
-    
+
 
     @push('styles')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <link rel="stylesheet" href="{{ asset('css/list-lowongan.css') }}">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <link rel="stylesheet" href="{{ asset('css/list-lowongan.css') }}">
     @endpush
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('js/list-lowongan.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="{{ asset('js/list-lowongan.js') }}"></script>
     @endpush
 </x-app-layout>
-
-
-

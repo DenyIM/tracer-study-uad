@@ -25,6 +25,32 @@ class Category extends Model
     ];
 
     /**
+     * Set the icon attribute with proper formatting
+     */
+    public function setIconAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['icon'] = null;
+        } else {
+            // Pastikan icon memiliki format yang benar
+            $icon = trim($value);
+            
+            // Jika tidak diawali dengan 'fas', 'fa-solid', 'fa-regular', dll, tambahkan 'fas'
+            if (!preg_match('/^(fas|fa-solid|fa-regular|fa-light|fa-thin|fa-duotone|fa-brands)\s+fa-/i', $icon)) {
+                if (strpos($icon, 'fa-') === 0) {
+                    // Jika hanya 'fa-nama-icon', tambahkan 'fas'
+                    $icon = 'fas ' . $icon;
+                } elseif (!str_contains($icon, 'fa-')) {
+                    // Jika tanpa 'fa-', tambahkan 'fas fa-'
+                    $icon = 'fas fa-' . $icon;
+                }
+            }
+            
+            $this->attributes['icon'] = $icon;
+        }
+    }
+
+    /**
      * Get all questionnaires for this category
      */
     public function questionnaires(): HasMany

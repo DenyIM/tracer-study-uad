@@ -79,7 +79,7 @@ class UserController extends Controller
     public function alumniEdit(Alumni $alumni)
     {
         $alumni->load('user');
-        $studyPrograms = ['Teknik Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
+        $studyPrograms = ['Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
         return view('admin.views.users.alumni.edit', compact('alumni', 'studyPrograms'));
     }
 
@@ -107,7 +107,7 @@ class UserController extends Controller
 
         $alumni->user->update([
             'email' => $validated['email'],
-            'email_verified_at' => $request->has('email_verified') ? now() : null,
+            'email_verified_at' => $request->boolean('email_verified') ? now() : null,
         ]);
 
         $alumni->update([
@@ -168,7 +168,7 @@ class UserController extends Controller
      */
     public function alumniCreate()
     {
-        $studyPrograms = ['Teknik Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
+        $studyPrograms = ['Informatika', 'Sistem Informasi', 'Manajemen', 'Akuntansi'];
         return view('admin.views.users.alumni.create', compact('studyPrograms'));
     }
 

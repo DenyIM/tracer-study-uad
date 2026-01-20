@@ -110,8 +110,10 @@
                         <label class="form-label">Status Email</label>
                         <div class="border rounded p-3">
                             <div class="form-check">
+                                <input type="hidden" name="email_verified" value="0">
                                 <input class="form-check-input" type="checkbox" name="email_verified" id="emailVerified"
-                                    {{ $alumni->user->email_verified_at ? 'checked' : '' }}>
+                                    value="1"
+                                    {{ old('email_verified', $alumni->user->email_verified_at ? 1 : 0) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="emailVerified">
                                     Email Terverifikasi
                                 </label>

@@ -11,6 +11,22 @@ class Question extends Model
 {
     use HasFactory;
 
+    // Tambahkan mapping tipe pertanyaan
+    const TYPE_MAPPING = [
+        'text' => 'Teks Singkat',
+        'textarea' => 'Teks Panjang',
+        'number' => 'Angka',
+        'date' => 'Tanggal',
+        'radio' => 'Pilihan Tunggal (Radio)',
+        'dropdown' => 'Pilihan Dropdown',
+        'checkbox' => 'Pilihan Ganda (Checkbox)',
+        'likert_scale' => 'Skala Likert (1-5)',
+        'competency_scale' => 'Skala Kompetensi',
+        'radio_per_row' => 'Radio per Baris',
+        'checkbox_per_row' => 'Checkbox per Baris',
+        'likert_per_row' => 'Likert per Baris',
+    ];
+
     protected $fillable = [
         'questionnaire_id',
         'question_text',
@@ -56,6 +72,48 @@ class Question extends Model
         'rows' => 'integer',
         'max_selections' => 'integer',
     ];
+
+    /**
+     * Set the options attribute
+     */
+    public function setOptionsAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['options'] = json_encode($value);
+        } elseif (is_string($value) && !empty($value)) {
+            $this->attributes['options'] = $value;
+        } else {
+            $this->attributes['options'] = null;
+        }
+    }
+
+    /**
+     * Set the row_items attribute
+     */
+    public function setRowItemsAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['row_items'] = json_encode($value);
+        } elseif (is_string($value) && !empty($value)) {
+            $this->attributes['row_items'] = $value;
+        } else {
+            $this->attributes['row_items'] = null;
+        }
+    }
+
+    /**
+     * Set the scale_options attribute
+     */
+    public function setScaleOptionsAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['scale_options'] = json_encode($value);
+        } elseif (is_string($value) && !empty($value)) {
+            $this->attributes['scale_options'] = $value;
+        } else {
+            $this->attributes['scale_options'] = null;
+        }
+    }
 
     /**
      * Get the questionnaire that owns the question
@@ -123,6 +181,13 @@ class Question extends Model
         return in_array($this->question_type, ['likert_scale', 'competency_scale']);
     }
 
+    /**
+     * Get type label for display
+     */
+    public function getTypeLabelAttribute(): string
+    {
+        return self::TYPE_MAPPING[$this->question_type] ?? $this->question_type;
+    }
 
     /**
      * Get available scale options with labels
@@ -154,15 +219,54 @@ class Question extends Model
     }
 
     /**
-     * Get row items for per-row questions
+     * Get formatted options for display
      */
-    public function getFormattedRowItemsAttribute(): array
+    public function getFormattedOptionsAttribute()
     {
-        if (!$this->row_items || !is_array($this->row_items)) {
+        if (!$this->options) {
             return [];
         }
         
-        return $this->row_items;
+        $options = is_string($this->options) ? json_decode($this->options, true) : $this->options;
+        if (!is_array($options)) {
+            return [];
+        }
+        
+        $formatted = [];
+        foreach ($options as $option) {
+            if (is_array($option) && isset($option['text'])) {
+                $formatted[] = $option['text'];
+            } else {
+                $formatted[] = $option;
+            }
+        }
+        
+        return $formatted;
+    }
+
+    /**
+     * Get row items for display
+     */
+    public function getFormattedRowItemsAttribute()
+    {
+        if (!$this->row_items) {
+            return [];
+        }
+        
+        $rowItems = is_string($this->row_items) ? json_decode($this->row_items, true) : $this->row_items;
+        if (!is_array($rowItems)) {
+            return [];
+        }
+        
+        $formatted = [];
+        foreach ($rowItems as $key => $value) {
+            $formatted[] = [
+                'key' => $key,
+                'label' => is_array($value) ? ($value['text'] ?? $value) : $value
+            ];
+        }
+        
+        return $formatted;
     }
 
     /**

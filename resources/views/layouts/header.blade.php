@@ -1,3 +1,7 @@
+@php
+    use App\Helpers\RankingHelper;
+@endphp
+
 <header class="sticky-top bg-white shadow-sm">
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
@@ -26,10 +30,9 @@
                     @else
                         @if (auth()->user()->role == 'alumni')
                             @php
-                                // Ambil data progress alumni
                                 $user = auth()->user();
                                 $alumni = $user->alumni;
-                                $statusQuestionnaire = $alumni->statuses()->first();
+                                $statusQuestionnaire = $alumni ? $alumni->statuses()->first() : null;
                                 $isCompleted = false;
                                 $progressParts = [
                                     'part1' => false,
@@ -38,19 +41,13 @@
                                     'part4' => false,
                                 ];
 
-                                if ($statusQuestionnaire) {
-                                    // Cek progress kuesioner untuk menentukan bagian mana yang sudah selesai
-                                    $progressRecords = $alumni
-                                        ->answers()
-                                        ->whereHas('question.questionnaire', function ($q) use ($statusQuestionnaire) {
-                                            $q->where('category_id', $statusQuestionnaire->category_id);
-                                        })
-                                        ->get()
-                                        ->groupBy(function ($answer) {
-                                            return $answer->question->questionnaire->slug;
-                                        });
+                                // Hitung ranking menggunakan helper
+                                $ranking = $alumni ? RankingHelper::getAlumniRank($alumni->id) : 1;
+                                $totalParticipants = RankingHelper::getTotalParticipants();
+                                $points = $alumni->points ?? 0;
 
-                                    // Logika sederhana untuk menentukan bagian yang terbuka
+                                // Progress logic
+                                if ($statusQuestionnaire) {
                                     $totalAnswered = $alumni
                                         ->answers()
                                         ->whereHas('question.questionnaire', function ($q) use ($statusQuestionnaire) {
@@ -67,7 +64,6 @@
                                     $progressPercentage =
                                         $totalQuestions > 0 ? ($totalAnswered / $totalQuestions) * 100 : 0;
 
-                                    // Asumsi: Setiap 25% progress membuka satu fitur
                                     $progressParts['part1'] = $progressPercentage >= 25;
                                     $progressParts['part2'] = $progressPercentage >= 50;
                                     $progressParts['part3'] = $progressPercentage >= 75;
@@ -183,7 +179,10 @@
                                     ? date('Y', strtotime($alumni->graduation_date))
                                     : '';
                                 $points = $alumni->points ?? 0;
-                                $ranking = $alumni->ranking ?? 0;
+
+                                // Hitung ranking menggunakan helper
+                                $ranking = $alumni ? RankingHelper::getAlumniRank($alumni->id) : 1;
+                                $totalParticipants = RankingHelper::getTotalParticipants();
 
                                 // Cek apakah ada foto profil
                                 $hasProfilePhoto = !empty($user->pp_url);

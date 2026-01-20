@@ -121,7 +121,7 @@
                                         <div class="user-avatar">AR</div>
                                         <div class="user-details">
                                             <h6>Ahmad Rizki</h6>
-                                            <small>Teknik Informatika 2018</small>
+                                            <small>Informatika 2018</small>
                                         </div>
                                     </div>
                                 </td>
@@ -163,7 +163,7 @@
                                         <div class="user-avatar">DI</div>
                                         <div class="user-details">
                                             <h6>Deny Iqbal</h6>
-                                            <small>Teknik Informatika 2018</small>
+                                            <small>Informatika 2018</small>
                                         </div>
                                     </div>
                                 </td>
