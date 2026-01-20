@@ -1,6 +1,6 @@
+<!-- Benefits Section -->
 <div class="benefits-section" data-aos="fade-up">
-    <h3 class="text-center fw-bold mb-4" style="color: var(--primary-blue);">Keuntungan Menjadi Top Rank
-    </h3>
+    <h3 class="text-center fw-bold mb-4" style="color: var(--primary-blue);">Keuntungan Menjadi Top Rank</h3>
     <div class="row">
         <div class="col-md-4">
             <div class="benefit-item">

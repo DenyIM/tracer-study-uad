@@ -1,18 +1,14 @@
 <x-app-layout>
     @section('title', 'Leaderboard Alumni')
 
-    @push('styles')
-        <link rel="stylesheet" href="{{ asset('css/leaderboard.css') }}">
-    @endpush
-
     <section class="leaderboard-header">
         <div class="container">
             <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Leaderboard Alumni</h1>
             <p class="lead mb-4" data-aos="fade-up" data-aos-delay="100">Kompetisi sehat untuk berkontribusi bagi almamater
                 dan dapatkan rewards eksklusif!</p>
             <div class="points-badge d-inline-block px-4 py-2" data-aos="fade-up" data-aos-delay="200">
-                <i class="fas fa-coins me-2"></i>Total Points Anda: <strong
-                    id="userPoints">{{ number_format($userPoints) }}</strong>
+                <i class="fas fa-coins me-2"></i>Total Points Anda:
+                <strong>{{ number_format($currentUser->points ?? 0, 0, ',', '.') }}</strong>
             </div>
         </div>
     </section>
@@ -28,36 +24,197 @@
             </div>
 
             <!-- Podium Section -->
-            @include('leaderboard._podium', ['podiumData' => $podiumData])
+            @include('leaderboard.partials.podium')
 
             <!-- Benefits Section -->
-            @include('leaderboard._benefits')
+            @include('leaderboard.partials.benefits')
+
+            <!-- Search and Filter Section -->
+            @include('leaderboard.partials.search')
 
             <!-- Leaderboard Table -->
-            @include('leaderboard._table', [
-                'topAlumni' => $topAlumni,
-                'currentUser' => $currentUser,
-                'currentUserRank' => $currentUserRank,
-                'totalParticipants' => $totalParticipants,
-            ])
+            @include('leaderboard.partials.table')
 
-            <!-- Section Kirim Informasi -->
-            @include('leaderboard._submit-form')
+            <!-- Points Information Section -->
+            @include('leaderboard.partials.points-info')
+
+            <!-- Submission Forms Section -->
+            @include('leaderboard.partials.forms')
         </div>
     </div>
 
+    <!-- User Detail Modal -->
+    <div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userDetailModalLabel">Detail Alumni</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="userDetailContent">
+                    <!-- Content akan diisi via JavaScript -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('styles')
+        <link rel="stylesheet" href="{{ asset('css/leaderboard.css') }}">
+        <style>
+            :root {
+                --primary-blue: #003366;
+                --secondary-blue: #3b82f6;
+                --accent-yellow: #fab300;
+                --light-blue: #f0f7ff;
+            }
+
+            .user-row {
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .user-row:hover {
+                background-color: rgba(0, 51, 102, 0.05) !important;
+            }
+
+            .avatar-container {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+                color: white;
+                font-weight: bold;
+            }
+
+            .avatar-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .search-box {
+                max-width: 400px;
+            }
+
+            .per-page-select {
+                width: auto;
+            }
+
+            .current-user-highlight {
+                animation: pulse-highlight 2s infinite;
+                position: relative;
+            }
+
+            @keyframes pulse-highlight {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(250, 179, 0, 0.4);
+                }
+
+                70% {
+                    box-shadow: 0 0 0 10px rgba(250, 179, 0, 0);
+                }
+
+                100% {
+                    box-shadow: 0 0 0 0 rgba(250, 179, 0, 0);
+                }
+            }
+        </style>
+    @endpush
+
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="{{ asset('js/leaderboard.js') }}"></script>
         <script>
-            // Global variables for JavaScript
-            window.leaderboardConfig = {
-                currentUserId: {{ $currentUser->id ?? 0 }},
-                currentUserRank: {{ $currentUserRank ?? 0 }},
-                submitForumUrl: "{{ route('leaderboard.submit.forum') }}",
-                submitJobUrl: "{{ route('leaderboard.submit.job') }}",
-                getDataUrl: "{{ route('leaderboard.data') }}",
-                csrfToken: "{{ csrf_token() }}"
+            // Debug script
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
+
+                // Test data sebelum submit
+                const testFormData = () => {
+                    console.log('=== Testing Form Data ===');
+
+                    // Forum form
+                    const forumForm = document.getElementById('forumForm');
+                    if (forumForm) {
+                        console.log('Forum Form Fields:');
+                        const forumData = new FormData(forumForm);
+                        for (let [key, value] of forumData.entries()) {
+                            console.log(`${key}: ${value}`);
+                        }
+                    }
+
+                    // Job form
+                    const jobForm = document.getElementById('jobForm');
+                    if (jobForm) {
+                        console.log('Job Form Fields:');
+                        const jobData = new FormData(jobForm);
+                        for (let [key, value] of jobData.entries()) {
+                            console.log(`${key}: ${value}`);
+                        }
+                    }
+
+                    console.log('=== End Testing ===');
+                };
+
+                // Jalankan test setelah 1 detik
+                setTimeout(testFormData, 1000);
+
+                // User detail modal
+                const userRows = document.querySelectorAll('.user-row[data-user-id]');
+                userRows.forEach(row => {
+                    row.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-user-id');
+                        loadUserDetail(userId);
+                    });
+                });
+            });
+
+            // Load user detail function
+            function loadUserDetail(userId) {
+                // ... kode sebelumnya ...
+            }
+
+            // Manual form test function
+            window.testSubmit = function(type) {
+                const form = type === 'forum' ?
+                    document.getElementById('forumForm') :
+                    document.getElementById('jobForm');
+
+                if (!form) {
+                    console.error('Form not found');
+                    return;
+                }
+
+                // Isi data test
+                if (type === 'forum') {
+                    form.querySelector('[name="category"]').value = 'seminar';
+                    form.querySelector('[name="title"]').value = 'Test Seminar ' + Date.now();
+                    form.querySelector('[name="description"]').value = 'Test description for seminar';
+                } else {
+                    form.querySelector('[name="company_name"]').value = 'Test Company ' + Date.now();
+                    form.querySelector('[name="position"]').value = 'Test Position';
+                    form.querySelector('[name="location"]').value = 'Jakarta';
+                    form.querySelector('[name="job_description"]').value = 'Test job description';
+                    form.querySelector('[name="qualifications"]').value = 'Test qualifications';
+                    form.querySelector('[name="field"]').value = 'it';
+                    form.querySelector('[name="link"]').value = 'https://example.com';
+                }
+
+                // Submit form
+                const event = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                form.dispatchEvent(event);
             };
         </script>
     @endpush

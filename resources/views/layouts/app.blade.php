@@ -21,6 +21,26 @@
         {{ $slot }}
     </main>
 
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    showNotification("{{ session('success') }}", 'success');
+                }, 1000);
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    showNotification("{{ session('error') }}", 'error');
+                }, 1000);
+            });
+        </script>
+    @endif
+
     @include('layouts.footer')
 
     <!-- Scripts -->

@@ -2,182 +2,320 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Alumni;
-use App\Models\User;
-use App\Helpers\RankingHelper;
+use App\Models\StatusQuestionnaire;
+use App\Models\AlumniAchievement;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class LeaderboardController extends Controller
 {
     /**
-     * Display leaderboard page
+     * Tampilkan halaman leaderboard
      */
     public function index(Request $request)
     {
         $user = Auth::user();
         $alumni = $user->alumni;
         
-        // Get paginated alumni with points
-        $perPage = 20;
-        $page = $request->get('page', 1);
+        // Ambil parameter untuk filter
+        $perPage = $request->get('per_page', 20);
+        $search = $request->get('search', '');
         
-        // Get top alumni ordered by points
-        $topAlumni = Alumni::where('points', '>', 0)
-            ->orderByDesc('points')
-            ->paginate($perPage, ['*'], 'page', $page);
+        // Query untuk ranking dengan window function
+        $rankQuery = Alumni::select([
+                'alumnis.id',
+                'alumnis.fullname',
+                'alumnis.nim',
+                'alumnis.study_program',
+                'alumnis.points',
+                'alumnis.graduation_date',
+                'users.pp_url',
+                DB::raw('(SELECT COUNT(*) + 1 FROM alumnis a2 WHERE a2.points > alumnis.points) as ranking')
+            ])
+            ->join('users', 'alumnis.user_id', '=', 'users.id')
+            ->where('alumnis.points', '>', 0);
         
-        // Get podium (top 3)
-        $podiumAlumni = Alumni::where('points', '>', 0)
-            ->orderByDesc('points')
-            ->take(3)
-            ->get();
-        
-        // Get current user rank
-        $currentUserRank = $alumni ? RankingHelper::getAlumniRank($alumni->id) : null;
-        
-        // Prepare podium data
-        $podiumData = [];
-        if ($podiumAlumni->count() >= 3) {
-            $podiumData = [
-                'first' => $podiumAlumni[0] ?? null,
-                'second' => $podiumAlumni[1] ?? null,
-                'third' => $podiumAlumni[2] ?? null,
-            ];
+        // Filter berdasarkan pencarian
+        if ($search) {
+            $rankQuery->where(function($q) use ($search) {
+                $q->where('alumnis.fullname', 'LIKE', "%{$search}%")
+                  ->orWhere('alumnis.nim', 'LIKE', "%{$search}%")
+                  ->orWhere('alumnis.study_program', 'LIKE', "%{$search}%");
+            });
         }
         
-        // Get total participants
-        $totalParticipants = RankingHelper::getTotalParticipants();
+        // Paginasi hasil
+        $leaderboard = $rankQuery->orderBy('alumnis.points', 'DESC')
+            ->paginate($perPage)
+            ->withQueryString(); // Untuk mempertahankan query string
         
+        // Ambil top 3 untuk podium
+        $topThree = Alumni::select([
+                'alumnis.id',
+                'alumnis.fullname',
+                'alumnis.nim',
+                'alumnis.study_program',
+                'alumnis.points',
+                'users.pp_url',
+            ])
+            ->join('users', 'alumnis.user_id', '=', 'users.id')
+            ->where('alumnis.points', '>', 0)
+            ->orderBy('alumnis.points', 'DESC')
+            ->limit(3)
+            ->get();
+        
+        // Hitung ranking user saat ini
+        $currentUserRank = Alumni::where('points', '>', $alumni->points ?? 0)
+            ->count() + 1;
+        
+        // Ambil total peserta
+        $totalParticipants = Alumni::where('points', '>', 0)->count();
+        
+        // Ambil achievements user saat ini
+        $achievements = AlumniAchievement::where('alumni_id', $alumni->id)
+            ->orderBy('achieved_at', 'desc')
+            ->take(5)
+            ->get();
+        
+        // Data untuk view
         return view('leaderboard.index', [
-            'topAlumni' => $topAlumni,
-            'podiumData' => $podiumData,
+            'leaderboard' => $leaderboard,
+            'topThree' => $topThree,
             'currentUser' => $alumni,
             'currentUserRank' => $currentUserRank,
             'totalParticipants' => $totalParticipants,
-            'userPoints' => $alumni ? $alumni->points : 0,
+            'achievements' => $achievements,
+            'search' => $search,
+            'perPage' => $perPage,
         ]);
     }
     
     /**
-     * Submit forum information
+     * Submit informasi forum
      */
     public function submitForum(Request $request)
     {
+        // Cek token CSRF untuk mencegah double submit
+        if (!$request->hasValidSignature() && !$request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid request signature'
+            ], 403);
+        }
+        
         $request->validate([
-            'category' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
+            'category' => 'required|in:seminar,event,tips,bootcamp,other',
+            'title' => 'required|string|max:200',
             'description' => 'required|string',
             'date_time' => 'nullable|date',
-            'location' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:200',
             'link' => 'nullable|url|max:500',
-            'contact' => 'nullable|string|max:255',
+            'contact' => 'nullable|string|max:200',
         ]);
         
-        // Here you would save to database
-        // For now, we'll simulate success
-        
-        // Calculate points (2,000 points for forum submission)
-        $points = 2000;
-        
-        // Add points to alumni (you'll need to implement this)
-        // $user = Auth::user();
-        // $alumni = $user->alumni;
-        // $alumni->increment('points', $points);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Informasi forum berhasil dikirim! Admin akan memverifikasi dalam 1-2 hari kerja.',
-            'points' => $points,
-        ]);
+        try {
+            $user = Auth::user();
+            $alumni = $user->alumni;
+            
+            // Cek duplicate submission dalam 5 menit terakhir
+            $recentSubmission = DB::table('forum_submissions')
+                ->where('alumni_id', $alumni->id)
+                ->where('title', $request->title)
+                ->where('created_at', '>', now()->subMinutes(5))
+                ->first();
+                
+            if ($recentSubmission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah mengirim informasi ini baru saja. Tunggu beberapa saat sebelum mengirim lagi.'
+                ], 429);
+            }
+            
+            // Simpan data ke tabel forum_submissions
+            DB::table('forum_submissions')->insert([
+                'alumni_id' => $alumni->id,
+                'category' => $request->category,
+                'title' => $request->title,
+                'description' => $request->description,
+                'date_time' => $request->date_time,
+                'location' => $request->location,
+                'link' => $request->link,
+                'contact' => $request->contact,
+                'status' => 'pending',
+                'points_awarded' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Informasi forum berhasil dikirim! Tim admin akan memverifikasi dalam 1-2 hari kerja.'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim informasi: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
-     * Submit job information
+     * Submit informasi lowongan kerja
      */
     public function submitJob(Request $request)
     {
-        $request->validate([
-            'company' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'description' => 'required|string',
-            'requirements' => 'required|string',
-            'field' => 'required|string|max:255',
-            'deadline' => 'nullable|date',
-            'link' => 'required|url|max:500',
-            'contact' => 'nullable|string|max:255',
-        ]);
-        
-        // Here you would save to database
-        // For now, we'll simulate success
-        
-        // Calculate points (3,000 points for job submission)
-        $points = 3000;
-        
-        // Add points to alumni (you'll need to implement this)
-        // $user = Auth::user();
-        // $alumni = $user->alumni;
-        // $alumni->increment('points', $points);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Informasi lowongan kerja berhasil dikirim! Admin akan memverifikasi dalam 1-2 hari kerja.',
-            'points' => $points,
-        ]);
-    }
-    
-    /**
-     * Get leaderboard data for API
-     */
-    public function getLeaderboardData(Request $request)
-    {
-        $page = $request->get('page', 1);
-        $perPage = 20;
-        
-        $alumni = Alumni::where('points', '>', 0)
-            ->orderByDesc('points')
-            ->paginate($perPage, ['*'], 'page', $page);
-        
-        $data = $alumni->map(function ($alumni, $index) use ($page, $perPage) {
-            // Calculate actual rank
-            $rank = (($page - 1) * $perPage) + $index + 1;
-            
-            return [
-                'rank' => $rank,
-                'name' => $alumni->fullname,
-                'initials' => $this->getInitials($alumni->fullname),
-                'study_program' => $alumni->study_program,
-                'graduation_year' => $alumni->graduation_date ? $alumni->graduation_date->format('Y') : 'N/A',
-                'points' => number_format($alumni->points),
-                'raw_points' => $alumni->points,
-                'alumni_id' => $alumni->id,
-            ];
-        });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'current_page' => $alumni->currentPage(),
-            'total_pages' => $alumni->lastPage(),
-            'total_items' => $alumni->total(),
-        ]);
-    }
-    
-    /**
-     * Get initials from name
-     */
-    private function getInitials($name)
-    {
-        $words = explode(' ', $name);
-        $initials = '';
-        
-        foreach ($words as $word) {
-            if (!empty($word)) {
-                $initials .= strtoupper(substr($word, 0, 1));
-            }
+        // Cek token CSRF untuk mencegah double submit
+        if (!$request->hasValidSignature() && !$request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid request signature'
+            ], 403);
         }
         
-        return substr($initials, 0, 2);
+        $request->validate([
+            'company_name' => 'required|string|max:200',
+            'position' => 'required|string|max:200',
+            'location' => 'required|string|max:200',
+            'job_description' => 'required|string',
+            'qualifications' => 'required|string',
+            'field' => 'required|in:it,marketing,finance,hrd,engineering,other',
+            'deadline' => 'nullable|date',
+            'link' => 'required|url|max:500',
+            'contact' => 'nullable|string|max:200',
+        ]);
+        
+        try {
+            $user = Auth::user();
+            $alumni = $user->alumni;
+            
+            // Cek duplicate submission dalam 5 menit terakhir
+            $recentSubmission = DB::table('job_submissions')
+                ->where('alumni_id', $alumni->id)
+                ->where('company_name', $request->company_name)
+                ->where('position', $request->position)
+                ->where('created_at', '>', now()->subMinutes(5))
+                ->first();
+                
+            if ($recentSubmission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah mengirim lowongan ini baru saja. Tunggu beberapa saat sebelum mengirim lagi.'
+                ], 429);
+            }
+            
+            // Simpan data ke tabel job_submissions
+            DB::table('job_submissions')->insert([
+                'alumni_id' => $alumni->id,
+                'company_name' => $request->company_name,
+                'position' => $request->position,
+                'location' => $request->location,
+                'job_description' => $request->job_description,
+                'qualifications' => $request->qualifications,
+                'field' => $request->field,
+                'deadline' => $request->deadline,
+                'link' => $request->link,
+                'contact' => $request->contact,
+                'status' => 'pending',
+                'points_awarded' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Informasi lowongan kerja berhasil dikirim! Tim admin akan memverifikasi dalam 1-2 hari kerja.'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim informasi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get user's submission history
+     */
+    public function getSubmissionHistory(Request $request)
+    {
+        $user = Auth::user();
+        $alumni = $user->alumni;
+        
+        $forumSubmissions = DB::table('forum_submissions')
+            ->where('alumni_id', $alumni->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $jobSubmissions = DB::table('job_submissions')
+            ->where('alumni_id', $alumni->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'forum_submissions' => $forumSubmissions,
+                'job_submissions' => $jobSubmissions,
+            ]
+        ]);
+    }
+    
+    /**
+     * Get detailed user info for ranking
+     */
+    public function getUserRankInfo($id)
+    {
+        $user = Alumni::select([
+                'alumnis.*',
+                'users.email',
+                'users.pp_url',
+            ])
+            ->join('users', 'alumnis.user_id', '=', 'users.id')
+            ->where('alumnis.id', $id)
+            ->first();
+            
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan'
+            ], 404);
+        }
+        
+        // Hitung ranking user
+        $ranking = Alumni::where('points', '>', $user->points)->count() + 1;
+        $user->ranking = $ranking;
+        
+        // Ambil achievements user
+        $achievements = AlumniAchievement::where('alumni_id', $id)
+            ->orderBy('achieved_at', 'desc')
+            ->get();
+            
+        // Hitung total submissions yang sudah diverifikasi
+        $verifiedSubmissions = DB::table('forum_submissions')
+            ->where('alumni_id', $id)
+            ->where('status', 'approved')
+            ->count();
+            
+        $verifiedJobs = DB::table('job_submissions')
+            ->where('alumni_id', $id)
+            ->where('status', 'approved')
+            ->count();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'achievements' => $achievements,
+                'submissions' => [
+                    'forum' => $verifiedSubmissions,
+                    'jobs' => $verifiedJobs,
+                ]
+            ]
+        ]);
     }
 }
