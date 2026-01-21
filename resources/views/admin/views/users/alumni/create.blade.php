@@ -61,15 +61,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
-                        <div class="mb-3">
-                            <label for="ranking" class="form-label">Ranking</label>
-                            <input type="number" class="form-control @error('ranking') is-invalid @enderror" id="ranking"
-                                name="ranking" value="{{ old('ranking') }}" min="1" placeholder="Masukkan ranking">
-                            @error('ranking')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
                     </div>
 
                     <div class="col-md-6">

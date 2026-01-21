@@ -71,7 +71,6 @@
                             <!-- HAPUS KOLOM NIM DARI HEADER -->
                             <th>Program Studi</th>
                             <th>Tahun Lulus</th>
-                            <th>Ranking</th>
                             <th>Points</th>
                             <th>Status Email</th>
                             <th>Terakhir Login</th>
@@ -99,13 +98,6 @@
                                 <td>{{ $alumniItem->graduation_date ? $alumniItem->graduation_date->format('Y') : '-' }}
                                 </td>
                                 <td>
-                                    @if ($alumniItem->ranking)
-                                        <span class="badge bg-primary">#{{ $alumniItem->ranking }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
                                     @if ($alumniItem->points)
                                         <span class="badge bg-success">{{ $alumniItem->points }} pts</span>
                                     @else
@@ -114,11 +106,11 @@
                                 </td>
                                 <td>
                                     @if ($alumniItem->user->email_verified_at)
-                                        <span class="status-badge badge-success">
+                                        <span class="badge bg-success px-3 py-2">
                                             <i class="bi bi-check-circle me-1"></i> Terverifikasi
                                         </span>
                                     @else
-                                        <span class="status-badge badge-warning">
+                                        <span class="badge bg-warning px-3 py-2">
                                             <i class="bi bi-clock me-1"></i> Belum Verifikasi
                                         </span>
                                     @endif

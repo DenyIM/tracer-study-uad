@@ -60,15 +60,6 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Ranking</label>
-                        <input type="number" class="form-control @error('ranking') is-invalid @enderror" name="ranking"
-                            value="{{ old('ranking', $alumni->ranking) }}" min="1" placeholder="Masukkan ranking">
-                        @error('ranking')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6 mb-3">
                         <label class="form-label">Points</label>
                         <input type="number" class="form-control @error('points') is-invalid @enderror" name="points"
                             value="{{ old('points', $alumni->points) }}" min="0" placeholder="Masukkan points">

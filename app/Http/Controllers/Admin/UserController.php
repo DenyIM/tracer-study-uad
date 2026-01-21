@@ -20,6 +20,8 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 
 class UserController extends Controller
@@ -237,6 +239,12 @@ class UserController extends Controller
      */
     public function adminCreate()
     {
+        // Check permission
+        if (!Auth::user()->canCreateAdmin()) {
+            return redirect()->route('admin.views.users.admin.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menambah admin');
+        }
+        
         return view('admin.views.users.admin.create');
     }
 
@@ -245,6 +253,12 @@ class UserController extends Controller
      */
     public function adminStore(Request $request)
     {
+        // Check permission
+        if (!Auth::user()->canCreateAdmin()) {
+            return redirect()->route('admin.views.users.admin.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menambah admin');
+        }
+        
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -278,6 +292,12 @@ class UserController extends Controller
      */
     public function adminEdit(Admin $admin)
     {
+        // Check permission
+        if (!Auth::user()->canEditAdmin()) {
+            return redirect()->route('admin.views.users.admin.show', $admin->id)
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit admin');
+        }
+        
         $admin->load('user');
         return view('admin.views.users.admin.edit', compact('admin'));
     }
@@ -287,6 +307,12 @@ class UserController extends Controller
      */
     public function adminUpdate(Request $request, Admin $admin)
     {
+        // Check permission
+        if (!Auth::user()->canEditAdmin()) {
+            return redirect()->route('admin.views.users.admin.show', $admin->id)
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit admin');
+        }
+        
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin->user_id)],
@@ -318,11 +344,23 @@ class UserController extends Controller
     */
     public function adminDestroy(Admin $admin)
     {
+        // Check permission
+        if (!Auth::user()->canDeleteAdmin()) {
+            return redirect()->route('admin.views.users.admin.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus admin');
+        }
+        
         // Check if trying to delete last admin
         $adminCount = Admin::count();
         if ($adminCount <= 1) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Tidak dapat menghapus admin terakhir');
+        }
+
+        // Check if trying to delete self
+        if ($admin->user_id === Auth::id()) {
+            return redirect()->route('admin.views.users.admin.index')
+                ->with('error', 'Tidak dapat menghapus akun sendiri');
         }
 
         // Delete associated user
@@ -2101,5 +2139,77 @@ class UserController extends Controller
         );
         
         return view('admin.views.questionnaire.export-complete-answers', $reportData);
+    }
+
+    /**
+     * Upload profile photo for admin.
+     */
+    public function adminUploadPhoto(Request $request, Admin $admin)
+    {
+        // Check permission
+        if (!Auth::user()->canEditAdmin()) {
+            return redirect()->route('admin.views.users.admin.show', $admin->id)
+                ->with('error', 'Anda tidak memiliki izin untuk mengupload foto admin');
+        }
+
+        $request->validate([
+            'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Delete old photo if exists
+        if ($admin->user->pp_url && Storage::exists($admin->user->pp_url)) {
+            Storage::delete($admin->user->pp_url);
+        }
+
+        // Store new photo
+        $path = $request->file('profile_photo')->store('profile-photos', 'public');
+
+        // Update user photo URL
+        $admin->user->update([
+            'pp_url' => $path,
+        ]);
+
+        return redirect()->route('admin.views.users.admin.edit', $admin->id)
+            ->with('success', 'Foto profil berhasil diupload');
+    }
+
+    /**
+     * Delete profile photo for admin.
+     */
+    public function adminDeletePhoto(Admin $admin)
+    {
+        // Check permission
+        if (!Auth::user()->canEditAdmin()) {
+            return redirect()->route('admin.views.users.admin.show', $admin->id)
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus foto admin');
+        }
+
+        if ($admin->user->pp_url && Storage::exists($admin->user->pp_url)) {
+            Storage::delete($admin->user->pp_url);
+        }
+
+        $admin->user->update([
+            'pp_url' => null,
+        ]);
+
+        return redirect()->route('admin.views.users.admin.edit', $admin->id)
+            ->with('success', 'Foto profil berhasil dihapus');
+    }
+
+    /**
+     * Verify admin email manually.
+     */
+    public function adminVerifyEmail(Admin $admin)
+    {
+        // Check permission
+        if (!Auth::user()->canEditAdmin()) {
+            return redirect()->route('admin.views.users.admin.show', $admin->id)
+                ->with('error', 'Anda tidak memiliki izin untuk memverifikasi email admin');
+        }
+        
+        $admin->user->update(['email_verified_at' => now()]);
+        
+        return redirect()->route('admin.views.users.admin.edit', $admin->id)
+            ->with('success', 'Email admin berhasil diverifikasi');
     }
 }

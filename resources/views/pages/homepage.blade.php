@@ -173,42 +173,6 @@
 </head>
 
 <body>
-    {{-- <header class="sticky-top bg-white shadow-sm">
-        <nav class="navbar navbar-expand-lg navbar-light bg-white">
-            <div class="container">
-                <a class="navbar-brand d-flex align-items-center" href="#" data-aos="fade-right">
-                    <img src="{{ asset('logo-tracer-study.png') }}" style="width: 150px; height: auto;"
-                        class="img-fluid rounded">
-                </a>
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item" data-aos="fade-down" data-aos-delay="100">
-                            <a class="nav-link active" href="#beranda">Beranda</a>
-                        </li>
-                        <li class="nav-item" data-aos="fade-down" data-aos-delay="200">
-                            <a class="nav-link" href="#tentang">Tentang</a>
-                        </li>
-                        <li class="nav-item" data-aos="fade-down" data-aos-delay="300">
-                            <a class="nav-link" href="#faq">FAQ</a>
-                        </li>
-                    </ul>
-
-                    <div class="d-flex">
-                        <a href="/homepage-login" class="btn btn-outline-primary-custom me-2" data-aos="zoom-in"
-                            data-aos-delay="400">Login</a>
-                        <a href="/homepage-register" class="btn btn-primary-custom" data-aos="zoom-in"
-                            data-aos-delay="500">Daftar</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header> --}}
-
     @include('layouts.header')
 
     <section class="hero-section" id="beranda">

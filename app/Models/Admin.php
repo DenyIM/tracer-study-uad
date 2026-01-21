@@ -20,4 +20,16 @@ class Admin extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
+    // Tambahkan method untuk mendapatkan URL foto profil
+    public function getProfilePhotoUrlAttribute()
+    {
+        if ($this->user->pp_url) {
+            // Jika ada URL foto profil, gunakan itu
+            return asset('storage/' . $this->user->pp_url);
+        } else {
+            // Jika tidak ada, generate dari UI Avatars berdasarkan nama
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->fullname) . '&background=0d6efd&color=fff';
+        }
+    }
 }

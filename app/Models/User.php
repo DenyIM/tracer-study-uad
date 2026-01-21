@@ -6,7 +6,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -88,8 +87,6 @@ class User extends Authenticatable
         return null;
     }
 
-    // Add these methods to your existing User model
-
     public function getStatusBadgeAttribute(): string
     {
         if ($this->email_verified_at) {
@@ -110,5 +107,58 @@ class User extends Authenticatable
         }
         
         return '<small>' . $this->last_login_at->diffForHumans() . '</small>';
+    }
+
+    // ============ PERMISSION METHODS ============
+    
+    /**
+     * Check if user has permission to edit admin data
+     */
+    public function canEditAdmin(): bool
+    {
+        if (!$this->isAdmin() || !$this->admin) {
+            return false;
+        }
+        
+        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
+        return in_array($this->admin->job_title, $allowedJobs);
+    }
+    
+    /**
+     * Check if user has permission to delete admin data
+     */
+    public function canDeleteAdmin(): bool
+    {
+        if (!$this->isAdmin() || !$this->admin) {
+            return false;
+        }
+        
+        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
+        return in_array($this->admin->job_title, $allowedJobs);
+    }
+    
+    /**
+     * Check if user has permission to create admin
+     */
+    public function canCreateAdmin(): bool
+    {
+        if (!$this->isAdmin() || !$this->admin) {
+            return false;
+        }
+        
+        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
+        return in_array($this->admin->job_title, $allowedJobs);
+    }
+    
+    /**
+     * Get current admin's job title
+     */
+    public function getJobTitleAttribute(): ?string
+    {
+        if ($this->isAdmin() && $this->admin) {
+            return $this->admin->job_title;
+        }
+        
+        return null;
     }
 }

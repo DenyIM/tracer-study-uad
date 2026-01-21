@@ -204,10 +204,52 @@
 
         /* Profile Image */
         .profile-img {
-            width: 35px;
-            height: 35px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+
+        .profile-img:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .profile-img-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .photo-upload-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .photo-upload-container .photo-upload-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .photo-upload-container .photo-upload-overlay:hover {
+            background: #0b5ed7;
+            transform: scale(1.1);
         }
 
         /* Filter Section */
@@ -239,6 +281,75 @@
         /* Table Hover */
         .table-hover tbody tr:hover {
             background-color: rgba(13, 110, 253, 0.05);
+        }
+
+        /* Permission Restricted Styles */
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #e9ecef !important;
+            border-color: #dee2e6 !important;
+            color: #6c757d !important;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert-danger .alert-heading {
+            color: #842029;
+        }
+
+        .alert-info .alert-heading {
+            color: #055160;
+        }
+
+        /* Badge Styles for Job Titles */
+        .badge.bg-danger {
+            background-color: #dc3545 !important;
+        }
+
+        .badge.bg-primary {
+            background-color: #0d6efd !important;
+        }
+
+        .badge.bg-info {
+            background-color: #0dcaf0 !important;
+        }
+
+        .badge.bg-warning {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+
+        .badge.bg-success {
+            background-color: #198754 !important;
+        }
+
+        .badge.bg-secondary {
+            background-color: #6c757d !important;
+        }
+
+        /* Tooltip Styles */
+        .tooltip-inner {
+            max-width: 300px;
+            padding: 8px 12px;
+            background-color: #333;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        /* Form Styles */
+        .form-control:disabled,
+        .form-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+
+        .input-group:has(input:disabled) .btn-outline-secondary {
+            cursor: not-allowed;
+            opacity: 0.5;
         }
 
         /* ===== CSS untuk Leaderboard ===== */
@@ -444,6 +555,60 @@
                 margin: 1px;
             }
         }
+
+        /* Profile Dropdown */
+        .dropdown-menu {
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-item {
+            padding: 10px 15px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Profile card styles */
+        .profile-card {
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .profile-info-item:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 
     @stack('styles')
@@ -568,16 +733,67 @@
 
                 <div class="d-flex align-items-center">
                     <div class="dropdown">
-                        <a href="#" data-bs-toggle="dropdown">
-                            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0d6efd&color=fff"
-                                alt="Admin" class="profile-img">
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <h6 class="dropdown-header">Halo, Admin</h6>
-                            <a class="dropdown-item text-danger" href="#">
-                                <i class="bi bi-box-arrow-right me-2"></i> Logout
-                            </a>
-                        </div>
+                        <button class="btn p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ auth()->user()->pp_url ? asset('storage/' . auth()->user()->pp_url) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->fullname) . '&background=0d6efd&color=fff' }}"
+                                    alt="Admin" class="profile-img me-2">
+                                <div class="text-start me-2 d-none d-md-block">
+                                    <div class="fw-bold small">{{ auth()->user()->fullname ?? 'Administrator' }}</div>
+                                    {{-- <div class="text-muted x-small">{{ auth()->user()->email }}</div> --}}
+                                </div>
+                                <i class="bi bi-chevron-down text-muted"></i>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 250px;">
+                            <li>
+                                <div class="dropdown-header">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ auth()->user()->pp_url ? asset('storage/' . auth()->user()->pp_url) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->fullname) . '&background=0d6efd&color=fff&size=64' }}"
+                                            alt="Admin" class="rounded-circle me-2" width="40"
+                                            height="40">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ auth()->user()->fullname ?? 'Administrator' }}
+                                            </h6>
+                                            <small class="text-muted">{{ auth()->user()->email }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.views.dashboard') }}">
+                                    <i class="bi bi-speedometer2 me-2 text-primary"></i>
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.profile') }}">
+                                    <i class="bi bi-person-circle me-2 text-primary"></i>
+                                    Profil Saya
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.views.users.admin.index') }}">
+                                    <i class="bi bi-people me-2 text-primary"></i>
+                                    Manajemen Admin
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#"
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                    class="d-none">
+                                    @csrf
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>

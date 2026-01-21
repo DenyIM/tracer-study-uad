@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AlumniRegistrationController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\Admin\LeaderboardAdminController;
+use App\Http\Controllers\Admin\AdminProfileController;
 
 require __DIR__.'/auth.php';
 
@@ -152,13 +153,20 @@ Route::middleware(['auth'])->group(function () {
 // ==============================================
 // ADMIN ROUTES 
 // ==============================================
-
-// Hapus middleware ['auth', 'verified'] dari group utama
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+// Route::prefix('admin')->name('admin.')->group(function () {
     
-    // Admin Dashboard - sekarang dapat diakses tanpa login
+    // Admin Dashboard
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('views.dashboard');
     
+    // Admin Profile
+    Route::get('/profile', [AdminProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [AdminProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/change-password', [AdminProfileController::class, 'changePassword'])->name('profile.change-password');
+    Route::post('/profile/upload-photo', [AdminProfileController::class, 'uploadPhoto'])->name('profile.upload-photo');
+    Route::post('/profile/delete-photo', [AdminProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
     // Dashboard API for real-time stats
     Route::get('/dashboard/stats', [UserController::class, 'getDashboardStats'])->name('dashboard.stats');
     
@@ -201,7 +209,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/export', [UserController::class, 'exportAlumni'])->name('export');
             Route::post('/import', [UserController::class, 'importAlumni'])->name('import');
         });
-        
+
         // Admin Management
         Route::prefix('admins')->name('admin.')->group(function () {
             Route::get('/', [UserController::class, 'adminIndex'])->name('index');
@@ -211,6 +219,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{admin}/edit', [UserController::class, 'adminEdit'])->name('edit');
             Route::put('/{admin}', [UserController::class, 'adminUpdate'])->name('update');
             Route::delete('/{admin}', [UserController::class, 'adminDestroy'])->name('destroy');
+            
+            // Additional admin actions
+            Route::post('/{admin}/upload-photo', [UserController::class, 'adminUploadPhoto'])->name('upload-photo');
+            Route::delete('/{admin}/delete-photo', [UserController::class, 'adminDeletePhoto'])->name('delete-photo');
+            Route::post('/{admin}/verify-email', [UserController::class, 'adminVerifyEmail'])->name('verify-email');
         });
     });
     
