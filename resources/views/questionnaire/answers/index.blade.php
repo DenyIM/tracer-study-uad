@@ -285,10 +285,13 @@
                                     continue;
                                 }
 
-                                // Tentukan skala label berdasarkan pertanyaan
-                                $isFirstQuestion = $questionnaire->is_general && $question->order == 1;
-                                $isSecondQuestion = $questionnaire->is_general && $question->order == 2;
+                                // Tentukan apakah ini pertanyaan pertama atau kedua untuk label yang tepat
+                                $isFirstQuestion = $question->order == 1 && $questionnaire->is_general;
+                                $isSecondQuestion = $question->order == 2 && $questionnaire->is_general;
 
+                                // Tentukan skala label berdasarkan pertanyaan
+                                $scaleLabels = [];
+                                
                                 if ($isSecondQuestion) {
                                     // Skala untuk pertanyaan 2: Metode Pembelajaran
                                     $scaleLabels = [
@@ -303,22 +306,39 @@
                                     $scaleLabels = [
                                         1 => 'Sangat Rendah',
                                         2 => 'Rendah',
-                                        3 => 'Cukup',
+                                        3 => 'Sedang',
                                         4 => 'Tinggi',
                                         5 => 'Sangat Tinggi',
                                     ];
                                 }
 
-                                // Parse answer data
+                                // Parse answer data - PERBAIKAN UTAMA DI SINI
                                 $answerText = $answer->answer;
                                 $selectedOptions = $answer->selected_options;
                                 $scaleValue = $answer->scale_value;
 
-                                if (is_string($selectedOptions)) {
-                                    $selectedOptions = json_decode($selectedOptions, true) ?? [];
-                                }
-                                if (!is_array($selectedOptions)) {
-                                    $selectedOptions = [$selectedOptions];
+                                // DEBUG: Tampilkan data untuk debugging
+                                // dd($answer->toArray());
+
+                                // Proses selected_options untuk checkbox
+                                if (!empty($selectedOptions)) {
+                                    if (is_string($selectedOptions)) {
+                                        // Coba decode JSON
+                                        $decoded = json_decode($selectedOptions, true);
+                                        if (json_last_error() === JSON_ERROR_NONE) {
+                                            $selectedOptions = $decoded;
+                                        } else {
+                                            // Jika bukan JSON, mungkin string biasa
+                                            $selectedOptions = [$selectedOptions];
+                                        }
+                                    }
+                                    
+                                    // Pastikan $selectedOptions adalah array
+                                    if (!is_array($selectedOptions)) {
+                                        $selectedOptions = [$selectedOptions];
+                                    }
+                                } else {
+                                    $selectedOptions = [];
                                 }
                             @endphp
 
@@ -326,15 +346,29 @@
                                 <div class="d-flex align-items-start">
                                     <div class="question-number me-3">{{ $loop->iteration }}</div>
                                     <div class="flex-grow-1">
-                                        <h5 class="fw-bold mb-2">{{ $question->question_text }}</h5>
+                                        <h5 class="fw-bold mb-2">{!! nl2br(e($question->question_text)) !!}</h5>
 
                                         @if ($question->description)
-                                            <p class="text-muted mb-3">{{ $question->description }}</p>
+                                            <p class="text-muted mb-3">{!! nl2br(e($question->description)) !!}</p>
                                         @endif
 
                                         <div class="answer-content">
                                             @if (in_array($question->question_type, ['likert_scale', 'competency_scale']))
                                                 @if ($scaleValue)
+                                                    @php
+                                                        $scaleLabel = '';
+                                                        if ($scaleValue == 1) {
+                                                            $scaleLabel = $scaleLabels[1] ?? 'Sangat Rendah';
+                                                        } elseif ($scaleValue == 2) {
+                                                            $scaleLabel = $scaleLabels[2] ?? 'Rendah';
+                                                        } elseif ($scaleValue == 3) {
+                                                            $scaleLabel = $scaleLabels[3] ?? 'Sedang';
+                                                        } elseif ($scaleValue == 4) {
+                                                            $scaleLabel = $scaleLabels[4] ?? 'Tinggi';
+                                                        } elseif ($scaleValue == 5) {
+                                                            $scaleLabel = $scaleLabels[5] ?? 'Sangat Tinggi';
+                                                        }
+                                                    @endphp
                                                     <div class="answer-text">
                                                         <table class="scale-table">
                                                             <tr>
@@ -343,8 +377,7 @@
                                                             </tr>
                                                             <tr>
                                                                 <td class="scale-value">{{ $scaleValue }}</td>
-                                                                <td>{{ $scaleLabels[$scaleValue] ?? 'Tidak tersedia' }}
-                                                                </td>
+                                                                <td>{{ $scaleLabel }}</td>
                                                             </tr>
                                                         </table>
                                                     </div>
@@ -353,96 +386,131 @@
                                                 @if (count($selectedOptions) > 0)
                                                     <div class="answer-text">
                                                         @foreach ($selectedOptions as $option)
-                                                            @if (is_string($option) && str_contains($option, ':'))
-                                                                @php
+                                                            @php
+                                                                // Handle berbagai format data
+                                                                $displayText = $option;
+                                                                $isSpecialOption = false;
+                                                                $mainText = $option;
+                                                                $additionalValue = '';
+                                                                
+                                                                // Cek jika ada format dengan delimiter
+                                                                if (is_string($option) && str_contains($option, ':')) {
                                                                     $parts = explode(':', $option, 2);
                                                                     $mainText = trim($parts[0]);
-                                                                    $additionalValue = isset($parts[1])
-                                                                        ? trim($parts[1])
-                                                                        : '';
-                                                                @endphp
-
-                                                                @if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,'))
-                                                                    <span
-                                                                        class="answer-badge badge-email">{{ $mainText }}</span>
-                                                                    @if ($additionalValue)
-                                                                        <div class="email-display">
-                                                                            <strong>Email:</strong>
-                                                                            {{ $additionalValue }}
+                                                                    $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
+                                                                    
+                                                                    if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,')) {
+                                                                        $isSpecialOption = true;
+                                                                        $badgeClass = 'badge-email';
+                                                                    } elseif (str_contains($mainText, 'WhatsApp')) {
+                                                                        $isSpecialOption = true;
+                                                                        $badgeClass = 'badge-whatsapp';
+                                                                    } elseif (str_contains($mainText, 'Lainnya')) {
+                                                                        $isSpecialOption = true;
+                                                                        $badgeClass = 'badge-other';
+                                                                    }
+                                                                }
+                                                                
+                                                                // Format khusus untuk data seeder/array PHP
+                                                                if (is_array($option)) {
+                                                                    $displayText = $option['text'] ?? $option[0] ?? json_encode($option);
+                                                                    $mainText = $displayText;
+                                                                }
+                                                            @endphp
+                                                            
+                                                            @if ($isSpecialOption)
+                                                                <div class="mb-2">
+                                                                    <span class="answer-badge {{ $badgeClass }}">{{ $mainText }}</span>
+                                                                    @if (!empty($additionalValue))
+                                                                        <div class="{{ 
+                                                                            str_contains($mainText, 'email') ? 'email-display' : 
+                                                                            (str_contains($mainText, 'WhatsApp') ? 'whatsapp-display' : 'other-display') 
+                                                                        }}">
+                                                                            @if (str_contains($mainText, 'email'))
+                                                                                <strong>Email:</strong> {{ $additionalValue }}
+                                                                            @elseif(str_contains($mainText, 'WhatsApp'))
+                                                                                <strong>WhatsApp:</strong> {{ $additionalValue }}
+                                                                            @elseif(str_contains($mainText, 'Lainnya'))
+                                                                                <strong>Keterangan:</strong> {{ $additionalValue }}
+                                                                            @endif
                                                                         </div>
                                                                     @endif
-                                                                @elseif(str_contains($mainText, 'WhatsApp'))
-                                                                    <span
-                                                                        class="answer-badge badge-whatsapp">{{ $mainText }}</span>
-                                                                    @if ($additionalValue)
-                                                                        <div class="whatsapp-display">
-                                                                            <strong>WhatsApp:</strong>
-                                                                            {{ $additionalValue }}
-                                                                        </div>
-                                                                    @endif
-                                                                @elseif(str_contains($mainText, 'Lainnya'))
-                                                                    <span
-                                                                        class="answer-badge badge-other">{{ $mainText }}</span>
-                                                                    @if ($additionalValue)
-                                                                        <div class="other-display">
-                                                                            <strong>Keterangan:</strong>
-                                                                            {{ $additionalValue }}
-                                                                        </div>
-                                                                    @endif
-                                                                @else
-                                                                    <span
-                                                                        class="answer-badge badge-checkbox">{{ $option }}</span>
-                                                                @endif
+                                                                </div>
                                                             @else
-                                                                <span
-                                                                    class="answer-badge badge-checkbox">{{ $option }}</span>
+                                                                <div class="mb-2">
+                                                                    <span class="answer-badge badge-checkbox">{{ $mainText }}</span>
+                                                                </div>
                                                             @endif
                                                         @endforeach
                                                     </div>
+                                                @elseif($answerText)
+                                                    {{-- Fallback: jika tidak ada selected_options tapi ada answer --}}
+                                                    <div class="answer-text">
+                                                        @php
+                                                            // Coba parse jika answerText adalah JSON string
+                                                            $parsedAnswers = [];
+                                                            if (is_string($answerText) && str_starts_with($answerText, '[') && str_ends_with($answerText, ']')) {
+                                                                $parsedAnswers = json_decode($answerText, true) ?? [];
+                                                            }
+                                                            
+                                                            if (!empty($parsedAnswers) && is_array($parsedAnswers)) {
+                                                                foreach ($parsedAnswers as $parsedOption) {
+                                                                    if (is_string($parsedOption)) {
+                                                                        // Handle format dengan delimiter
+                                                                        if (str_contains($parsedOption, ':')) {
+                                                                            $parts = explode(':', $parsedOption, 2);
+                                                                            $mainText = trim($parts[0]);
+                                                                            $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
+                                                                            
+                                                                            echo '<div class="mb-2">';
+                                                                            echo '<span class="answer-badge badge-checkbox">' . $mainText . '</span>';
+                                                                            if (!empty($additionalValue)) {
+                                                                                if (str_contains($mainText, 'Lainnya')) {
+                                                                                    echo '<div class="other-display"><strong>Keterangan:</strong> ' . $additionalValue . '</div>';
+                                                                                } else {
+                                                                                    echo '<div class="email-display"><strong>Detail:</strong> ' . $additionalValue . '</div>';
+                                                                                }
+                                                                            }
+                                                                            echo '</div>';
+                                                                        } else {
+                                                                            echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' . $parsedOption . '</span></div>';
+                                                                        }
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                // Tampilkan sebagai plain text
+                                                                echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' . $answerText . '</span></div>';
+                                                            }
+                                                        @endphp
+                                                    </div>
+                                                @else
+                                                    <div class="answer-text text-muted">
+                                                        <i class="fas fa-info-circle me-2"></i>Tidak ada jawaban yang dipilih
+                                                    </div>
                                                 @endif
-                                            @elseif(in_array($question->question_type, ['radio', 'dropdown', 'radio_per_row']))
+                                            @elseif(in_array($question->question_type, ['radio', 'dropdown']))
                                                 @if ($answerText)
                                                     <div class="answer-text">
                                                         @php
-                                                            if (
-                                                                is_string($answerText) &&
-                                                                str_contains($answerText, ':')
-                                                            ) {
+                                                            if (is_string($answerText) && str_contains($answerText, ':')) {
                                                                 $parts = explode(':', $answerText, 2);
                                                                 $mainText = trim($parts[0]);
-                                                                $additionalValue = isset($parts[1])
-                                                                    ? trim($parts[1])
-                                                                    : '';
+                                                                $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
 
-                                                                if (
-                                                                    str_contains($mainText, 'email') ||
-                                                                    str_contains($mainText, 'Ya,')
-                                                                ) {
-                                                                    echo '<span class="answer-badge badge-email">' .
-                                                                        $mainText .
-                                                                        '</span>';
+                                                                if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,')) {
+                                                                    echo '<span class="answer-badge badge-email">' . $mainText . '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="email-display"><strong>Email:</strong> ' .
-                                                                            $additionalValue .
-                                                                            '</div>';
+                                                                        echo '<div class="email-display"><strong>Email:</strong> ' . $additionalValue . '</div>';
                                                                     }
                                                                 } elseif (str_contains($mainText, 'WhatsApp')) {
-                                                                    echo '<span class="answer-badge badge-whatsapp">' .
-                                                                        $mainText .
-                                                                        '</span>';
+                                                                    echo '<span class="answer-badge badge-whatsapp">' . $mainText . '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="whatsapp-display"><strong>WhatsApp:</strong> ' .
-                                                                            $additionalValue .
-                                                                            '</div>';
+                                                                        echo '<div class="whatsapp-display"><strong>WhatsApp:</strong> ' . $additionalValue . '</div>';
                                                                     }
                                                                 } elseif (str_contains($mainText, 'Lainnya')) {
-                                                                    echo '<span class="answer-badge badge-other">' .
-                                                                        $mainText .
-                                                                        '</span>';
+                                                                    echo '<span class="answer-badge badge-other">' . $mainText . '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="other-display"><strong>Keterangan:</strong> ' .
-                                                                            $additionalValue .
-                                                                            '</div>';
+                                                                        echo '<div class="other-display"><strong>Keterangan:</strong> ' . $additionalValue . '</div>';
                                                                     }
                                                                 } else {
                                                                     echo $answerText;
@@ -455,18 +523,31 @@
                                                 @endif
                                             @elseif($question->question_type === 'likert_per_row')
                                                 @php
-                                                    // Handle both array and JSON string for answer
-                                                    $answerValues = $answerText;
-                                                    if (is_string($answerValues)) {
-                                                        $answerValues = json_decode($answerValues, true) ?? [];
+                                                    // Handle data dari seeder (array PHP langsung atau JSON)
+                                                    $answerValues = [];
+                                                    
+                                                    // Logic untuk membaca data dari seeder
+                                                    if ($answer) {
+                                                        // Coba dari answer field
+                                                        if ($answer->answer && is_string($answer->answer)) {
+                                                            $answerValues = json_decode($answer->answer, true) ?? [];
+                                                        } 
+                                                        // Coba dari scale_value (backward compatibility)
+                                                        elseif ($answer->scale_value && is_string($answer->scale_value)) {
+                                                            $answerValues = json_decode($answer->scale_value, true) ?? [];
+                                                        }
+                                                        // Jika sudah array langsung
+                                                        elseif (is_array($answer->answer)) {
+                                                            $answerValues = $answer->answer;
+                                                        }
                                                     }
-
-                                                    // Handle row items
+                                                    
+                                                    // Handle row items dari seeder (array PHP, bukan JSON)
                                                     $rowItems = $question->row_items;
                                                     if (is_string($rowItems)) {
                                                         $rowItems = json_decode($rowItems, true) ?? [];
                                                     }
-
+                                                    
                                                     if (!is_array($rowItems)) {
                                                         $rowItems = [];
                                                     }
@@ -489,16 +570,52 @@
                                                                 <th width="20%">Keterangan</th>
                                                             </tr>
                                                             @foreach ($rowItems as $key => $item)
-                                                                @if (isset($answerValues[$key]))
-                                                                    <tr>
-                                                                        <td>{{ $item['text'] ?? $item }}</td>
-                                                                        <td class="scale-value">
-                                                                            {{ $answerValues[$key] }}</td>
-                                                                        <td class="scale-label">
-                                                                            {{ $scaleLabels[$answerValues[$key]] ?? 'Tidak tersedia' }}
-                                                                        </td>
-                                                                    </tr>
-                                                                @endif
+                                                                @php
+                                                                    // Penyesuaian untuk data seeder
+                                                                    $itemText = is_array($item) ? ($item['text'] ?? $item) : $item;
+                                                                    $itemKey = is_string($key) ? $key : $itemText;
+                                                                    
+                                                                    if (isset($answerValues[$itemKey])) {
+                                                                        $scaleValue = $answerValues[$itemKey];
+                                                                        $scaleLabel = '';
+                                                                        
+                                                                        // Penyesuaian label berdasarkan pertanyaan
+                                                                        if ($isSecondQuestion) {
+                                                                            // Untuk pertanyaan kedua (metode pembelajaran)
+                                                                            if ($scaleValue == 1) {
+                                                                                $scaleLabel = 'Tidak Sama Sekali';
+                                                                            } elseif ($scaleValue == 2) {
+                                                                                $scaleLabel = 'Kurang';
+                                                                            } elseif ($scaleValue == 3) {
+                                                                                $scaleLabel = 'Cukup';
+                                                                            } elseif ($scaleValue == 4) {
+                                                                                $scaleLabel = 'Besar';
+                                                                            } elseif ($scaleValue == 5) {
+                                                                                $scaleLabel = 'Sangat Besar';
+                                                                            }
+                                                                        } else {
+                                                                            // Untuk pertanyaan lain
+                                                                            if ($scaleValue == 1) {
+                                                                                $scaleLabel = 'Sangat Rendah';
+                                                                            } elseif ($scaleValue == 2) {
+                                                                                $scaleLabel = 'Rendah';
+                                                                            } elseif ($scaleValue == 3) {
+                                                                                $scaleLabel = 'Sedang';
+                                                                            } elseif ($scaleValue == 4) {
+                                                                                $scaleLabel = 'Tinggi';
+                                                                            } elseif ($scaleValue == 5) {
+                                                                                $scaleLabel = 'Sangat Tinggi';
+                                                                            }
+                                                                        }
+                                                                @endphp
+                                                                <tr>
+                                                                    <td>{{ $itemText }}</td>
+                                                                    <td class="scale-value">{{ $scaleValue }}</td>
+                                                                    <td class="scale-label">{{ $scaleLabel }}</td>
+                                                                </tr>
+                                                                @php
+                                                                    }
+                                                                @endphp
                                                             @endforeach
                                                         </table>
                                                     </div>
@@ -545,6 +662,20 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {{-- DEBUG SCRIPT untuk melihat data --}}
+    <script>
+        console.log("DEBUG: Data jawaban");
+        @foreach ($answers as $answer)
+            console.log("Question ID: {{ $answer->question_id }}", {
+                question_type: "{{ $answer->question->question_type ?? 'N/A' }}",
+                answer: @json($answer->answer),
+                selected_options: @json($answer->selected_options),
+                scale_value: {{ $answer->scale_value ?? 'null' }},
+                raw_data: @json($answer->toArray())
+            });
+        @endforeach
+    </script>
 </body>
 
 </html>

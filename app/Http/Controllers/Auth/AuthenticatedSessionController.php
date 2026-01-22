@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
             'last_login_at' => now(),
         ]);
 
-        return redirect()->intended(route('main', absolute: false));
+        return redirect()->intended(route('public', absolute: false));
     }
 
 

@@ -46,9 +46,9 @@ Route::get('/go-to-kuesioner1', function () {
     return view('questionnaire.dashboard.index');
 });
 
-Route::get('/nav-kuesioner', function () {
-    return view('questionnaire.dashboard.index');
-})->name('main');
+// Route::get('/nav-kuesioner', function () {
+//     return view('questionnaire.dashboard.index');
+// })->name('main');
 
 // Route::get('/nav-leaderboard', function () {
 //     return view('pages.leaderboard');
@@ -240,25 +240,31 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         
         // ============ GENERAL QUESTIONNAIRES MANAGEMENT ============
         Route::get('/general-questionnaires', [AdminQuestionnaireController::class, 'generalQuestionnaires'])->name('general-questionnaires');
+        Route::get('general-questionnaires/{questionnaireId}/questions/create', [AdminQuestionnaireController::class, 'createGeneralQuestion'])->name('general-questions.create');
+        Route::get('general-questionnaires/{questionnaireId}/questions/{id}/edit', [AdminQuestionnaireController::class, 'editGeneralQuestion'])->name('general-questions.edit');
         Route::put('/general-questionnaires/{id}', [AdminQuestionnaireController::class, 'updateGeneralQuestionnaire'])->name('general-questionnaires.update');
         Route::post('/general-questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'storeGeneralQuestion'])->name('general-questions.store');
         Route::put('/general-questionnaires/{questionnaireId}/questions/{id}', [AdminQuestionnaireController::class, 'updateGeneralQuestion'])->name('general-questions.update');
         Route::delete('/general-questionnaires/{questionnaireId}/questions/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedGeneralQuestions'])->name('general-questions.delete-selected');
-        
+
+
         // ============ SPECIFIC QUESTIONNAIRES MANAGEMENT ============
         Route::get('/categories/{categoryId}/questionnaires', [AdminQuestionnaireController::class, 'questionnaires'])->name('questionnaires');
         Route::post('/categories/{categoryId}/questionnaires', [AdminQuestionnaireController::class, 'storeQuestionnaire'])->name('questionnaires.store');
         Route::put('/categories/{categoryId}/questionnaires/{id}', [AdminQuestionnaireController::class, 'updateQuestionnaire'])->name('questionnaires.update');
         Route::delete('/categories/{categoryId}/questionnaires/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedQuestionnaires'])->name('questionnaires.delete-selected');
         Route::post('/categories/{categoryId}/questionnaires/order', [AdminQuestionnaireController::class, 'updateQuestionnaireOrder'])->name('questionnaires.update-order');
-        
+                
         // ============ SPECIFIC QUESTIONS MANAGEMENT ============
         Route::get('/categories/{categoryId}/questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'questions'])->name('questions');
+        Route::get('categories/{categoryId}/questionnaires/{questionnaireId}/questions/create', [AdminQuestionnaireController::class, 'createQuestion'])->name('questions.create');
+        Route::get('categories/{categoryId}/questionnaires/{questionnaireId}/questions/{id}/edit', [AdminQuestionnaireController::class, 'editQuestion'])->name('questions.edit');
         Route::post('/categories/{categoryId}/questionnaires/{questionnaireId}/questions', [AdminQuestionnaireController::class, 'storeQuestion'])->name('questions.store');
         Route::put('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/{id}', [AdminQuestionnaireController::class, 'updateQuestion'])->name('questions.update');
         Route::delete('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/delete-selected', [AdminQuestionnaireController::class, 'deleteSelectedQuestions'])->name('questions.delete-selected');
         Route::post('/categories/{categoryId}/questionnaires/{questionnaireId}/questions/order', [AdminQuestionnaireController::class, 'updateQuestionOrder'])->name('questions.update-order');
-        
+
+
         // ============ STATISTICS & REPORTS ============
         Route::get('/statistics', [AdminQuestionnaireController::class, 'statistics'])->name('statistics');
         Route::get('/export/{categoryId?}', [AdminQuestionnaireController::class, 'exportData'])->name('export');

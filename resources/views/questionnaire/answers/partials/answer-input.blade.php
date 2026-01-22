@@ -427,136 +427,46 @@
     @break
 
     @case('likert_scale')
-    @case('competency_scale')
         <div class="scale-options">
             <div class="scale-options-grid">
-                @foreach ($scaleOptions as $scaleValue)
+                @foreach ($scaleOptions as $option)
+                    @php
+                        // Perbaikan: ganti $scaleValue menjadi $option
+                        $scaleLabel = '';
+                        $optionValue = $option;
+                        $optionLabel = $option;
+
+                        // Untuk skala numerik, tambahkan label jika ada
+                        if (is_numeric($option)) {
+                            if ($option == 1 && $question->scale_label_low) {
+                                $scaleLabel = $question->scale_label_low;
+                            } elseif ($option == max($scaleOptions) && $question->scale_label_high) {
+                                $scaleLabel = $question->scale_label_high;
+                            }
+                        }
+
+                        // Cek apakah opsi ini dipilih
+                        $isChecked = ($scaleValue ?? 0) == $option;
+                    @endphp
                     <div class="scale-option-item text-center">
-                        <div class="likert-option">
+                        <div class="likert-option {{ $isChecked ? 'selected' : '' }}">
                             <input type="radio" name="answers[{{ $question->id }}]"
-                                id="scale_{{ $question->id }}_{{ $scaleValue }}" value="{{ $scaleValue }}"
-                                {{ ($scaleValue ?? 0) == $scaleValue ? 'checked' : '' }}
-                                {{ $question->is_required ? 'required' : '' }}>
-                            <div class="likert-label">{{ $scaleValue }}</div>
-                            @if ($scaleValue == 1 && $question->scale_label_low)
-                                <div class="likert-label small">{{ $question->scale_label_low }}</div>
-                            @elseif($scaleValue == max($scaleOptions) && $question->scale_label_high)
-                                <div class="likert-label small">{{ $question->scale_label_high }}</div>
+                                id="scale_{{ $question->id }}_{{ $option }}" value="{{ $option }}"
+                                {{ $isChecked ? 'checked' : '' }} {{ $question->is_required ? 'required' : '' }}>
+                            <div class="likert-value">{{ $option }}</div>
+                            @if ($scaleLabel)
+                                <div class="likert-label small">{{ $scaleLabel }}</div>
                             @endif
                         </div>
                     </div>
                 @endforeach
+            </div>
+
+            <div class="scale-labels mt-2 d-flex justify-content-between">
+                <small class="text-muted">{{ $question->scale_label_low ?? 'Sangat Rendah' }}</small>
+                <small class="text-muted">{{ $question->scale_label_high ?? 'Sangat Tinggi' }}</small>
             </div>
         </div>
-    @break
-
-    @case('radio_per_row')
-        @if (count($rowItems) > 0)
-            <div class="row-item-grid">
-                @foreach ($rowItems as $key => $item)
-                    @php
-                        $itemText = is_array($item) ? $item['text'] ?? $item : $item;
-                        $itemValue = is_array($item) ? $item['value'] ?? $key : $key;
-
-                        // Parse answer untuk row ini
-                        $rowAnswer = null;
-                        if (is_array($answerValue)) {
-                            $rowAnswer = $answerValue[$key] ?? null;
-                        }
-                    @endphp
-
-                    <div class="radio-per-row-item">
-                        <div class="radio-per-row-label">
-                            {{ $itemText }}
-                        </div>
-                        <div class="row-item-options">
-                            @if (is_array($question->available_options) && count($question->available_options) > 0)
-                                @foreach ($question->available_options as $optionIndex => $option)
-                                    @php
-                                        $optionText = $option;
-                                        if (is_array($option) && isset($option['text'])) {
-                                            $optionText = $option['text'];
-                                        }
-
-                                        $isSelected = $rowAnswer === $optionText;
-                                    @endphp
-
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio"
-                                            name="answers[{{ $question->id }}][{{ $key }}]"
-                                            id="row_radio_{{ $question->id }}_{{ $key }}_{{ $optionIndex }}"
-                                            value="{{ $optionText }}" {{ $isSelected ? 'checked' : '' }}>
-                                        <label class="form-check-label"
-                                            for="row_radio_{{ $question->id }}_{{ $key }}_{{ $optionIndex }}">
-                                            {{ $optionText }}
-                                        </label>
-                                    </div>
-                                @endforeach
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <p class="text-muted">Tidak ada item baris tersedia</p>
-        @endif
-    @break
-
-    @case('checkbox_per_row')
-        @if (count($rowItems) > 0)
-            <div class="row-item-grid">
-                @foreach ($rowItems as $key => $item)
-                    @php
-                        $itemText = is_array($item) ? $item['text'] ?? $item : $item;
-                        $itemValue = is_array($item) ? $item['value'] ?? $key : $key;
-
-                        // Parse answer untuk row ini (array of selected options)
-                        $rowAnswers = [];
-                        if (is_array($answerValue)) {
-                            $rowAnswers = $answerValue[$key] ?? [];
-                        } elseif (is_string($answerValue)) {
-                            $rowAnswers = json_decode($answerValue, true)[$key] ?? [];
-                        }
-                        if (!is_array($rowAnswers)) {
-                            $rowAnswers = [$rowAnswers];
-                        }
-                    @endphp
-
-                    <div class="checkbox-per-row-item">
-                        <div class="checkbox-per-row-label">
-                            {{ $itemText }}
-                        </div>
-                        <div class="checkbox-per-row-options">
-                            @if (is_array($question->available_options) && count($question->available_options) > 0)
-                                @foreach ($question->available_options as $optionIndex => $option)
-                                    @php
-                                        $optionText = $option;
-                                        if (is_array($option) && isset($option['text'])) {
-                                            $optionText = $option['text'];
-                                        }
-
-                                        $isChecked = in_array($optionText, $rowAnswers);
-                                    @endphp
-
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox"
-                                            name="answers[{{ $question->id }}][{{ $key }}][]"
-                                            id="row_checkbox_{{ $question->id }}_{{ $key }}_{{ $optionIndex }}"
-                                            value="{{ $optionText }}" {{ $isChecked ? 'checked' : '' }}>
-                                        <label class="form-check-label"
-                                            for="row_checkbox_{{ $question->id }}_{{ $key }}_{{ $optionIndex }}">
-                                            {{ $optionText }}
-                                        </label>
-                                    </div>
-                                @endforeach
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <p class="text-muted">Tidak ada item baris tersedia</p>
-        @endif
     @break
 
     @case('likert_per_row')
@@ -565,35 +475,58 @@
                 <div class="competency-grid" id="competency-grid-{{ $question->id }}">
                     @foreach ($rowItems as $key => $item)
                         @php
+                            // Penyesuaian untuk data dari seeder (array PHP)
                             $itemText = is_array($item) ? $item['text'] ?? $item : $item;
+                            $itemKey = is_string($key) ? $key : $itemText;
+
                             $currentValue = null;
 
-                            // Parse answer values
+                            // Parse answer values - PENYESUAIAN UNTUK SEEDER
                             $answerValues = [];
-                            if (is_string($answerValue)) {
-                                $answerValues = json_decode($answerValue, true) ?? [];
-                            } elseif (is_array($answerValue)) {
-                                $answerValues = $answerValue;
+                            if ($answer) {
+                                // Coba dari answer field
+                                if ($answer->answer && is_string($answer->answer)) {
+                                    $answerValues = json_decode($answer->answer, true) ?? [];
+                                }
+                                // Coba dari scale_value field (backward compatibility)
+                                elseif ($answer->scale_value && is_string($answer->scale_value)) {
+                                    $answerValues = json_decode($answer->scale_value, true) ?? [];
+                                }
+                                // Jika sudah array langsung
+                                elseif (is_array($answer->answer)) {
+                                    $answerValues = $answer->answer;
+                                }
                             }
 
-                            $currentValue = $answerValues[$key] ?? null;
+                            $currentValue = $answerValues[$itemKey] ?? null;
                             $isAnswered = $currentValue !== null && $currentValue !== '';
                         @endphp
 
                         <div class="competency-item {{ $isAnswered ? 'answered' : 'unanswered' }}"
-                            data-competency-key="{{ $key }}" data-question-id="{{ $question->id }}">
+                            data-competency-key="{{ $itemKey }}" data-question-id="{{ $question->id }}">
                             <div class="competency-name">{{ $itemText }}</div>
                             <div class="competency-scale">
                                 @foreach ($scaleOptions as $scaleValue)
+                                    @php
+                                        $scaleLabel = '';
+                                        if ($scaleValue == 1) {
+                                            $scaleLabel = $question->scale_label_low ?? 'Sangat Rendah';
+                                        } elseif ($scaleValue == 5) {
+                                            $scaleLabel = $question->scale_label_high ?? 'Sangat Tinggi';
+                                        }
+                                    @endphp
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio"
-                                            name="answers[{{ $question->id }}][{{ $key }}]"
-                                            id="row_{{ $question->id }}_{{ $key }}_{{ $scaleValue }}"
+                                            name="answers[{{ $question->id }}][{{ $itemKey }}]"
+                                            id="row_{{ $question->id }}_{{ $itemKey }}_{{ $scaleValue }}"
                                             value="{{ $scaleValue }}"
                                             {{ $currentValue == $scaleValue ? 'checked' : '' }}>
                                         <label class="form-check-label"
-                                            for="row_{{ $question->id }}_{{ $key }}_{{ $scaleValue }}">
+                                            for="row_{{ $question->id }}_{{ $itemKey }}_{{ $scaleValue }}">
                                             {{ $scaleValue }}
+                                            @if ($scaleLabel)
+                                                <br><small class="text-muted">{{ $scaleLabel }}</small>
+                                            @endif
                                         </label>
                                     </div>
                                 @endforeach
@@ -612,6 +545,49 @@
                 @endif
             </div>
         @endif
+    @break
+
+    @case('competency_scale')
+        <div class="competency-scale-options">
+            <div class="scale-options-grid">
+                @foreach ($scaleOptions as $option)
+                    @php
+                        $optionValue = $option;
+                        $optionLabel = $option;
+
+                        // Untuk skala kompetensi, gunakan label yang lebih deskriptif
+                        if (is_numeric($option)) {
+                            if ($option == 1) {
+                                $scaleLabel = $question->scale_label_low ?? 'Pemula';
+                            } elseif ($option == 2) {
+                                $scaleLabel = 'Dasar';
+                            } elseif ($option == 3) {
+                                $scaleLabel = 'Menengah';
+                            } elseif ($option == 4) {
+                                $scaleLabel = 'Mahir';
+                            } elseif ($option == 5) {
+                                $scaleLabel = $question->scale_label_high ?? 'Expert';
+                            } else {
+                                $scaleLabel = $option;
+                            }
+                        } else {
+                            $scaleLabel = $option;
+                        }
+
+                        $isChecked = ($scaleValue ?? 0) == $optionValue;
+                    @endphp
+                    <div class="scale-option-item text-center">
+                        <div class="competency-option {{ $isChecked ? 'selected' : '' }}">
+                            <input type="radio" name="answers[{{ $question->id }}]"
+                                id="comp_{{ $question->id }}_{{ $optionValue }}" value="{{ $optionValue }}"
+                                {{ $isChecked ? 'checked' : '' }} {{ $question->is_required ? 'required' : '' }}>
+                            <div class="competency-value">{{ $optionValue }}</div>
+                            <div class="competency-label small">{{ $scaleLabel }}</div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
     @break
 
     @default

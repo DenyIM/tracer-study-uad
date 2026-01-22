@@ -250,8 +250,6 @@ class QuestionnaireController extends Controller
     public function submitQuestionnaire(Request $request, $questionnaireId)
     {
         $alumni = Auth::user()->alumni;
-        $expectsJson = $request->expectsJson();
-
         $questionnaire = Questionnaire::with('category')->findOrFail($questionnaireId);
 
         // Cek status kategori
@@ -260,115 +258,120 @@ class QuestionnaireController extends Controller
             ->first();
 
         if (!$statusQuestionnaire) {
-            if ($expectsJson) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Anda belum memilih kategori ini.'
-                ], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda belum memilih kategori ini.'
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Simpan semua jawaban
+            $answers = $request->input('answers', []);
+            
+            foreach ($answers as $questionId => $answerData) {
+                $question = Question::find($questionId);
+                if (!$question) continue;
+
+                $answer = AnswerQuestion::updateOrCreate(
+                    [
+                        'alumni_id' => $alumni->id,
+                        'question_id' => $questionId,
+                    ],
+                    [
+                        'is_skipped' => false,
+                        'answered_at' => now(),
+                        'points' => $question->points,
+                    ]
+                );
+
+                // Update answer berdasarkan tipe
+                if (is_array($answerData)) {
+                    // Untuk array data (checkbox, likert_per_row)
+                    $answer->answer = json_encode($answerData);
+                    $answer->save();
+                } else {
+                    // Untuk single value
+                    $answer->answer = $answerData;
+                    $answer->save();
+                }
             }
 
-            return redirect()->route('questionnaire.categories')
-                ->with('error', 'Anda belum memilih kategori ini.');
-        }
-
-        // Simpan semua jawaban dari request
-        $answers = $request->input('answers', []);
-        
-        foreach ($answers as $questionId => $answerData) {
-        $question = Question::find($questionId);
-        if (!$question) continue;
-
-        // Proses jawaban berdasarkan tipe
-        if (is_array($answerData) && isset($answerData[0])) {
-            // Handle checkbox/array answers
-            AnswerQuestion::updateOrCreate(
+            // Update progress questionnaire
+            QuestionnaireProgress::updateOrCreate(
                 [
                     'alumni_id' => $alumni->id,
-                    'question_id' => $questionId,
+                    'questionnaire_id' => $questionnaire->id,
                 ],
                 [
-                    'selected_options' => json_encode($answerData),
-                    'points' => $question->points, // TAMBAHKAN POINTS
-                    'is_skipped' => false,
-                    'answered_at' => now(),
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                    'progress_percentage' => 100,
+                    'answered_count' => $questionnaire->questions()->count(),
+                    'total_questions' => $questionnaire->questions()->count(),
                 ]
             );
-        } else {
-            // Handle single value answers
-            AnswerQuestion::updateOrCreate(
-                [
-                    'alumni_id' => $alumni->id,
-                    'question_id' => $questionId,
-                ],
-                [
-                    'answer' => is_array($answerData) ? json_encode($answerData) : $answerData,
-                    'points' => $question->points, // TAMBAHKAN POINTS
-                    'is_skipped' => false,
-                    'answered_at' => now(),
-                ]
-            );
-        }
-    }
 
-        // Update progress questionnaire
-        QuestionnaireProgress::updateOrCreate(
-            [
-                'alumni_id' => $alumni->id,
-                'questionnaire_id' => $questionnaire->id,
-            ],
-            [
-                'status' => 'completed',
-                'completed_at' => now(),
-                'progress_percentage' => 100,
-                'answered_count' => $questionnaire->questions()->count(),
-                'total_questions' => $questionnaire->questions()->count(),
-            ]
-        );
+            // Sequence logic
+            $category = $questionnaire->category;
+            $currentSequence = $category->sequences()
+                ->where('questionnaire_id', $questionnaire->id)
+                ->first();
 
-        // Sequence logic
-        $category = $questionnaire->category;
-        $currentSequence = $category->sequences()
-            ->where('questionnaire_id', $questionnaire->id)
-            ->first();
+            if ($currentSequence && $currentSequence->isLast()) {
+                // Semua kuesioner selesai
+                $statusQuestionnaire->update([
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                    'progress_percentage' => 100,
+                ]);
 
-        if ($currentSequence && $currentSequence->isLast()) {
-            // Semua kuesioner selesai
-            $statusQuestionnaire->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-                'progress_percentage' => 100,
-            ]);
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Semua kuesioner telah diselesaikan.',
+                    'completed' => true,
+                    'redirect_url' => route('questionnaire.completed'),
+                ]);
+            }
+
+            $nextSequence = $currentSequence?->next();
+
+            if ($nextSequence) {
+                $statusQuestionnaire->update([
+                    'current_questionnaire_id' => $nextSequence->questionnaire_id,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Bagian berhasil disimpan.',
+                    'redirect_url' => route('questionnaire.fill', [
+                        'categorySlug' => $category->slug,
+                        'questionnaireSlug' => $nextSequence->questionnaire->slug,
+                    ]),
+                ]);
+            }
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Semua kuesioner telah diselesaikan.',
-                'completed' => true,
-                'redirect_url' => route('questionnaire.completed'),
-            ]);
-        }
-
-        $nextSequence = $currentSequence?->next();
-
-        if ($nextSequence) {
-            $statusQuestionnaire->update([
-                'current_questionnaire_id' => $nextSequence->questionnaire_id,
+                'message' => 'Kuesioner berhasil disimpan.',
+                'redirect_url' => route('questionnaire.dashboard'),
             ]);
 
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
             return response()->json([
-                'success' => true,
-                'message' => 'Bagian berhasil disimpan.',
-                'redirect_url' => route('questionnaire.fill', [
-                    'categorySlug' => $category->slug,
-                    'questionnaireSlug' => $nextSequence->questionnaire->slug,
-                ]),
-            ]);
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Kuesioner berhasil disimpan.',
-            'redirect_url' => route('questionnaire.dashboard'),
-        ]);
     }
     
     /**

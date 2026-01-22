@@ -477,11 +477,12 @@ class QuestionnaireController extends Controller
         
         $validator = Validator::make($request->all(), [
             'question_text' => 'required|string',
-            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_scale,competency_scale,radio_per_row,checkbox_per_row,likert_per_row',
+            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_per_row',
             'description' => 'nullable|string',
             'options' => 'nullable|string',
             'row_items' => 'nullable|string',
             'scale_options' => 'nullable|string',
+            'scale_information' => 'nullable|string',
             'is_required' => 'sometimes',
             'order' => 'nullable|integer',
             'points' => 'nullable|integer|min:0',
@@ -495,6 +496,31 @@ class QuestionnaireController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
+        }
+
+        // Validasi khusus untuk likert_per_row
+        if ($request->question_type === 'likert_per_row') {
+            if (!$request->filled('scale_options')) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala wajib diisi untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
+            if (count($scaleOptions) > 5) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala maksimal 5 untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            // Validasi bahwa opsi skala harus angka 1-5
+            foreach ($scaleOptions as $option) {
+                if (!is_numeric($option) || $option < 1 || $option > 5) {
+                    return redirect()->back()
+                        ->with('error', 'Opsi skala harus berupa angka antara 1 sampai 5.')
+                        ->withInput();
+                }
+            }
         }
         
         // Parse options dari textarea ke array
@@ -526,10 +552,26 @@ class QuestionnaireController extends Controller
             $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
             $scaleOptions = !empty($scaleOptions) ? json_encode($scaleOptions) : null;
         }
+
+        // Parse scale_information (keterangan untuk setiap opsi skala)
+        $scaleInformation = null;
+        if ($request->filled('scale_information')) {
+            $scaleInformation = [];
+            $lines = array_filter(array_map('trim', explode("\n", $request->scale_information)));
+            foreach ($lines as $line) {
+                if (strpos($line, '|') !== false) {
+                    list($key, $value) = explode('|', $line, 2);
+                    $scaleInformation[trim($key)] = trim($value);
+                } else {
+                    $scaleInformation[$line] = $line;
+                }
+            }
+            $scaleInformation = !empty($scaleInformation) ? json_encode($scaleInformation) : null;
+        }
         
         $data = $request->only([
             'question_text', 'question_type', 'description', 'order', 'points',
-            'placeholder', 'helper_text'
+            'placeholder', 'helper_text', 'scale_label_low', 'scale_label_high'
         ]);
         
         $data['questionnaire_id'] = $questionnaireId;
@@ -542,6 +584,7 @@ class QuestionnaireController extends Controller
         if ($options !== null) $data['options'] = $options;
         if ($rowItems !== null) $data['row_items'] = $rowItems;
         if ($scaleOptions !== null) $data['scale_options'] = $scaleOptions;
+        if ($scaleInformation !== null) $data['scale_information'] = $scaleInformation;
         
         try {
             Question::create($data);
@@ -572,11 +615,12 @@ class QuestionnaireController extends Controller
         
         $validator = Validator::make($request->all(), [
             'question_text' => 'required|string',
-            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_scale,competency_scale,radio_per_row,checkbox_per_row,likert_per_row',
+            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_per_row',
             'description' => 'nullable|string',
             'options' => 'nullable|string',
             'row_items' => 'nullable|string',
             'scale_options' => 'nullable|string',
+            'scale_information' => 'nullable|string',
             'is_required' => 'sometimes',
             'order' => 'nullable|integer',
             'points' => 'nullable|integer|min:0',
@@ -590,6 +634,31 @@ class QuestionnaireController extends Controller
             return redirect()->back()
                 ->withErrors($validator)
                 ->withInput();
+        }
+
+        // Validasi khusus untuk likert_per_row
+        if ($request->question_type === 'likert_per_row') {
+            if (!$request->filled('scale_options')) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala wajib diisi untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
+            if (count($scaleOptions) > 5) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala maksimal 5 untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            // Validasi bahwa opsi skala harus angka 1-5
+            foreach ($scaleOptions as $option) {
+                if (!is_numeric($option) || $option < 1 || $option > 5) {
+                    return redirect()->back()
+                        ->with('error', 'Opsi skala harus berupa angka antara 1 sampai 5.')
+                        ->withInput();
+                }
+            }
         }
         
         // Parse options dari textarea ke array
@@ -621,10 +690,26 @@ class QuestionnaireController extends Controller
             $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
             $scaleOptions = !empty($scaleOptions) ? json_encode($scaleOptions) : null;
         }
+
+        // Parse scale_information (keterangan untuk setiap opsi skala)
+        $scaleInformation = null;
+        if ($request->filled('scale_information')) {
+            $scaleInformation = [];
+            $lines = array_filter(array_map('trim', explode("\n", $request->scale_information)));
+            foreach ($lines as $line) {
+                if (strpos($line, '|') !== false) {
+                    list($key, $value) = explode('|', $line, 2);
+                    $scaleInformation[trim($key)] = trim($value);
+                } else {
+                    $scaleInformation[$line] = $line;
+                }
+            }
+            $scaleInformation = !empty($scaleInformation) ? json_encode($scaleInformation) : null;
+        }
         
         $data = $request->only([
             'question_text', 'question_type', 'description', 'order', 'points',
-            'placeholder', 'helper_text'
+            'placeholder', 'helper_text', 'scale_label_low', 'scale_label_high'
         ]);
         
         $data['is_required'] = $request->filled('is_required');
@@ -647,6 +732,12 @@ class QuestionnaireController extends Controller
             $data['scale_options'] = $scaleOptions;
         } elseif ($request->has('scale_options')) {
             $data['scale_options'] = null;
+        }
+
+        if ($scaleInformation !== null) {
+            $data['scale_information'] = $scaleInformation;
+        } elseif ($request->has('scale_information')) {
+            $data['scale_information'] = null;
         }
         
         try {
@@ -751,11 +842,12 @@ class QuestionnaireController extends Controller
         
         $validator = Validator::make($request->all(), [
             'question_text' => 'required|string',
-            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_scale,competency_scale,radio_per_row,checkbox_per_row,likert_per_row',
+            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_per_row',
             'description' => 'nullable|string',
             'options' => 'nullable|string',
             'row_items' => 'nullable|string',
             'scale_options' => 'nullable|string',
+            'scale_information' => 'nullable|string',
             'is_required' => 'sometimes',
             'order' => 'nullable|integer',
             'points' => 'nullable|integer|min:0',
@@ -770,15 +862,41 @@ class QuestionnaireController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
+
+        // Validasi khusus untuk likert_per_row
+        if ($request->question_type === 'likert_per_row') {
+            if (!$request->filled('scale_options')) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala wajib diisi untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
+            if (count($scaleOptions) > 5) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala maksimal 5 untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            // Validasi bahwa opsi skala harus angka 1-5
+            foreach ($scaleOptions as $option) {
+                if (!is_numeric($option) || $option < 1 || $option > 5) {
+                    return redirect()->back()
+                        ->with('error', 'Opsi skala harus berupa angka antara 1 sampai 5.')
+                        ->withInput();
+                }
+            }
+        }
         
         // Parse options dari textarea ke array
         $options = $this->formatOptions($request->options);
         $rowItems = $this->formatRowItems($request->row_items);
         $scaleOptions = $this->formatScaleOptions($request->scale_options);
+        $scaleInformation = $this->formatScaleInformation($request->scale_information);
         
         $data = $request->only([
             'question_text', 'question_type', 'description', 'order', 'points',
-            'placeholder', 'helper_text'
+            'placeholder', 'helper_text', 'scale_label_low', 'scale_label_high'
         ]);
         
         $data['questionnaire_id'] = $questionnaireId;
@@ -791,6 +909,7 @@ class QuestionnaireController extends Controller
         if ($options !== null) $data['options'] = $options;
         if ($rowItems !== null) $data['row_items'] = $rowItems;
         if ($scaleOptions !== null) $data['scale_options'] = $scaleOptions;
+        if ($scaleInformation !== null) $data['scale_information'] = $scaleInformation;
         
         try {
             Question::create($data);
@@ -821,11 +940,12 @@ class QuestionnaireController extends Controller
         
         $validator = Validator::make($request->all(), [
             'question_text' => 'required|string',
-            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_scale,competency_scale,radio_per_row,checkbox_per_row,likert_per_row',
+            'question_type' => 'required|in:radio,dropdown,text,textarea,date,number,checkbox,likert_per_row',
             'description' => 'nullable|string',
             'options' => 'nullable|string',
             'row_items' => 'nullable|string',
             'scale_options' => 'nullable|string',
+            'scale_information' => 'nullable|string',
             'is_required' => 'sometimes',
             'order' => 'nullable|integer',
             'points' => 'nullable|integer|min:0',
@@ -840,15 +960,41 @@ class QuestionnaireController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
+
+        // Validasi khusus untuk likert_per_row
+        if ($request->question_type === 'likert_per_row') {
+            if (!$request->filled('scale_options')) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala wajib diisi untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
+            if (count($scaleOptions) > 5) {
+                return redirect()->back()
+                    ->with('error', 'Opsi skala maksimal 5 untuk tipe Likert per Baris.')
+                    ->withInput();
+            }
+
+            // Validasi bahwa opsi skala harus angka 1-5
+            foreach ($scaleOptions as $option) {
+                if (!is_numeric($option) || $option < 1 || $option > 5) {
+                    return redirect()->back()
+                        ->with('error', 'Opsi skala harus berupa angka antara 1 sampai 5.')
+                        ->withInput();
+                }
+            }
+        }
         
         // Parse options dari textarea ke array
         $options = $this->formatOptions($request->options);
         $rowItems = $this->formatRowItems($request->row_items);
         $scaleOptions = $this->formatScaleOptions($request->scale_options);
+        $scaleInformation = $this->formatScaleInformation($request->scale_information);
         
         $data = $request->only([
             'question_text', 'question_type', 'description', 'order', 'points',
-            'placeholder', 'helper_text'
+            'placeholder', 'helper_text', 'scale_label_low', 'scale_label_high'
         ]);
         
         $data['is_required'] = $request->filled('is_required');
@@ -871,6 +1017,12 @@ class QuestionnaireController extends Controller
             $data['scale_options'] = $scaleOptions;
         } elseif ($request->has('scale_options')) {
             $data['scale_options'] = null;
+        }
+
+        if ($scaleInformation !== null) {
+            $data['scale_information'] = $scaleInformation;
+        } elseif ($request->has('scale_information')) {
+            $data['scale_information'] = null;
         }
         
         try {
@@ -895,19 +1047,29 @@ class QuestionnaireController extends Controller
             return null;
         }
         
-        $options = array_filter(array_map('trim', explode("\n", $optionsText)));
+        $lines = array_filter(array_map('trim', explode("\n", $optionsText)));
         $formattedOptions = [];
         
-        foreach ($options as $option) {
-            // Check if option contains pipe for value|label format
-            if (strpos($option, '|') !== false) {
-                $parts = explode('|', $option, 2);
-                $formattedOptions[] = [
-                    'value' => trim($parts[0]),
-                    'text' => trim($parts[1] ?? $parts[0])
-                ];
+        foreach ($lines as $line) {
+            // Skip empty lines
+            if (empty($line)) continue;
+            
+            // Handle format dengan pipe: value|text
+            if (strpos($line, '|') !== false) {
+                $parts = explode('|', $line, 2);
+                $value = trim($parts[0]);
+                $text = trim($parts[1] ?? $parts[0]);
+                
+                // Jika value dan text sama, simpan sebagai string
+                // Jika berbeda, simpan sebagai array
+                if ($value === $text) {
+                    $formattedOptions[] = $text;
+                } else {
+                    $formattedOptions[] = ['text' => $text];
+                }
             } else {
-                $formattedOptions[] = trim($option);
+                // Format sederhana
+                $formattedOptions[] = $line;
             }
         }
         
@@ -951,6 +1113,32 @@ class QuestionnaireController extends Controller
         
         $options = array_filter(array_map('trim', explode(',', $scaleOptionsText)));
         return !empty($options) ? json_encode($options) : null;
+    }
+
+    /**
+     * Format scale information from textarea to array
+     */
+    private function formatScaleInformation($scaleInformationText)
+    {
+        if (empty($scaleInformationText)) {
+            return null;
+        }
+        
+        $lines = array_filter(array_map('trim', explode("\n", $scaleInformationText)));
+        $scaleInformation = [];
+        
+        foreach ($lines as $line) {
+            if (strpos($line, '|') !== false) {
+                $parts = explode('|', $line, 2);
+                $key = trim($parts[0]);
+                $value = trim($parts[1] ?? $parts[0]);
+                $scaleInformation[$key] = $value;
+            } else {
+                $scaleInformation[$line] = $line;
+            }
+        }
+        
+        return !empty($scaleInformation) ? json_encode($scaleInformation) : null;
     }
     
     /**
@@ -1138,5 +1326,101 @@ class QuestionnaireController extends Controller
             return redirect()->back()
                 ->with('error', 'Gagal mengexport data: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Tampilkan form create pertanyaan (non-general)
+     */
+    public function createQuestion($categoryId, $questionnaireId)
+    {
+        $category = Category::findOrFail($categoryId);
+        $questionnaire = Questionnaire::findOrFail($questionnaireId);
+        
+        // Pastikan bukan kuesioner umum
+        if ($questionnaire->is_general) {
+            return redirect()->route('admin.questionnaire.general-questionnaires', ['category_id' => $categoryId])
+                ->with('error', 'Kuesioner umum dikelola di halaman khusus.');
+        }
+        
+        $questions = $questionnaire->questions()->orderBy('order')->get();
+        
+        return view('admin.views.questionnaire.question_form', compact(
+            'category',
+            'questionnaire',
+            'questions'
+        ));
+    }
+
+    /**
+     * Tampilkan form edit pertanyaan (non-general)
+     */
+    public function editQuestion($categoryId, $questionnaireId, $id)
+    {
+        $category = Category::findOrFail($categoryId);
+        $questionnaire = Questionnaire::findOrFail($questionnaireId);
+        $question = Question::findOrFail($id);
+        
+        // Pastikan bukan kuesioner umum
+        if ($questionnaire->is_general) {
+            return redirect()->route('admin.questionnaire.general-questionnaires', ['category_id' => $categoryId])
+                ->with('error', 'Kuesioner umum dikelola di halaman khusus.');
+        }
+        
+        $questions = $questionnaire->questions()->orderBy('order')->get();
+        
+        return view('admin.views.questionnaire.question_form', compact(
+            'category',
+            'questionnaire',
+            'question',
+            'questions'
+        ));
+    }
+
+    /**
+     * Tampilkan form create pertanyaan (general)
+     */
+    public function createGeneralQuestion($questionnaireId)
+    {
+        $questionnaire = Questionnaire::findOrFail($questionnaireId);
+        
+        // Pastikan ini adalah kuesioner umum
+        if (!$questionnaire->is_general) {
+            return redirect()->back()
+                ->with('error', 'Hanya dapat menambahkan pertanyaan ke kuesioner umum.');
+        }
+        
+        $selectedCategory = $questionnaire->category;
+        $questions = $questionnaire->questions()->orderBy('order')->get();
+        
+        return view('admin.views.questionnaire.general_question_form', compact(
+            'questionnaire',
+            'selectedCategory',
+            'questions'
+        ));
+    }
+
+    /**
+     * Tampilkan form edit pertanyaan (general)
+     */
+    public function editGeneralQuestion($questionnaireId, $id)
+    {
+        $questionnaire = Questionnaire::findOrFail($questionnaireId);
+        $question = Question::findOrFail($id);
+        
+        // Pastikan ini adalah kuesioner umum
+        if (!$questionnaire->is_general) {
+            return redirect()->back()
+                ->with('error', 'Hanya dapat mengedit pertanyaan di kuesioner umum.');
+        }
+        
+        $selectedCategory = $questionnaire->category;
+        $questions = $questionnaire->questions()->orderBy('order')->get();
+        
+        return view('admin.views.questionnaire.general_question_form', compact(
+            'questionnaire',
+            'selectedCategory',
+            'question',
+            'questions'
+        ));
     }
 }

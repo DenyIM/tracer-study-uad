@@ -79,6 +79,8 @@
             color: white;
             font-weight: bold;
             font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-right: 15px;
         }
 
         .question-nav-card {
@@ -87,6 +89,21 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             max-height: 400px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-nav-items-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            /* Batasi tinggi */
+        }
+
+        .question-nav-footer {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #eaeaea;
         }
 
         .question-nav-item {
@@ -148,6 +165,14 @@
             font-size: 0.9rem;
             margin-right: 10px;
             flex-shrink: 0;
+        }
+
+        .d-flex.align-items-start {
+            align-items: flex-start;
+        }
+
+        .flex-grow-1 {
+            flex: 1 1 0%;
         }
 
         .answer-option {
@@ -233,8 +258,9 @@
 
         .competency-scale {
             display: flex;
-            gap: 20px;
+            gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .footer {
@@ -394,9 +420,21 @@
         }
 
         .checkbox-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-grid .form-check {
+            margin-bottom: 0;
+        }
+
+        .checkbox-grid .form-check-label {
+            display: block;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
 
         .scale-options-grid {
@@ -454,7 +492,6 @@
         }
 
         .checkbox-per-row-item {
-            display: flex;
             align-items: start;
             gap: 15px;
             padding: 12px;
@@ -470,11 +507,18 @@
         }
 
         .checkbox-per-row-options {
-            display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 10px;
             flex-grow: 1;
         }
+
+
+
+
+
+
+
+
 
         .likert-per-row-item {
             display: flex;
@@ -495,6 +539,53 @@
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .checkbox-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .competency-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .competency-scale {
+                flex-wrap: wrap;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .competency-scale .form-check-inline {
+                margin-right: 0;
+                margin-bottom: 5px;
+                text-align: center;
+                min-width: 50px;
+            }
+
+            .competency-scale .form-check-label {
+                display: block;
+                font-size: 0.85rem;
+            }
+
+            .competency-scale .form-check-label small {
+                display: block;
+                font-size: 0.7rem;
+                color: #6c757d;
+                margin-top: 2px;
+            }
+
+            @media (max-width: 768px) {
+                .competency-scale {
+                    justify-content: flex-start;
+                    gap: 8px;
+                }
+
+                .competency-scale .form-check-inline {
+                    min-width: 45px;
+                }
+            }
         }
     </style>
 </head>
@@ -586,83 +677,86 @@
                 <div class="col-lg-4 mb-4" data-aos="fade-right">
                     <div class="question-nav-card p-3">
                         <h5 class="fw-bold mb-3" style="color: var(--primary-blue);">Daftar Pertanyaan</h5>
+                        <div class="question-nav-items-container">
+                            @foreach ($questions as $index => $question)
+                                @php
+                                    $answer = $answers[$question->id] ?? null;
+                                    $isAnswered = $answer && !$answer->is_skipped;
+                                    $isCurrent = $loop->first;
+                                @endphp
 
-                        @foreach ($questions as $index => $question)
-                            @php
-                                $answer = $answers[$question->id] ?? null;
-                                $isAnswered = $answer && !$answer->is_skipped;
-                                $isCurrent = $loop->first;
-                            @endphp
+                                <div class="question-nav-item 
+                                    {{ $isCurrent ? 'active current' : '' }} 
+                                    {{ $isAnswered ? 'answered' : '' }}"
+                                    data-question-id="{{ $question->id }}"
+                                    onclick="navigateToQuestion({{ $question->id }})">
 
-                            <div class="question-nav-item 
-                                 {{ $isCurrent ? 'active current' : '' }} 
-                                 {{ $isAnswered ? 'answered' : '' }}"
-                                data-question-id="{{ $question->id }}"
-                                onclick="navigateToQuestion({{ $question->id }})">
-
-                                <div class="d-flex align-items-center">
-                                    <div class="nav-question-number">{{ $loop->iteration }}</div>
-                                    <div
-                                        class="nav-status 
-                                         {{ $isAnswered ? 'answered' : '' }} 
-                                         {{ $isCurrent ? 'current' : '' }} 
-                                         pending me-3">
-                                        @if ($isAnswered)
-                                            <i class="fas fa-check"></i>
-                                        @elseif($isCurrent)
-                                            <i class="fas fa-pen"></i>
-                                        @endif
+                                    <div class="d-flex align-items-center">
+                                        <div class="nav-question-number">{{ $loop->iteration }}</div>
+                                        <div
+                                            class="nav-status 
+                                            {{ $isAnswered ? 'answered' : '' }} 
+                                            {{ $isCurrent ? 'current' : '' }} 
+                                            pending me-3">
+                                            @if ($isAnswered)
+                                                <i class="fas fa-check"></i>
+                                            @elseif($isCurrent)
+                                                <i class="fas fa-pen"></i>
+                                            @endif
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <span class="text-truncate d-block">
+                                                {{ Str::limit($question->question_text, 30) }}
+                                            </span>
+                                            <small class="text-muted d-block">
+                                                {{ $question->type_label }}
+                                                @if ($question->is_required)
+                                                    <span class="text-danger ms-1">*</span>
+                                                @endif
+                                            </small>
+                                        </div>
                                     </div>
-                                    <div class="flex-grow-1">
-                                        <span class="text-truncate d-block">
-                                            {{ Str::limit($question->question_text, 30) }}
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="question-nav-footer">
+                            <!-- Progress Urutan Kuesioner -->
+                            <div class="pt-3 border-top">
+                                <h6 class="fw-bold mb-2">Urutan Kuesioner</h6>
+                                <div class="sequence-progress">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span id="sequenceProgressText">
+                                            @if ($currentSequence)
+                                                Bagian {{ $currentSequence->order }} dari
+                                                {{ $category->sequences()->count() }}
+                                            @else
+                                                Bagian 1 dari 1
+                                            @endif
                                         </span>
-                                        <small class="text-muted d-block">
-                                            {{ $question->type_label }}
-                                            @if ($question->is_required)
-                                                <span class="text-danger ms-1">*</span>
+                                        <span class="fw-bold text-info" id="sequenceProgressPercent">
+                                            @if ($currentSequence)
+                                                {{ round(($currentSequence->order / $category->sequences()->count()) * 100) }}%
+                                            @else
+                                                100%
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-info" id="sequenceProgressBar"
+                                            style="width: {{ $currentSequence ? round(($currentSequence->order / $category->sequences()->count()) * 100) : 100 }}%">
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted">
+                                            @if ($currentSequence && $currentSequence->isLast())
+                                                <i class="fas fa-check-circle text-success me-1"></i> Bagian terakhir
+                                            @elseif($currentSequence)
+                                                <i class="fas fa-arrow-right text-info me-1"></i> Berlanjut ke bagian
+                                                berikutnya
                                             @endif
                                         </small>
                                     </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <!-- Progress Urutan Kuesioner -->
-                        <div class="mt-4 pt-3 border-top">
-                            <h6 class="fw-bold mb-2">Urutan Kuesioner</h6>
-                            <div class="sequence-progress">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span id="sequenceProgressText">
-                                        @if ($currentSequence)
-                                            Bagian {{ $currentSequence->order }} dari
-                                            {{ $category->sequences()->count() }}
-                                        @else
-                                            Bagian 1 dari 1
-                                        @endif
-                                    </span>
-                                    <span class="fw-bold text-info" id="sequenceProgressPercent">
-                                        @if ($currentSequence)
-                                            {{ round(($currentSequence->order / $category->sequences()->count()) * 100) }}%
-                                        @else
-                                            100%
-                                        @endif
-                                    </span>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-info" id="sequenceProgressBar"
-                                        style="width: {{ $currentSequence ? round(($currentSequence->order / $category->sequences()->count()) * 100) : 100 }}%">
-                                    </div>
-                                </div>
-                                <div class="text-center mt-2">
-                                    <small class="text-muted">
-                                        @if ($currentSequence && $currentSequence->isLast())
-                                            <i class="fas fa-check-circle text-success me-1"></i> Bagian terakhir
-                                        @elseif($currentSequence)
-                                            <i class="fas fa-arrow-right text-info me-1"></i> Berlanjut ke bagian
-                                            berikutnya
-                                        @endif
-                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -689,13 +783,15 @@
                                 <div class="d-flex align-items-start mb-4">
                                     <div class="question-number">{{ $loop->iteration }}</div>
                                     <div class="flex-grow-1 ms-3">
-                                        <h4 class="fw-bold mb-2">{{ $question->question_text }}</h4>
+                                        <h4 class="fw-bold mb-2">@brformat($question->question_text)</h4>
+
                                         @if ($question->description)
-                                            <p class="text-muted mb-0">{{ $question->description }}</p>
+                                            <p class="text-muted mb-0">@brformat($question->description)</p>
                                         @endif
+
                                         @if ($question->helper_text)
                                             <p class="text-info small mt-1">
-                                                <i class="fas fa-info-circle"></i> {{ $question->helper_text }}
+                                                <i class="fas fa-info-circle"></i> @brformat($question->helper_text)
                                             </p>
                                         @endif
                                     </div>
@@ -965,15 +1061,17 @@
                     return scaleRadio ? parseInt(scaleRadio.value) : null;
 
                 case 'likert_per_row':
-                    const rowRadios = container.querySelectorAll('input[type="radio"]:checked');
+                    const competencyItems = container.querySelectorAll('.competency-item');
                     const rowValues = {};
-                    rowRadios.forEach(radio => {
-                        const name = radio.name;
-                        const match = name.match(/\[(\w+)\]/);
-                        if (match) {
-                            rowValues[match[1]] = radio.value;
+
+                    competencyItems.forEach(item => {
+                        const key = item.getAttribute('data-competency-key');
+                        const selectedRadio = item.querySelector('input[type="radio"]:checked');
+                        if (selectedRadio) {
+                            rowValues[key] = parseInt(selectedRadio.value);
                         }
                     });
+
                     return Object.keys(rowValues).length > 0 ? rowValues : null;
 
                 default:
@@ -1731,20 +1829,21 @@
                 const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
                 loadingModal.show();
 
-                // Submit form via AJAX
+                // Kumpulkan semua jawaban
                 const formData = new FormData();
-                formData.append('_token', csrfToken);
+                formData.append('_token', '{{ csrf_token() }}');
                 formData.append('questionnaire_id', questionnaireId);
 
-                // Collect all answers
+                // Collect all answers dengan format yang benar
                 questions.forEach(question => {
                     const answerValue = getAnswerValue(question.id, question.question_type);
                     if (answerValue !== null) {
                         if (question.question_type === 'checkbox' || question.question_type ===
                             'checkbox_per_row') {
                             if (Array.isArray(answerValue)) {
-                                answerValue.forEach(value => {
-                                    formData.append(`answers[${question.id}][]`, value);
+                                answerValue.forEach((value, index) => {
+                                    formData.append(`answers[${question.id}][${index}]`,
+                                        value);
                                 });
                             }
                         } else if (question.question_type === 'likert_per_row') {
@@ -1762,16 +1861,22 @@
                     }
                 });
 
-                // Kirim data ke server
+                // Kirim dengan fetch yang benar
                 fetch("{{ route('questionnaire.submit', $questionnaire->id) }}", {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: formData
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         loadingModal.hide();
 
@@ -1779,23 +1884,26 @@
                             // Clear localStorage
                             localStorage.removeItem(`questionnaire_${questionnaireId}_answers`);
 
-                            // Redirect berdasarkan respons
+                            // Redirect
                             if (data.redirect_url) {
                                 window.location.href = data.redirect_url;
                             } else if (data.completed) {
                                 window.location.href = "{{ route('questionnaire.completed') }}";
                             } else {
-                                window.location.href = data.redirect_url ||
-                                    "{{ route('questionnaire.dashboard') }}";
+                                window.location.href = "{{ route('questionnaire.dashboard') }}";
                             }
                         } else {
                             alert(data.message || 'Terjadi kesalahan saat mengirim kuesioner.');
+                            console.error('Error:', data);
                         }
                     })
                     .catch(error => {
                         loadingModal.hide();
-                        console.error('Error:', error);
-                        alert('Terjadi kesalahan jaringan.');
+                        console.error('Fetch error:', error);
+                        alert('Terjadi kesalahan jaringan. Silakan coba lagi.');
+
+                        // Fallback: submit form tradisional
+                        document.getElementById('questionnaireForm').submit();
                     });
             });
 

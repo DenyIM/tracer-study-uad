@@ -20,10 +20,6 @@ class Question extends Model
         'radio' => 'Pilihan Tunggal (Radio)',
         'dropdown' => 'Pilihan Dropdown',
         'checkbox' => 'Pilihan Ganda (Checkbox)',
-        'likert_scale' => 'Skala Likert (1-5)',
-        'competency_scale' => 'Skala Kompetensi',
-        'radio_per_row' => 'Radio per Baris',
-        'checkbox_per_row' => 'Checkbox per Baris',
         'likert_per_row' => 'Likert per Baris',
     ];
 
@@ -34,6 +30,7 @@ class Question extends Model
         'description',
         'options',
         'scale_options',
+        'scale_information',
         'row_items',
         'scale_label_low',
         'scale_label_high',
@@ -58,6 +55,7 @@ class Question extends Model
     protected $casts = [
         'options' => 'array',
         'scale_options' => 'array',
+        'scale_information' => 'array',
         'row_items' => 'array',
         'validation_rules' => 'array',
         'is_required' => 'boolean',
@@ -116,6 +114,20 @@ class Question extends Model
     }
 
     /**
+     * Set the scale_information attribute
+     */
+    public function setScaleInformationAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['scale_information'] = json_encode($value);
+        } elseif (is_string($value) && !empty($value)) {
+            $this->attributes['scale_information'] = $value;
+        } else {
+            $this->attributes['scale_information'] = null;
+        }
+    }
+
+    /**
      * Get the questionnaire that owns the question
      */
     public function questionnaire(): BelongsTo
@@ -152,14 +164,42 @@ class Question extends Model
      */
     public function getAvailableOptionsAttribute(): array
     {
-        $options = $this->options ?? [];
+        $options = [];
         
-        if ($this->has_other_option) {
-            $options[] = 'Lainnya, sebutkan!';
+        if ($this->options) {
+            // Decode jika string JSON
+            if (is_string($this->options)) {
+                $decoded = json_decode($this->options, true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $item) {
+                        if (is_array($item) && isset($item['text'])) {
+                            $options[] = $item['text'];
+                        } elseif (is_string($item)) {
+                            $options[] = $item;
+                        }
+                    }
+                }
+            } elseif (is_array($this->options)) {
+                // Handle array langsung
+                foreach ($this->options as $item) {
+                    if (is_array($item) && isset($item['text'])) {
+                        $options[] = $item['text'];
+                    } elseif (is_string($item)) {
+                        $options[] = $item;
+                    }
+                }
+            }
         }
         
-        if ($this->has_none_option) {
-            $options[] = 'Tidak Ada';
+        // Tampilkan opsi lain dan tidak ada hanya untuk radio, dropdown, checkbox
+        if (in_array($this->question_type, ['radio', 'dropdown', 'checkbox'])) {
+            if ($this->has_other_option && !in_array('Lainnya, sebutkan!', $options)) {
+                $options[] = 'Lainnya, sebutkan!';
+            }
+            
+            if ($this->has_none_option && !in_array('Tidak Ada', $options)) {
+                $options[] = 'Tidak Ada';
+            }
         }
         
         return $options;
@@ -170,15 +210,7 @@ class Question extends Model
      */
     public function getSupportsMultipleAttribute(): bool
     {
-        return in_array($this->question_type, ['checkbox', 'competency_scale']);
-    }
-
-    /**
-     * Check if question type is scale-based
-     */
-    public function getIsScaleAttribute(): bool
-    {
-        return in_array($this->question_type, ['likert_scale', 'competency_scale']);
+        return $this->question_type === 'checkbox';
     }
 
     /**
@@ -190,20 +222,47 @@ class Question extends Model
     }
 
     /**
+     * Check if question type supports other/none options
+     */
+    public function getSupportsOtherNoneAttribute(): bool
+    {
+        return in_array($this->question_type, ['radio', 'dropdown', 'checkbox']);
+    }
+
+    /**
      * Get available scale options with labels
      */
     public function getScaleOptionsWithLabelsAttribute(): array
     {
-        $options = $this->scale_options ?? [1, 2, 3, 4, 5];
+        // Jika sudah array langsung (dari seeder)
+        if (is_array($this->scale_options)) {
+            $options = $this->scale_options;
+        } 
+        // Jika string (JSON)
+        elseif (is_string($this->scale_options)) {
+            $options = json_decode($this->scale_options, true) ?? [];
+        }
+        // Default untuk likert per baris
+        else {
+            $options = [1, 2, 3, 4, 5];
+        }
+        
         $labels = [];
         
-        foreach ($options as $value) {
-            if ($value == 1) {
-                $labels[$value] = $this->scale_label_low ?? 'Sangat Rendah';
-            } elseif ($value == 5) {
-                $labels[$value] = $this->scale_label_high ?? 'Sangat Tinggi';
-            } else {
-                $labels[$value] = $value;
+        // Untuk likert per baris, gunakan angka saja
+        if ($this->question_type === 'likert_per_row') {
+            foreach ($options as $value) {
+                $labels[$value] = (string)$value;
+            }
+        } else {
+            foreach ($options as $value) {
+                if ($value == 1) {
+                    $labels[$value] = $this->scale_label_low ?? 'Sangat Rendah';
+                } elseif ($value == 5) {
+                    $labels[$value] = $this->scale_label_high ?? 'Sangat Tinggi';
+                } else {
+                    $labels[$value] = (string)$value;
+                }
             }
         }
         
@@ -211,11 +270,46 @@ class Question extends Model
     }
 
     /**
+     * Get scale information for display
+     */
+    public function getScaleInformationArrayAttribute(): array
+    {
+        if (!$this->scale_information) {
+            return [];
+        }
+
+        if (is_array($this->scale_information)) {
+            return $this->scale_information;
+        }
+
+        if (is_string($this->scale_information)) {
+            return json_decode($this->scale_information, true) ?? [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Get formatted scale information
+     */
+    public function getFormattedScaleInformationAttribute(): array
+    {
+        $information = $this->scale_information_array;
+        $formatted = [];
+
+        foreach ($information as $scale => $desc) {
+            $formatted[] = "Skala {$scale}: {$desc}";
+        }
+
+        return $formatted;
+    }
+
+    /**
      * Check if question type is per-row (likert per baris)
      */
     public function getIsPerRowAttribute(): bool
     {
-        return in_array($this->question_type, ['radio_per_row', 'checkbox_per_row', 'likert_per_row']);
+        return $this->question_type === 'likert_per_row';
     }
 
     /**
@@ -253,20 +347,37 @@ class Question extends Model
             return [];
         }
         
-        $rowItems = is_string($this->row_items) ? json_decode($this->row_items, true) : $this->row_items;
-        if (!is_array($rowItems)) {
-            return [];
+        // Jika sudah array langsung (dari seeder), kembalikan langsung
+        if (is_array($this->row_items)) {
+            $formatted = [];
+            foreach ($this->row_items as $key => $value) {
+                $formatted[] = [
+                    'key' => $key,
+                    'label' => is_array($value) ? ($value['text'] ?? $value) : $value
+                ];
+            }
+            return $formatted;
         }
         
-        $formatted = [];
-        foreach ($rowItems as $key => $value) {
-            $formatted[] = [
-                'key' => $key,
-                'label' => is_array($value) ? ($value['text'] ?? $value) : $value
-            ];
+        // Jika string (JSON), decode
+        if (is_string($this->row_items)) {
+            $rowItems = json_decode($this->row_items, true) ?? [];
+            if (!is_array($rowItems)) {
+                return [];
+            }
+            
+            $formatted = [];
+            foreach ($rowItems as $key => $value) {
+                $formatted[] = [
+                    'key' => $key,
+                    'label' => is_array($value) ? ($value['text'] ?? $value) : $value
+                ];
+            }
+            
+            return $formatted;
         }
         
-        return $formatted;
+        return [];
     }
 
     /**

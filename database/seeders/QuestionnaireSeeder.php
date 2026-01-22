@@ -54,6 +54,13 @@ class QuestionnaireSeeder extends Seeder
                 'self_development' => 'Pengembangan Diri',
             ],
             'scale_options' => [1, 2, 3, 4, 5],
+            'scale_information' => [
+                '1' => 'Sangat Rendah',
+                '2' => 'Rendah',
+                '3' => 'Cukup',
+                '4' => 'Tinggi',
+                '5' => 'Sangat Tinggi'
+            ],
             'scale_label_low' => 'Sangat Rendah',
             'scale_label_high' => 'Sangat Tinggi',
             'is_required' => true,
@@ -77,6 +84,13 @@ class QuestionnaireSeeder extends Seeder
                 'discussion' => 'Diskusi',
             ],
             'scale_options' => [1, 2, 3, 4, 5],
+            'scale_information' => [
+                '1' => 'Tidak Sama Sekali',
+                '2' => 'Kurang',
+                '3' => 'Cukup',
+                '4' => 'Besar',
+                '5' => 'Sangat Besar'
+            ],
             'scale_label_low' => 'Tidak Sama Sekali',
             'scale_label_high' => 'Sangat Besar',
             'is_required' => true,
@@ -825,7 +839,7 @@ class QuestionnaireSeeder extends Seeder
         // Pertanyaan 3
         Question::create([
             'questionnaire_id' => $bagian2->id,
-            'question_text' => ' Berbeda dengan pertanyaan sebelumnya yang menanyakan kemampuan Anda saat lulus, pertanyaan ini tentang dunia kerja yang akan Anda masuki. Menurut Anda, dalam pekerjaan atau usaha yang Anda cita-citakan, seberapa TINGGI tuntutan terhadap kompetensi-kompetensi berikut?',
+            'question_text' => 'Berbeda dengan pertanyaan sebelumnya yang menanyakan kemampuan Anda saat lulus, pertanyaan ini tentang dunia kerja yang akan Anda masuki. Menurut Anda, dalam pekerjaan atau usaha yang Anda cita-citakan, seberapa TINGGI tuntutan terhadap kompetensi-kompetensi berikut?',
             'question_type' => 'likert_per_row',
             'row_items' => [
                 'ethics' => 'Etika',

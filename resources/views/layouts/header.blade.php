@@ -5,7 +5,7 @@
 <header class="sticky-top bg-white shadow-sm">
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
-            <a class="navbar-brand" href="{{ auth()->check() ? route('main') : url('/') }}">
+            <a class="navbar-brand" href="{{ auth()->check() ? route('public') : url('/') }}">
                 <img src="{{ asset('logo-tracer-study.png') }}" style="width: 150px; height: auto;"
                     class="img-fluid rounded">
             </a>
@@ -74,7 +74,7 @@
 
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('main') ? 'active' : '' }}"
-                                    href="{{ route('main') }}">
+                                    href="{{ route('questionnaire.dashboard') }}">
                                     <i class="fas fa-clipboard-list me-1"></i> Kuesioner
                                 </a>
                             </li>
@@ -254,6 +254,80 @@
                                             href="{{ route('nav-bookmark') }}">
                                             <i class="fas fa-bookmark text-primary me-2"></i>
                                             <span>Bookmark</span>
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider m-0">
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2 text-danger" href="#"
+                                            data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                            <i class="fas fa-sign-out-alt me-2"></i>
+                                            <span>Logout</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        @else
+                            @php
+                                $user = auth()->user();
+                                $admin = $user->admin;
+                                $fullname = $admin->fullname ?? 'User';
+                                $initials = $fullname
+                                    ? strtoupper(substr($fullname, 0, 2))
+                                    : strtoupper(substr($user->email, 0, 2));
+
+                                // Cek apakah ada foto profil
+                                $hasProfilePhoto = !empty($user->pp_url);
+                                $profilePhotoUrl = $hasProfilePhoto ? asset('storage/' . $user->pp_url) : '';
+
+                                // CSS untuk avatar dengan background image
+                                $avatarStyle = $hasProfilePhoto
+                                    ? "background-image: url('$profilePhotoUrl'); background-size: cover; background-position: center; background-color: transparent;"
+                                    : 'background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));';
+
+                                $avatarTextStyle = $hasProfilePhoto
+                                    ? 'color: transparent;' // Transparan karena ada background image
+                                    : 'color: white;'; // Putih untuk gradient background
+                            @endphp
+
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary d-flex align-items-center dropdown-toggle"
+                                    type="button" id="profileDropdownBtn" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px; font-size: 12px; font-weight: bold; {{ $avatarStyle }} {{ $avatarTextStyle ?? '' }}">
+                                        @if (!$hasProfilePhoto)
+                                            {{ $initials }}
+                                        @endif
+                                    </div>
+                                    <span>{{ Str::limit($fullname, 15) }}</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
+                                    aria-labelledby="profileDropdownBtn" style="min-width: 250px;">
+                                    <li>
+                                        <div class="p-3 border-bottom">
+                                            <div class="d-flex align-items-center">
+                                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-3"
+                                                    style="width: 48px; height: 48px; font-size: 18px; font-weight: bold; {{ $avatarStyle }} {{ $avatarTextStyle ?? '' }}">
+                                                    @if (!$hasProfilePhoto)
+                                                        {{ $initials }}
+                                                    @endif
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ $fullname }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center py-2"
+                                            href="{{ route('admin.views.dashboard') }}">
+                                            <i class="fas fa-user text-primary me-2"></i>
+                                            <span>Dashboard Admin</span>
                                         </a>
                                     </li>
 

@@ -446,7 +446,7 @@ class QuestionController extends Controller
             case 'likert_scale':
             case 'competency_scale':
             case 'likert_per_row':
-                $answerData['scale_value'] = $request->scale_value;
+                $answerData['answer'] = json_encode($request->scale_value ?? []);
                 break;
                 
             default:
@@ -492,8 +492,11 @@ class QuestionController extends Controller
             case 'likert_scale':
             case 'competency_scale':
             case 'likert_per_row':
-                if ($request->scale_value && ($request->scale_value < 1 || $request->scale_value > 5)) {
-                    $errors['scale_value'] = ['Skala harus antara 1-5.'];
+                // Untuk seeder, simpan sebagai JSON string
+                if ($request->has('scale_value') && is_array($request->scale_value)) {
+                    $answerData['answer'] = json_encode($request->scale_value);
+                } else {
+                    $answerData['answer'] = null;
                 }
                 break;
         }
@@ -610,5 +613,36 @@ class QuestionController extends Controller
                 'row_items' => $question->formatted_row_items,
             ],
         ]);
+    }
+
+    private function processAnswerForSubmit(Request $request, Question $question)
+    {
+        switch ($question->question_type) {
+            case 'likert_per_row':
+                $answerValues = [];
+                $rowItems = $question->row_items;
+                if (is_string($rowItems)) {
+                    $rowItems = json_decode($rowItems, true) ?? [];
+                }
+                
+                foreach ($rowItems as $key => $item) {
+                    if ($request->has("answers.{$question->id}.{$key}")) {
+                        $answerValues[$key] = $request->input("answers.{$question->id}.{$key}");
+                    }
+                }
+                return $answerValues;
+                
+            case 'checkbox':
+            case 'checkbox_per_row':
+                $selectedOptions = [];
+                $answers = $request->input("answers.{$question->id}", []);
+                foreach ($answers as $index => $value) {
+                    $selectedOptions[] = $value;
+                }
+                return $selectedOptions;
+                
+            default:
+                return $request->input("answers.{$question->id}");
+        }
     }
 }

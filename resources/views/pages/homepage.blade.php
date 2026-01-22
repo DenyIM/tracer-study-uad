@@ -346,8 +346,9 @@
                         <div class="card-body text-center p-4">
                             <div class="step-number bg-primary-custom text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
                                 style="width: 40px; height: 40px;">1</div>
-                            <h5 class="card-title">Daftar Akun & Kuesioner 1</h5>
-                            <p class="card-text">Isi data dasar dan kuesioner 1 untuk membuka fitur Leaderboard.</p>
+                            <h5 class="card-title">Kuesioner Umum & Kuesioner 1</h5>
+                            <p class="card-text">Isi kuesioner umum dan kuesioner 1 untuk membuka fitur Leaderboard.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -387,7 +388,7 @@
         </div>
     </section>
 
-    <section class="py-5 bg-primary-custom text-white">
+    {{-- <section class="py-5 bg-primary-custom text-white">
         <div class="container">
             <div class="row text-center">
                 <div class="col-md-3 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="100">
@@ -408,7 +409,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> --}}
 
     {{-- <section class="py-5">
         <div class="container">
@@ -490,8 +491,8 @@
                                 data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
                                     Klik tombol "Daftar" di bagian atas halaman, isi data diri Anda, dan verifikasi
-                                    email. Setelah itu, Anda mulai mengisi kuesioner bagian 1 dan dapat melakukan Login
-                                    Akun.
+                                    email dengan masukkan kode otp. Setelah itu, anda dapat melakukan Login Akun atau
+                                    anda bisa langsung Login dengan Akun google khusus UAD.
                                 </div>
                             </div>
                         </div>
@@ -594,7 +595,7 @@
 
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="text-white-50 mb-0">&copy; 2025 Tracer Study Universitas Ahmad Dahlan.</p>
+                    <p class="text-white-50 mb-0">&copy;{{ date('Y') }} Tracer Study Universitas Ahmad Dahlan.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p class="text-white-50 mb-0">Sistem Informasi Tracer Study</p>

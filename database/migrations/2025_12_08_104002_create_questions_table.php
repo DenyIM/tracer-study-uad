@@ -12,10 +12,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('questionnaire_id')->constrained()->onDelete('cascade');
             $table->text('question_text');
-            $table->string('question_type'); // radio, dropdown, text, textarea, date, number, checkbox, likert_scale, competency_scale, radio_per_row, checkbox_per_row
+            $table->string('question_type'); // radio, dropdown, text, textarea, date, number, checkbox, likert_per_row
             $table->text('description')->nullable();
             $table->json('options')->nullable(); // Untuk radio, dropdown, checkbox
             $table->json('scale_options')->nullable(); // Opsi untuk skala likert [1,2,3,4,5]
+            $table->json('scale_information')->nullable(); // Keterangan untuk setiap opsi skala
             $table->json('row_items')->nullable(); // Item untuk pertanyaan per baris (kompetensi, metode)
             $table->string('scale_label_low')->nullable(); // Label untuk skala rendah (e.g., "Sangat Rendah")
             $table->string('scale_label_high')->nullable(); // Label untuk skala tinggi (e.g., "Sangat Tinggi")
