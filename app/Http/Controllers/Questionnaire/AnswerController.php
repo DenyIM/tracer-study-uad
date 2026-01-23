@@ -57,11 +57,13 @@ class AnswerController extends Controller
                 $query->where('category_id', $category->id);
             })
             ->where('is_skipped', false)
-            ->get();
+            ->get()
+            ->keyBy('question_id'); // Key by question_id untuk akses mudah
         
-        // Ambil semua bagian kuesioner untuk kategori ini
+        // Ambil semua bagian kuesioner untuk kategori ini, urutkan: umum dulu, lalu spesifik
         $questionnaires = Questionnaire::where('category_id', $category->id)
-            ->orderBy('order')
+            ->orderBy('is_general', 'desc')
+            ->orderBy('order', 'asc')
             ->get();
         
         return view('questionnaire.answers.index', compact(
@@ -91,6 +93,7 @@ class AnswerController extends Controller
         
         // Ambil data untuk PDF
         $questionnaires = Questionnaire::where('category_id', $category->id)
+            ->orderBy('is_general', 'desc')
             ->orderBy('order')
             ->get();
         

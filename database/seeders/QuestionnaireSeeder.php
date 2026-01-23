@@ -241,7 +241,7 @@ class QuestionnaireSeeder extends Seeder
             'order' => 2,
             'rows' => 4,
             'placeholder' => 'Tuliskan setiap mata kuliah dalam baris terpisah',
-            'helper_text' => 'Contoh: \n1. Pemrograman Berorientasi Objek\n2. Basis Data\n3. Rekayasa Perangkat Lunak',
+            'helper_text' => 'Contoh: 1. Pemrograman Berorientasi Objek 2. Basis Data 3. Rekayasa Perangkat Lunak',
         ]);
 
         $questionnaires[] = $bagian3;
@@ -265,7 +265,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'rows' => 5,
-            'placeholder' => 'Contoh: \n- Penggunaan framework Laravel\n- Kemampuan DevOps\n- Cloud computing',
+            'placeholder' => 'Contoh: 1. Penggunaan framework Laravel 2. Kemampuan DevOps 3. Cloud computing',
         ]);
 
         // Pertanyaan 9
@@ -276,7 +276,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => false,
             'order' => 2,
             'rows' => 4,
-            'placeholder' => 'Contoh: \n- AWS Certified Developer\n- Laravel Certified Developer',
+            'placeholder' => 'Contoh: 1. AWS Certified Developer 2. Laravel Certified Developer',
             'helper_text' => 'Opsional: Isi jika ada sertifikat yang diperoleh',
         ]);
 
@@ -413,7 +413,7 @@ class QuestionnaireSeeder extends Seeder
             'is_required' => true,
             'order' => 1,
             'rows' => 5,
-            'placeholder' => 'Contoh: \n- Manajemen keuangan\n- Digital marketing\n- Networking',
+            'placeholder' => 'Contoh: 1. Manajemen keuangan 2. Digital marketing 3. Networking',
         ]);
 
         // Pertanyaan 8
@@ -473,7 +473,7 @@ class QuestionnaireSeeder extends Seeder
             'question_type' => 'text',
             'is_required' => true,
             'order' => 2,
-            'placeholder' => 'Contoh: Universitas Gadjah Mada',
+            'placeholder' => 'Contoh: Universitas Ahmad Dahlan',
         ]);
 
         // Pertanyaan 3
@@ -839,7 +839,7 @@ class QuestionnaireSeeder extends Seeder
         // Pertanyaan 3
         Question::create([
             'questionnaire_id' => $bagian2->id,
-            'question_text' => 'Berbeda dengan pertanyaan sebelumnya yang menanyakan kemampuan Anda saat lulus, pertanyaan ini tentang dunia kerja yang akan Anda masuki. Menurut Anda, dalam pekerjaan atau usaha yang Anda cita-citakan, seberapa TINGGI tuntutan terhadap kompetensi-kompetensi berikut?',
+            'question_text' => 'Berbeda dengan pertanyaan sebelumnya yang menanyakan kemampuan Anda saat lulus, pertanyaan ini tentang dunia kerja yang akan Anda masuki.<br><br>Menurut Anda, dalam pekerjaan atau usaha yang Anda cita-citakan, seberapa TINGGI tuntutan terhadap kompetensi-kompetensi berikut?',
             'question_type' => 'likert_per_row',
             'row_items' => [
                 'ethics' => 'Etika',

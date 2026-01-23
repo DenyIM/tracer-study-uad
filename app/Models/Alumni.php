@@ -18,12 +18,14 @@ class Alumni extends Model
         'study_program',
         'graduation_date',
         'npwp',
-        'points'
+        'points',
+        'is_data_complete'  // TAMBAHKAN INI
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'graduation_date' => 'date',
+        'is_data_complete' => 'boolean'  // TAMBAHKAN INI
     ];
 
     public function user()

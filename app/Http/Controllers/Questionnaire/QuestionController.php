@@ -62,12 +62,14 @@ class QuestionController extends Controller
      */
     public function storeAnswer(Request $request, $questionId)
     {
-        $validator = Validator::make($request->all(), [
-            'answer' => 'nullable',
-            'selected_options' => 'nullable|array',
-            'scale_value' => 'nullable|integer|min:1|max:5',
-            'is_skipped' => 'boolean',
-        ]);
+        $question = Question::findOrFail($questionId);
+        
+        // Buat aturan validasi dinamis
+        $rules = [
+            'answer' => $question->getValidationRules(),
+        ];
+        
+        $validator = Validator::make($request->all(), $rules, $question->getValidationMessages());
         
         if ($validator->fails()) {
             return response()->json([

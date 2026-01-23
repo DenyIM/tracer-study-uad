@@ -46,9 +46,9 @@ Route::get('/go-to-kuesioner1', function () {
     return view('questionnaire.dashboard.index');
 });
 
-// Route::get('/nav-kuesioner', function () {
-//     return view('questionnaire.dashboard.index');
-// })->name('main');
+Route::get('/nav-kuesioner', function () {
+    return view('questionnaire.dashboard.index');
+})->name('main');
 
 // Route::get('/nav-leaderboard', function () {
 //     return view('pages.leaderboard');
@@ -154,7 +154,6 @@ Route::middleware(['auth'])->group(function () {
 // ADMIN ROUTES 
 // ==============================================
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-// Route::prefix('admin')->name('admin.')->group(function () {
     
     // Admin Dashboard
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('views.dashboard');
@@ -173,17 +172,22 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     // Tracer Study Charts API
     Route::get('/tracer-charts', [UserController::class, 'getTracerChartsData'])->name('tracer.charts');
     
-    // Export Questionnaire Results to PDF
-    Route::get('/export-pdf-form', [UserController::class, 'showExportPDFForm'])->name('questionnaire.export.form');
-    Route::get('/export-questionnaire-pdf', [UserController::class, 'exportQuestionnaireResultsPDF'])->name('questionnaire.export.pdf');
-    Route::get('/preview-questionnaire-pdf', [UserController::class, 'previewQuestionnairePDF'])->name('questionnaire.export.preview');
-    Route::get('/admin/export-complete-answers-form', [UserController::class, 'showCompleteAnswersExportForm'])
+    // Export Questionnaire Results to PDF (SINGLE VERSION - RECOMMENDED)
+    Route::get('/questionnaire/export/pdf-form', [UserController::class, 'showExportPDFForm'])
+        ->name('questionnaire.export.form');
+
+    Route::get('/questionnaire/export/pdf', [UserController::class, 'exportQuestionnaireResultsPDF'])
+        ->name('questionnaire.export.pdf');
+    
+    // Export Complete Answers
+    Route::get('/export/complete-answers-form', [UserController::class, 'showCompleteAnswersExportForm'])
         ->name('questionnaire.export.complete.form');
         
-    Route::get('/admin/export-complete-answers-pdf', [UserController::class, 'exportCompleteAnswersPDF'])
+    Route::get('/export/complete-answers-pdf', [UserController::class, 'exportCompleteAnswersPDF'])
         ->name('questionnaire.export.complete.pdf');
         
-    Route::get('/admin/preview-complete-answers-pdf', [UserController::class, 'previewCompleteAnswersPDF'])
+    // Preview Route (optional)
+    Route::get('/export/complete-answers-preview', [UserController::class, 'previewCompleteAnswersPDF'])
         ->name('questionnaire.export.complete.preview');
 
     // User Management
@@ -208,6 +212,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
             // Import/Export
             Route::get('/export', [UserController::class, 'exportAlumni'])->name('export');
             Route::post('/import', [UserController::class, 'importAlumni'])->name('import');
+            Route::get('/admin/questionnaire/export/pdf', [UserController::class, 'exportQuestionnaireResultsPDF'])
+                ->name('admin.questionnaire.export.pdf');
         });
 
         // Admin Management
@@ -297,20 +303,13 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     
 
 // ==============================================
-// ALUMNI QUESTIONNAIRE ROUTES (SEDERHANAKAN)
+// ALUMNI QUESTIONNAIRE ROUTES
 // ==============================================
 
 Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')->name('questionnaire.')->group(function () {
-    // Middleware untuk cek apakah user adalah alumni
     
     // ===== QUESTIONNAIRE COMPLETION ===== (DI ATAS/URUTAN PERTAMA)
     Route::get('/completed', [AlumniQuestionnaireController::class, 'completed'])->name('completed');
-    
-    // ===== CATEGORY SELECTION =====
-    // Route::get('/categories', [CategoryController::class, 'index'])->name('categories');
-    // Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    // Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
-    // Route::delete('/category/cancel', [CategoryController::class, 'cancel'])->name('category.cancel');
 
     Route::controller(CategoryController::class)->group(function () {
         Route::get('/categories', 'index')->name('categories');

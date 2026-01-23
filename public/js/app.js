@@ -1,59 +1,71 @@
-// NOTIFICATION AND LOGOUT SYSTEM - FIXED VERSION
+// NOTIFICATION SYSTEM - IMPROVED VERSION
 
 let notifications = [
     {
         id: 1,
         type: 'forum',
         title: 'Balasan Komentar',
-        text: 'Siti Rahayu membalas komentar Anda di postingan "Tips Interview Kerja" dengan memberikan saran yang sangat bermanfaat untuk persiapan interview di perusahaan teknologi',
+        message: 'Siti Rahayu membalas komentar Anda di postingan "Tips Interview Kerja" dengan memberikan saran yang sangat bermanfaat.',
         time: '5 menit lalu',
-        unread: true,
-        icon: 'fas fa-comments'
+        is_read: false,
+        icon: 'fas fa-comments',
+        color: 'primary',
+        link: '#'
     },
     {
         id: 2,
         type: 'verification',
         title: 'Verifikasi Diterima',
-        text: 'Informasi lowongan kerja yang Anda submit untuk posisi Data Analyst di PT. Teknologi Indonesia telah diverifikasi dan diterima. Anda mendapatkan +50 Points untuk kontribusi ini!',
+        message: 'Lowongan kerja Data Analyst di PT. Teknologi Indonesia telah diverifikasi. Anda mendapatkan +50 Points!',
         time: '1 jam lalu',
-        unread: true,
-        icon: 'fas fa-check-circle'
+        is_read: false,
+        icon: 'fas fa-check-circle',
+        color: 'success',
+        link: '#'
     },
     {
         id: 3,
         type: 'consultation',
         title: 'Konsultasi Diproses',
-        text: 'Permintaan konsultasi karir Anda dengan mentor dari industri teknologi sedang diproses. Tim kami akan menghubungi Anda via WhatsApp dalam 1-2 hari kerja untuk menjadwalkan sesi konsultasi',
+        message: 'Permintaan konsultasi karir Anda dengan mentor dari industri teknologi sedang diproses.',
         time: '3 jam lalu',
-        unread: true,
-        icon: 'fas fa-user-clock'
+        is_read: false,
+        icon: 'fas fa-user-clock',
+        color: 'warning',
+        link: '#'
     },
     {
         id: 4,
         type: 'points',
         title: 'Points Bertambah',
-        text: 'Anda mendapatkan 25 points karena aktif berpartisipasi di forum diskusi "Peluang Karir di Era Digital" hari ini. Teruslah berbagi pengalaman dan pengetahuan dengan alumni lainnya',
+        message: 'Anda mendapatkan 25 points karena aktif berpartisipasi di forum diskusi "Peluang Karir di Era Digital".',
         time: '5 jam lalu',
-        unread: true,
-        icon: 'fas fa-coins'
+        is_read: true,
+        icon: 'fas fa-coins',
+        color: 'warning',
+        link: '#'
     },
     {
         id: 5,
-        type: 'verification',
-        title: 'Verifikasi Ditolak',
-        text: 'Informasi forum yang Anda submit tentang "Seminar Kewirausahaan" perlu revisi pada bagian tanggal dan waktu pelaksanaan. Silakan periksa detailnya di halaman submission dan submit ulang',
+        type: 'system',
+        title: 'Pengingat Kuesioner',
+        message: 'Jangan lupa menyelesaikan bagian 2 kuesioner untuk membuka fitur Forum. Selesaikan sebelum 31 Desember.',
         time: '1 hari lalu',
-        unread: false,
-        icon: 'fas fa-exclamation-circle'
+        is_read: true,
+        icon: 'fas fa-clipboard-check',
+        color: 'info',
+        link: '#'
     },
     {
         id: 6,
         type: 'forum',
-        title: 'Balasan Komentar',
-        text: 'Ahmad Rizki membalas komentar Anda di postingan "Peluang Karir Data Science" dengan menambahkan informasi tentang sertifikasi yang direkomendasikan untuk pemula di bidang data science dan machine learning',
+        title: 'Diskusi Baru',
+        message: 'Budi Santoso membuat postingan baru "Pengalaman Kerja di Startup Teknologi". Yuk bagikan pengalamanmu!',
         time: '2 hari lalu',
-        unread: false,
-        icon: 'fas fa-comments'
+        is_read: true,
+        icon: 'fas fa-comment-medical',
+        color: 'primary',
+        link: '#'
     }
 ];
 
@@ -62,25 +74,20 @@ let notifications = [
 // Fungsi untuk memuat notifikasi
 function loadNotifications() {
     const notificationList = document.getElementById('notificationList');
-    const notificationBadge = document.getElementById('notificationBadge');
-    const notificationCount = document.getElementById('notificationCount');
-
-    // Cek jika element tidak ditemukan
-    if (!notificationList) {
-        console.warn('Element notificationList tidak ditemukan');
-        return;
-    }
+    if (!notificationList) return;
 
     // Hitung notifikasi yang belum dibaca
-    const unreadCount = notifications.filter(notif => notif.unread).length;
+    const unreadCount = notifications.filter(notif => !notif.is_read).length;
+    const totalCount = notifications.length;
 
-    // Update badge jika ada
-    if (notificationBadge) {
-        notificationBadge.textContent = unreadCount;
-    }
+    // Update badge di tombol
+    updateNotificationBadge(unreadCount);
 
-    if (notificationCount) {
-        notificationCount.textContent = unreadCount;
+    // Update counter di dropdown
+    const counter = document.getElementById('notificationCounter');
+    if (counter) {
+        counter.textContent = unreadCount > 0 ? `${unreadCount} baru` : '0 baru';
+        counter.className = unreadCount > 0 ? 'badge bg-primary' : 'badge bg-secondary';
     }
 
     // Kosongkan daftar notifikasi
@@ -89,9 +96,9 @@ function loadNotifications() {
     if (notifications.length === 0) {
         // Tampilkan pesan jika tidak ada notifikasi
         notificationList.innerHTML = `
-            <div class="notification-empty">
-                <i class="far fa-bell"></i>
-                <p>Tidak ada notifikasi</p>
+            <div class="text-center py-5">
+                <i class="far fa-bell fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">Tidak ada notifikasi</p>
             </div>
         `;
         return;
@@ -99,59 +106,156 @@ function loadNotifications() {
 
     // Tambahkan notifikasi ke daftar
     notifications.forEach(notification => {
-        const notificationItem = document.createElement('a');
-        notificationItem.className = `dropdown-item notification-item ${notification.unread ? 'unread' : ''}`;
-        notificationItem.href = '#';
-        notificationItem.innerHTML = `
-            <div class="notification-icon ${notification.type}">
-                <i class="${notification.icon}"></i>
-            </div>
-            <div class="notification-content">
-                <div class="notification-title">${notification.title}</div>
-                <div class="notification-text">${notification.text}</div>
-                <div class="notification-time">${notification.time}</div>
-            </div>
-        `;
-
-        // Tambahkan event listener untuk menandai sebagai sudah dibaca
-        notificationItem.addEventListener('click', function (e) {
-            e.preventDefault();
-            markAsRead(notification.id);
-        });
-
+        const notificationItem = createNotificationElement(notification);
         notificationList.appendChild(notificationItem);
     });
+}
+
+// Fungsi untuk membuat elemen notifikasi
+function createNotificationElement(notification) {
+    const notificationItem = document.createElement('div');
+    notificationItem.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+    notificationItem.dataset.id = notification.id;
+
+    const timeAgo = formatTimeAgo(notification.time);
+
+    notificationItem.innerHTML = `
+        <div class="d-flex align-items-start p-3 border-bottom ${notification.is_read ? 'bg-white' : 'bg-light'}">
+            <div class="notification-icon me-3 rounded-circle d-flex align-items-center justify-content-center" 
+                 style="width: 40px; height: 40px; background-color: ${getNotificationColor(notification.color, 0.1)}; color: ${getNotificationColor(notification.color)};">
+                <i class="${notification.icon}"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">${notification.title}</h6>
+                    <small class="text-muted">${timeAgo}</small>
+                </div>
+                <p class="mb-1" style="font-size: 0.85rem; color: #666;">${notification.message}</p>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-circle me-1" style="font-size: 6px; color: ${getNotificationColor(notification.color)};"></i>
+                        ${notification.type.charAt(0).toUpperCase() + notification.type.slice(1)}
+                    </small>
+                    ${!notification.is_read ?
+            `<button class="btn btn-sm btn-outline-primary mark-as-read-btn" style="font-size: 0.75rem; padding: 2px 8px;">
+                            <i class="fas fa-check me-1"></i>Tandai dibaca
+                        </button>` :
+            `<small class="text-success"><i class="fas fa-check me-1"></i>Sudah dibaca</small>`
+        }
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Tambahkan event listener untuk tombol "Tandai dibaca"
+    const markAsReadBtn = notificationItem.querySelector('.mark-as-read-btn');
+    if (markAsReadBtn) {
+        markAsReadBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            markAsRead(notification.id);
+        });
+    }
+
+    // Event listener untuk klik di seluruh item
+    notificationItem.addEventListener('click', function (e) {
+        if (!e.target.classList.contains('mark-as-read-btn') && !e.target.closest('.mark-as-read-btn')) {
+            markAsRead(notification.id);
+            if (notification.link && notification.link !== '#') {
+                window.location.href = notification.link;
+            }
+        }
+    });
+
+    return notificationItem;
+}
+
+// Fungsi untuk mendapatkan warna notifikasi
+function getNotificationColor(colorName, alpha = 1) {
+    const colors = {
+        'primary': alpha < 1 ? `rgba(13, 110, 253, ${alpha})` : '#0d6efd',
+        'success': alpha < 1 ? `rgba(25, 135, 84, ${alpha})` : '#198754',
+        'warning': alpha < 1 ? `rgba(255, 193, 7, ${alpha})` : '#ffc107',
+        'info': alpha < 1 ? `rgba(13, 202, 240, ${alpha})` : '#0dcaf0',
+        'danger': alpha < 1 ? `rgba(220, 53, 69, ${alpha})` : '#dc3545',
+        'secondary': alpha < 1 ? `rgba(108, 117, 125, ${alpha})` : '#6c757d'
+    };
+
+    return colors[colorName] || colors['primary'];
+}
+
+// Fungsi untuk format waktu
+function formatTimeAgo(timeString) {
+    return timeString; // Untuk statis, return langsung
 }
 
 // Fungsi untuk menandai notifikasi sebagai sudah dibaca
 function markAsRead(notificationId) {
     const notification = notifications.find(n => n.id === notificationId);
-    if (notification && notification.unread) {
-        notification.unread = false;
+    if (notification && !notification.is_read) {
+        notification.is_read = true;
         loadNotifications();
         showToast('Notifikasi ditandai sebagai sudah dibaca', 'success');
     }
 }
 
-// Fungsi untuk refresh notifikasi
+// Fungsi untuk menandai SEMUA notifikasi sebagai sudah dibaca
+function markAllAsRead() {
+    let updated = false;
+    notifications.forEach(notification => {
+        if (!notification.is_read) {
+            notification.is_read = true;
+            updated = true;
+        }
+    });
+
+    if (updated) {
+        loadNotifications();
+        showToast('Semua notifikasi ditandai sebagai sudah dibaca', 'success');
+    } else {
+        showToast('Tidak ada notifikasi baru', 'info');
+    }
+}
+
+// Fungsi untuk menghapus semua notifikasi
+function clearAllNotifications() {
+    if (notifications.length === 0) {
+        showToast('Tidak ada notifikasi untuk dihapus', 'info');
+        return;
+    }
+
+    if (confirm('Apakah Anda yakin ingin menghapus semua notifikasi?')) {
+        notifications = [];
+        loadNotifications();
+        showToast('Semua notifikasi telah dihapus', 'success');
+    }
+}
+
+// Fungsi untuk refresh notifikasi (tambah notifikasi baru)
 function refreshNotifications() {
     const refreshBtn = document.getElementById('notificationRefreshBtn');
     if (!refreshBtn) return;
 
     // Tampilkan loading state
-    refreshBtn.classList.add('loading');
+    const icon = refreshBtn.querySelector('i');
+    const originalIcon = icon.className;
+    icon.className = 'fas fa-spinner fa-spin';
+    refreshBtn.disabled = true;
 
     // Simulasi request ke server
     setTimeout(() => {
         // Tambahkan notifikasi baru (simulasi)
+        const newId = notifications.length > 0 ? Math.max(...notifications.map(n => n.id)) + 1 : 1;
         const newNotification = {
-            id: notifications.length + 1,
-            type: 'forum',
-            title: 'Komentar Baru',
-            text: 'Budi Santoso mengomentari postingan Anda "Pengalaman Kerja di Startup Teknologi" dengan bertanya tentang tips menghadapi tantangan di lingkungan kerja yang dinamis dan cepat berubah seperti di startup',
+            id: newId,
+            type: 'system',
+            title: 'Pembaruan Sistem',
+            message: 'Sistem telah diperbarui dengan fitur notifikasi yang lebih baik. Coba klik notifikasi untuk menandainya sebagai sudah dibaca!',
             time: 'Baru saja',
-            unread: true,
-            icon: 'fas fa-comment'
+            is_read: false,
+            icon: 'fas fa-sync-alt',
+            color: 'info',
+            link: '#'
         };
 
         // Tambahkan notifikasi baru di urutan teratas
@@ -160,113 +264,39 @@ function refreshNotifications() {
         // Muat ulang notifikasi
         loadNotifications();
 
-        // Hapus loading state
-        refreshBtn.classList.remove('loading');
+        // Kembalikan icon dan state
+        icon.className = originalIcon;
+        refreshBtn.disabled = false;
 
-        // Tampilkan toast bahwa notifikasi telah diperbarui
+        // Tampilkan toast
         showToast('Notifikasi telah diperbarui', 'success');
     }, 1000);
 }
 
-// ==================== TOAST FUNCTION ====================
+// Fungsi untuk update badge notifikasi
+function updateNotificationBadge(count) {
+    const badge = document.querySelector('.notification-count-badge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'block';
 
-// Fungsi untuk menampilkan toast
-function showToast(message, type = 'info') {
-    // Buat elemen toast
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0 position-fixed top-0 end-0 m-3`;
-    toast.style.zIndex = '9999';
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">
-                ${message}
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    `;
-
-    // Tambahkan ke body
-    document.body.appendChild(toast);
-
-    // Inisialisasi dan tampilkan toast menggunakan Bootstrap
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-    } else {
-        // Fallback jika Bootstrap tidak tersedia
-        toast.classList.add('show');
-        setTimeout(() => {
-            if (toast.parentNode) {
-                document.body.removeChild(toast);
+            // Tambah animasi jika notifikasi baru
+            if (count > parseInt(badge.textContent) || badge.style.display === 'none') {
+                badge.classList.add('pulse-animation');
+                setTimeout(() => badge.classList.remove('pulse-animation'), 1000);
             }
-        }, 3000);
-    }
-
-    // Hapus toast setelah ditutup
-    toast.addEventListener('hidden.bs.toast', function () {
-        if (toast.parentNode) {
-            document.body.removeChild(toast);
+        } else {
+            badge.style.display = 'none';
         }
-    });
-
-    // Fallback untuk auto remove
-    setTimeout(() => {
-        if (toast.parentNode) {
-            document.body.removeChild(toast);
-        }
-    }, 5000);
-}
-
-// ==================== LOGOUT FUNCTIONS ====================
-
-// Fungsi untuk menampilkan dialog logout
-function showLogoutDialog(event) {
-    if (event) {
-        event.preventDefault();
-        event.stopPropagation();
     }
-
-    const logoutModal = document.getElementById('logoutModal');
-    if (logoutModal) {
-        logoutModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    } else {
-        console.warn('Logout modal element tidak ditemukan');
-        // Fallback ke fungsi logout langsung
-        logoutUser();
-    }
-}
-
-// Fungsi untuk menyembunyikan dialog logout
-function hideLogoutDialog() {
-    const logoutModal = document.getElementById('logoutModal');
-    if (logoutModal) {
-        logoutModal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-}
-
-// Fungsi untuk logout langsung (tanpa modal)
-function logoutUser() {
-    showToast('Anda telah logout. Mengarahkan ke halaman homepage...', 'success');
-
-    // Simulasi redirect ke halaman homepage setelah 1.5 detik
-    setTimeout(() => {
-        window.location.href = '/logout'; // Sesuaikan dengan URL homepage Anda
-    }, 1500);
-}
-
-// Fungsi untuk konfirmasi logout dari modal
-function confirmLogout() {
-    hideLogoutDialog();
-    logoutUser();
 }
 
 // ==================== INITIALIZATION ====================
 
-// Fungsi untuk inisialisasi semua event listeners
-function initializeApp() {
-    console.log('Initializing notification and logout system...');
+// Fungsi untuk inisialisasi event listeners notifikasi
+function initializeNotificationSystem() {
+    console.log('Initializing notification system...');
 
     // Muat notifikasi pertama kali
     loadNotifications();
@@ -274,9 +304,31 @@ function initializeApp() {
     // Setup event listener untuk tombol refresh notifikasi
     const refreshBtn = document.getElementById('notificationRefreshBtn');
     if (refreshBtn) {
-        refreshBtn.addEventListener('click', refreshNotifications);
-    } else {
-        console.warn('Tombol refresh notifikasi tidak ditemukan');
+        refreshBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            refreshNotifications();
+        });
+    }
+
+    // Setup event listener untuk tombol "Tandai Semua Sudah Dibaca"
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            markAllAsRead();
+        });
+    }
+
+    // Setup event listener untuk tombol "Hapus Semua"
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            clearAllNotifications();
+        });
     }
 
     // Setup event listener untuk dropdown notifikasi
@@ -288,71 +340,75 @@ function initializeApp() {
         });
     }
 
-    // Setup event listener untuk tombol logout
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', showLogoutDialog);
-    } else {
-        console.warn('Tombol logout tidak ditemukan');
-    }
+    // Tambahkan style untuk animasi
+    addNotificationStyles();
+}
 
-    // Setup event listener untuk modal logout
-    const logoutModal = document.getElementById('logoutModal');
-    if (logoutModal) {
-        // Close modal ketika klik di luar
-        logoutModal.addEventListener('click', function (event) {
-            if (event.target === this) {
-                hideLogoutDialog();
-            }
-        });
-
-        // Setup tombol cancel logout
-        const logoutCancelBtn = document.getElementById('logoutCancelBtn');
-        if (logoutCancelBtn) {
-            logoutCancelBtn.addEventListener('click', hideLogoutDialog);
-        }
-
-        // Setup tombol confirm logout
-        const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
-        if (logoutConfirmBtn) {
-            logoutConfirmBtn.addEventListener('click', confirmLogout);
-        }
-    }
-
-    // Close logout modal dengan Escape key
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            const logoutModal = document.getElementById('logoutModal');
-            if (logoutModal && logoutModal.style.display === 'flex') {
-                hideLogoutDialog();
-            }
-        }
-    });
-
-    // Tambahkan style untuk loading animation
+// Fungsi untuk menambahkan styles tambahan
+function addNotificationStyles() {
     const style = document.createElement('style');
     style.textContent = `
+        /* Animasi untuk badge notifikasi */
+        .pulse-animation {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Hover effect untuk notification item */
+        .notification-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .notification-item:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        .notification-item.unread:hover {
+            background-color: #e7f1ff !important;
+        }
+        
+        /* Loading animation untuk refresh button */
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .notification-refresh-btn.loading i {
-            animation: spin 1s linear infinite;
+        
+        /* Scrollbar styling untuk notification container */
+        #notificationList::-webkit-scrollbar {
+            width: 6px;
         }
-        .logout-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
+        
+        #notificationList::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-        .toast {
-            z-index: 10000;
+        
+        #notificationList::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        #notificationList::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Style untuk tombol kecil */
+        .mark-as-read-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .mark-as-read-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
     `;
     document.head.appendChild(style);
@@ -360,34 +416,21 @@ function initializeApp() {
 
 // ==================== EVENT LISTENERS ====================
 
-// Tunggu DOM sepenuhnya dimuat
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    // DOM sudah dimuat
-    initializeApp();
-}
+// Inisialisasi ketika DOM siap
+document.addEventListener('DOMContentLoaded', function () {
+    // Inisialisasi sistem notifikasi
+    initializeNotificationSystem();
 
-// Juga inisialisasi jika dokumen sudah siap
-window.addEventListener('load', function () {
-    // Pastikan AOS diinisialisasi jika ada
-    if (typeof AOS !== 'undefined') {
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-    }
+    // Juga panggil loadNotifications setelah sedikit delay untuk memastikan elemen sudah ada
+    setTimeout(loadNotifications, 300);
 });
 
-// Export untuk testing (opsional)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        notifications,
-        loadNotifications,
-        refreshNotifications,
-        showToast,
-        showLogoutDialog,
-        logoutUser
-    };
-}
+// Export untuk akses global (opsional)
+window.NotificationSystem = {
+    notifications,
+    loadNotifications,
+    refreshNotifications,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications
+};

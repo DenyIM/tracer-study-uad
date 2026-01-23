@@ -1080,6 +1080,66 @@
             }
         }
 
+        function handleDropdownChange(questionId) {
+            const container = document.getElementById(`answer-area-${questionId}`);
+            if (!container) return;
+
+            const select = container.querySelector('select');
+            const otherContainer = container.querySelector('.other-input-container');
+
+            if (select && otherContainer) {
+                select.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    const isOtherOption = selectedValue.includes('Lainnya');
+
+                    if (isOtherOption) {
+                        otherContainer.style.display = 'block';
+                        otherContainer.querySelector('.other-input').required = true;
+                    } else {
+                        otherContainer.style.display = 'none';
+                        otherContainer.querySelector('.other-input').required = false;
+                        otherContainer.querySelector('.other-input').value = '';
+                    }
+                });
+
+                // Initialize on load
+                const initialValue = select.value;
+                const isOtherOption = initialValue && initialValue.includes('Lainnya');
+                if (isOtherOption) {
+                    otherContainer.style.display = 'block';
+                }
+            }
+        }
+
+        // Function khusus untuk menangani radio change
+        function handleRadioChange(questionId) {
+            const container = document.getElementById(`answer-area-${questionId}`);
+            if (!container) return;
+
+            const radioInputs = container.querySelectorAll('input[type="radio"]');
+
+            radioInputs.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const answerOption = this.closest('.answer-option');
+                    const hasOther = answerOption.getAttribute('data-has-other') === 'true';
+                    const otherContainer = answerOption.querySelector('.other-input-container');
+
+                    // Sembunyikan semua other container terlebih dahulu
+                    container.querySelectorAll('.other-input-container').forEach(container => {
+                        container.style.display = 'none';
+                        container.querySelector('.other-input').required = false;
+                    });
+
+                    // Tampilkan jika ini opsi "Lainnya"
+                    if (hasOther && otherContainer) {
+                        otherContainer.style.display = 'block';
+                        otherContainer.querySelector('.other-input').required = true;
+                        otherContainer.querySelector('.other-input').focus();
+                    }
+                });
+            });
+        }
+
         // Check if question has been answered
         function isQuestionAnswered(questionId, questionType) {
             const answerValue = getAnswerValue(questionId, questionType);
@@ -1173,7 +1233,6 @@
                 q.classList.add('d-none');
             });
 
-            // Show current question
             const question = document.getElementById(`question-${questions[index].id}`);
             if (question) {
                 question.classList.remove('d-none');
@@ -1185,8 +1244,13 @@
                 // Update navigation items
                 updateNavigationItems(questions[index].id);
 
-                // Handle email input visibility
-                handleEmailInputVisibility(questions[index].id, questions[index].question_type);
+                // Handle input visibility berdasarkan tipe pertanyaan
+                const currentQuestion = questions[index];
+                if (currentQuestion.question_type === 'dropdown') {
+                    handleDropdownChange(currentQuestion.id);
+                } else if (currentQuestion.question_type === 'radio') {
+                    handleRadioChange(currentQuestion.id);
+                }
 
                 // Update likert visual state jika tipe likert_per_row
                 if (questions[index].question_type === 'likert_per_row') {

@@ -33,7 +33,7 @@ class AlumniRegistrationController extends Controller
         
         // Jika data sudah lengkap, redirect ke main
         if ($alumni->is_data_complete) {
-            return redirect()->route('main');
+            return redirect()->route('public');
         }
         
         return view('auth.register-form', [
@@ -76,6 +76,6 @@ class AlumniRegistrationController extends Controller
             $user->update(['name' => $request->fullname]);
         }
         
-        return redirect()->route('main')->with('success', 'Data berhasil disimpan!');
+        return redirect()->route('public')->with('success', 'Data berhasil disimpan!');
     }
 }

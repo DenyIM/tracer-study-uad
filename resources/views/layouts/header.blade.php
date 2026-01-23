@@ -3,6 +3,8 @@
 @endphp
 
 <header class="sticky-top bg-white shadow-sm">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @stack('styles')
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
             <a class="navbar-brand" href="{{ auth()->check() ? route('public') : url('/') }}">
@@ -74,7 +76,7 @@
 
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('main') ? 'active' : '' }}"
-                                    href="{{ route('questionnaire.dashboard') }}">
+                                    href="{{ route('main') }}">
                                     <i class="fas fa-clipboard-list me-1"></i> Kuesioner
                                 </a>
                             </li>
@@ -140,28 +142,58 @@
                                     id="notificationDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-bell"></i>
                                     <span
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        5
-                                        <span class="visually-hidden">notifications</span>
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count-badge"
+                                        style="font-size: 0.7rem; display: none;">
+                                        0
+                                        <span class="visually-hidden">unread notifications</span>
                                     </span>
                                 </button>
-                                <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationDropdownBtn"
-                                    style="min-width: 300px;">
-                                    <div class="p-3 border-bottom">
+                                <div class="dropdown-menu dropdown-menu-end p-0 shadow"
+                                    aria-labelledby="notificationDropdownBtn"
+                                    style="min-width: 350px; max-height: 500px; overflow: hidden;">
+                                    <!-- Header -->
+                                    <div class="p-3 border-bottom bg-light">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0 fw-bold">Notifikasi</h6>
-                                            <div class="d-flex align-items-center">
-                                                <button class="btn btn-sm btn-outline-secondary me-2"
-                                                    id="notificationRefreshBtn" title="Muat Ulang Notifikasi">
+                                            <h6 class="mb-0 fw-bold">
+                                                <i class="fas fa-bell me-2"></i>Notifikasi
+                                            </h6>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button class="btn btn-sm btn-outline-secondary p-1"
+                                                    id="notificationRefreshBtn" title="Muat Ulang Notifikasi"
+                                                    style="width: 28px; height: 28px;">
                                                     <i class="fas fa-sync-alt"></i>
                                                 </button>
-                                                <span class="badge bg-primary">5</span>
+                                                <button class="btn btn-sm btn-outline-primary p-1" id="markAllReadBtn"
+                                                    title="Tandai Semua Sudah Dibaca" style="width: 28px; height: 28px;">
+                                                    <i class="fas fa-check-double"></i>
+                                                </button>
+                                                <span class="badge bg-primary" id="notificationCounter">0 baru</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="p-2" id="notificationList">
-                                        <div class="dropdown-item p-3">
-                                            <p class="mb-0 text-muted">Tidak ada notifikasi</p>
+
+                                    <!-- Container notifikasi -->
+                                    <div class="notification-container" id="notificationList"
+                                        style="max-height: 380px; overflow-y: auto;">
+                                        <!-- Notifikasi akan dimuat di sini -->
+                                    </div>
+
+                                    <!-- Footer dengan spacing yang lebih baik -->
+                                    <div class="border-top bg-light" style="padding: 14px 16px;">
+                                        <!-- Pakai padding bukan p- class -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-info-circle text-muted me-2"
+                                                    style="font-size: 0.9rem;"></i>
+                                                <small class="text-muted" style="line-height: 1.3;">
+                                                    Klik notifikasi<br>
+                                                    untuk menandai sudah dibaca
+                                                </small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-secondary ms-3" id="clearAllBtn"
+                                                style="padding: 4px 12px; font-size: 0.85rem;">
+                                                <i class="fas fa-trash-alt me-1"></i>Hapus
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -201,7 +233,8 @@
                             <!-- Profil Dropdown -->
                             <div class="dropdown">
                                 <button class="btn btn-outline-primary d-flex align-items-center dropdown-toggle"
-                                    type="button" id="profileDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    type="button" id="profileDropdownBtn" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
                                     <div class="rounded-circle text-white d-flex align-items-center justify-content-center me-2"
                                         style="width: 32px; height: 32px; font-size: 12px; font-weight: bold; {{ $avatarStyle }} {{ $avatarTextStyle ?? '' }}">
                                         @if (!$hasProfilePhoto)
@@ -377,6 +410,65 @@
         </div>
     </div>
 @endauth
+
+<style>
+    /* Notifikasi Styles */
+    .notification-container {
+        scrollbar-width: thin;
+        scrollbar-color: #c1c1c1 #f1f1f1;
+    }
+
+    .notification-icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .notification-item.unread {
+        border-left: 3px solid #0d6efd;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Badge notifikasi di tombol */
+    .notification-count-badge {
+        font-size: 0.65rem !important;
+        padding: 0.25em 0.5em !important;
+        min-width: 1.5em;
+        height: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Tombol aksi notifikasi */
+    .notification-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .notification-item:hover .notification-actions {
+        opacity: 1;
+    }
+
+    /* Responsif */
+    @media (max-width: 768px) {
+        .dropdown-menu[aria-labelledby="notificationDropdownBtn"] {
+            min-width: 300px !important;
+            margin-right: -50px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dropdown-menu[aria-labelledby="notificationDropdownBtn"] {
+            min-width: 280px !important;
+            margin-right: -80px;
+        }
+    }
+</style>
 
 <!-- Script untuk refresh foto profil setelah upload -->
 <script>

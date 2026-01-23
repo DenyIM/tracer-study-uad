@@ -170,6 +170,8 @@
             scroll-margin-top: 80px;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @stack('styles')
 </head>
 
 <body>
@@ -696,6 +698,8 @@
             });
         });
     </script>
+    <script src="{{ asset('js/app.js') }}"></script>
+    @stack('scripts')
 </body>
 
 </html>

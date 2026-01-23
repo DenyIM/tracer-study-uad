@@ -74,12 +74,53 @@
             border-bottom: 2px solid var(--primary-blue);
         }
 
+        /* MODIFIKASI: Text area answer dengan overflow control */
         .answer-text {
             background-color: #f8f9fa;
             padding: 12px 15px;
             border-radius: 8px;
             border-left: 4px solid var(--secondary-blue);
             margin-top: 10px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+        /* MODIFIKASI: Khusus untuk teks panjang */
+        .answer-text.long-text {
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* MODIFIKASI: Text area khusus */
+        .answer-text.textarea-answer {
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.5;
+            font-family: inherit;
+        }
+
+        /* MODIFIKASI: Scrollbar styling */
+        .answer-text::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .answer-text::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .answer-text::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .answer-text::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
 
         /* Scale table styles */
@@ -88,6 +129,7 @@
             border-collapse: collapse;
             margin-top: 10px;
             background: white;
+            table-layout: fixed;
         }
 
         .scale-table th {
@@ -97,11 +139,24 @@
             border: 1px solid #dee2e6;
             font-weight: 600;
             color: var(--primary-blue);
+            word-wrap: break-word;
         }
 
         .scale-table td {
             padding: 10px;
             border: 1px solid #dee2e6;
+            word-wrap: break-word;
+            vertical-align: top;
+        }
+
+        .scale-table td:first-child {
+            width: 50%;
+        }
+
+        .scale-table td:nth-child(2),
+        .scale-table td:nth-child(3) {
+            width: 25%;
+            text-align: center;
         }
 
         .scale-value {
@@ -124,6 +179,8 @@
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 500;
+            max-width: 100%;
+            word-wrap: break-word;
         }
 
         .badge-checkbox {
@@ -150,28 +207,30 @@
             border: 1px solid #5a32a3;
         }
 
-        .email-display {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border-left: 3px solid #ffc107;
-        }
-
-        .whatsapp-display {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #dcf8c6;
-            border-radius: 6px;
-            border-left: 3px solid #25d366;
-        }
-
+        .email-display,
+        .whatsapp-display,
         .other-display {
             margin-top: 10px;
             padding: 10px;
-            background-color: #e9d8fd;
             border-radius: 6px;
-            border-left: 3px solid #6f42c1;
+            border-left: 3px solid;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .email-display {
+            background-color: #f8f9fa;
+            border-left-color: #ffc107;
+        }
+
+        .whatsapp-display {
+            background-color: #dcf8c6;
+            border-left-color: #25d366;
+        }
+
+        .other-display {
+            background-color: #e9d8fd;
+            border-left-color: #6f42c1;
         }
 
         .empty-state {
@@ -187,6 +246,7 @@
             text-align: center;
         }
 
+        /* MODIFIKASI: Responsive adjustments */
         @media (max-width: 768px) {
             .question-item {
                 padding: 15px;
@@ -200,6 +260,29 @@
             .scale-table td {
                 padding: 6px;
             }
+
+            .answer-text {
+                padding: 10px 12px;
+            }
+
+            .answer-text.long-text,
+            .answer-text.textarea-answer {
+                max-height: 150px;
+            }
+        }
+
+        /* MODIFIKASI: Untuk mencegah overflow horizontal */
+        .question-text,
+        .answer-content {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+
+        /* MODIFIKASI: Container untuk mencegah overflow */
+        .answer-container {
+            max-width: 100%;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -291,7 +374,7 @@
 
                                 // Tentukan skala label berdasarkan pertanyaan
                                 $scaleLabels = [];
-                                
+
                                 if ($isSecondQuestion) {
                                     // Skala untuk pertanyaan 2: Metode Pembelajaran
                                     $scaleLabels = [
@@ -317,8 +400,33 @@
                                 $selectedOptions = $answer->selected_options;
                                 $scaleValue = $answer->scale_value;
 
-                                // DEBUG: Tampilkan data untuk debugging
-                                // dd($answer->toArray());
+                                if ($answerText && is_string($answerText)) {
+                                    // Hapus semua whitespace di awal dan akhir string termasuk newline
+                                    $answerText = trim($answerText);
+
+                                    // Jika masih ada newline di awal (setelah trim), hapus
+                                    $answerText = ltrim($answerText, "\n\r\t\v\x00");
+
+                                    // Hapus multiple spaces/tabs di seluruh teks
+                                    $answerText = preg_replace('/[ \t]+/', ' ', $answerText);
+
+                                    // Untuk textarea: pertahankan struktur paragraf tapi bersihkan
+                                    if ($question->question_type === 'textarea') {
+                                        // Hapus spasi di awal setiap baris
+                                        $answerText = preg_replace('/^[ \t]+/m', '', $answerText);
+                                        // Hapus spasi di akhir setiap baris
+                                        $answerText = preg_replace('/[ \t]+$/m', '', $answerText);
+                                    }
+                                }
+
+                                // Cek apakah ini tipe teks panjang
+                                $isTextArea = $question->question_type === 'textarea';
+                                $isLongText =
+                                    $question->question_type === 'text' && $answerText && strlen($answerText) > 200;
+
+                                // Cek panjang teks
+                                $textLength = $answerText ? strlen($answerText) : 0;
+                                $isVeryLongText = $textLength > 500;
 
                                 // Proses selected_options untuk checkbox
                                 if (!empty($selectedOptions)) {
@@ -332,7 +440,7 @@
                                             $selectedOptions = [$selectedOptions];
                                         }
                                     }
-                                    
+
                                     // Pastikan $selectedOptions adalah array
                                     if (!is_array($selectedOptions)) {
                                         $selectedOptions = [$selectedOptions];
@@ -345,8 +453,8 @@
                             <div class="question-item">
                                 <div class="d-flex align-items-start">
                                     <div class="question-number me-3">{{ $loop->iteration }}</div>
-                                    <div class="flex-grow-1">
-                                        <h5 class="fw-bold mb-2">{!! nl2br(e($question->question_text)) !!}</h5>
+                                    <div class="flex-grow-1 answer-container">
+                                        <h5 class="fw-bold mb-2 question-text">{!! nl2br(e($question->question_text)) !!}</h5>
 
                                         @if ($question->description)
                                             <p class="text-muted mb-3">{!! nl2br(e($question->description)) !!}</p>
@@ -384,7 +492,7 @@
                                                 @endif
                                             @elseif(in_array($question->question_type, ['checkbox', 'checkbox_per_row']))
                                                 @if (count($selectedOptions) > 0)
-                                                    <div class="answer-text">
+                                                    <div class="answer-text {{ $isVeryLongText ? 'long-text' : '' }}">
                                                         @foreach ($selectedOptions as $option)
                                                             @php
                                                                 // Handle berbagai format data
@@ -392,14 +500,19 @@
                                                                 $isSpecialOption = false;
                                                                 $mainText = $option;
                                                                 $additionalValue = '';
-                                                                
+
                                                                 // Cek jika ada format dengan delimiter
                                                                 if (is_string($option) && str_contains($option, ':')) {
                                                                     $parts = explode(':', $option, 2);
                                                                     $mainText = trim($parts[0]);
-                                                                    $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
-                                                                    
-                                                                    if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,')) {
+                                                                    $additionalValue = isset($parts[1])
+                                                                        ? trim($parts[1])
+                                                                        : '';
+
+                                                                    if (
+                                                                        str_contains($mainText, 'email') ||
+                                                                        str_contains($mainText, 'Ya,')
+                                                                    ) {
                                                                         $isSpecialOption = true;
                                                                         $badgeClass = 'badge-email';
                                                                     } elseif (str_contains($mainText, 'WhatsApp')) {
@@ -410,49 +523,62 @@
                                                                         $badgeClass = 'badge-other';
                                                                     }
                                                                 }
-                                                                
+
                                                                 // Format khusus untuk data seeder/array PHP
                                                                 if (is_array($option)) {
-                                                                    $displayText = $option['text'] ?? $option[0] ?? json_encode($option);
+                                                                    $displayText =
+                                                                        $option['text'] ??
+                                                                        ($option[0] ?? json_encode($option));
                                                                     $mainText = $displayText;
                                                                 }
                                                             @endphp
-                                                            
+
                                                             @if ($isSpecialOption)
                                                                 <div class="mb-2">
-                                                                    <span class="answer-badge {{ $badgeClass }}">{{ $mainText }}</span>
+                                                                    <span
+                                                                        class="answer-badge {{ $badgeClass }}">{{ $mainText }}</span>
                                                                     @if (!empty($additionalValue))
-                                                                        <div class="{{ 
-                                                                            str_contains($mainText, 'email') ? 'email-display' : 
-                                                                            (str_contains($mainText, 'WhatsApp') ? 'whatsapp-display' : 'other-display') 
-                                                                        }}">
+                                                                        <div
+                                                                            class="{{ str_contains($mainText, 'email')
+                                                                                ? 'email-display'
+                                                                                : (str_contains($mainText, 'WhatsApp')
+                                                                                    ? 'whatsapp-display'
+                                                                                    : 'other-display') }}">
                                                                             @if (str_contains($mainText, 'email'))
-                                                                                <strong>Email:</strong> {{ $additionalValue }}
+                                                                                <strong>Email:</strong>
+                                                                                {{ $additionalValue }}
                                                                             @elseif(str_contains($mainText, 'WhatsApp'))
-                                                                                <strong>WhatsApp:</strong> {{ $additionalValue }}
+                                                                                <strong>WhatsApp:</strong>
+                                                                                {{ $additionalValue }}
                                                                             @elseif(str_contains($mainText, 'Lainnya'))
-                                                                                <strong>Keterangan:</strong> {{ $additionalValue }}
+                                                                                <strong>Keterangan:</strong>
+                                                                                {{ $additionalValue }}
                                                                             @endif
                                                                         </div>
                                                                     @endif
                                                                 </div>
                                                             @else
                                                                 <div class="mb-2">
-                                                                    <span class="answer-badge badge-checkbox">{{ $mainText }}</span>
+                                                                    <span
+                                                                        class="answer-badge badge-checkbox">{{ $mainText }}</span>
                                                                 </div>
                                                             @endif
                                                         @endforeach
                                                     </div>
                                                 @elseif($answerText)
                                                     {{-- Fallback: jika tidak ada selected_options tapi ada answer --}}
-                                                    <div class="answer-text">
+                                                    <div class="answer-text {{ $isVeryLongText ? 'long-text' : '' }}">
                                                         @php
                                                             // Coba parse jika answerText adalah JSON string
                                                             $parsedAnswers = [];
-                                                            if (is_string($answerText) && str_starts_with($answerText, '[') && str_ends_with($answerText, ']')) {
+                                                            if (
+                                                                is_string($answerText) &&
+                                                                str_starts_with($answerText, '[') &&
+                                                                str_ends_with($answerText, ']')
+                                                            ) {
                                                                 $parsedAnswers = json_decode($answerText, true) ?? [];
                                                             }
-                                                            
+
                                                             if (!empty($parsedAnswers) && is_array($parsedAnswers)) {
                                                                 foreach ($parsedAnswers as $parsedOption) {
                                                                     if (is_string($parsedOption)) {
@@ -460,57 +586,92 @@
                                                                         if (str_contains($parsedOption, ':')) {
                                                                             $parts = explode(':', $parsedOption, 2);
                                                                             $mainText = trim($parts[0]);
-                                                                            $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
-                                                                            
+                                                                            $additionalValue = isset($parts[1])
+                                                                                ? trim($parts[1])
+                                                                                : '';
+
                                                                             echo '<div class="mb-2">';
-                                                                            echo '<span class="answer-badge badge-checkbox">' . $mainText . '</span>';
+                                                                            echo '<span class="answer-badge badge-checkbox">' .
+                                                                                $mainText .
+                                                                                '</span>';
                                                                             if (!empty($additionalValue)) {
-                                                                                if (str_contains($mainText, 'Lainnya')) {
-                                                                                    echo '<div class="other-display"><strong>Keterangan:</strong> ' . $additionalValue . '</div>';
+                                                                                if (
+                                                                                    str_contains($mainText, 'Lainnya')
+                                                                                ) {
+                                                                                    echo '<div class="other-display"><strong>Keterangan:</strong> ' .
+                                                                                        $additionalValue .
+                                                                                        '</div>';
                                                                                 } else {
-                                                                                    echo '<div class="email-display"><strong>Detail:</strong> ' . $additionalValue . '</div>';
+                                                                                    echo '<div class="email-display"><strong>Detail:</strong> ' .
+                                                                                        $additionalValue .
+                                                                                        '</div>';
                                                                                 }
                                                                             }
                                                                             echo '</div>';
                                                                         } else {
-                                                                            echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' . $parsedOption . '</span></div>';
+                                                                            echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' .
+                                                                                $parsedOption .
+                                                                                '</span></div>';
                                                                         }
                                                                     }
                                                                 }
                                                             } else {
                                                                 // Tampilkan sebagai plain text
-                                                                echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' . $answerText . '</span></div>';
+                                                                echo '<div class="mb-2"><span class="answer-badge badge-checkbox">' .
+                                                                    $answerText .
+                                                                    '</span></div>';
                                                             }
                                                         @endphp
                                                     </div>
                                                 @else
                                                     <div class="answer-text text-muted">
-                                                        <i class="fas fa-info-circle me-2"></i>Tidak ada jawaban yang dipilih
+                                                        <i class="fas fa-info-circle me-2"></i>Tidak ada jawaban yang
+                                                        dipilih
                                                     </div>
                                                 @endif
                                             @elseif(in_array($question->question_type, ['radio', 'dropdown']))
                                                 @if ($answerText)
-                                                    <div class="answer-text">
+                                                    <div class="answer-text {{ $isVeryLongText ? 'long-text' : '' }}">
                                                         @php
-                                                            if (is_string($answerText) && str_contains($answerText, ':')) {
+                                                            if (
+                                                                is_string($answerText) &&
+                                                                str_contains($answerText, ':')
+                                                            ) {
                                                                 $parts = explode(':', $answerText, 2);
                                                                 $mainText = trim($parts[0]);
-                                                                $additionalValue = isset($parts[1]) ? trim($parts[1]) : '';
+                                                                $additionalValue = isset($parts[1])
+                                                                    ? trim($parts[1])
+                                                                    : '';
 
-                                                                if (str_contains($mainText, 'email') || str_contains($mainText, 'Ya,')) {
-                                                                    echo '<span class="answer-badge badge-email">' . $mainText . '</span>';
+                                                                if (
+                                                                    str_contains($mainText, 'email') ||
+                                                                    str_contains($mainText, 'Ya,')
+                                                                ) {
+                                                                    echo '<span class="answer-badge badge-email">' .
+                                                                        $mainText .
+                                                                        '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="email-display"><strong>Email:</strong> ' . $additionalValue . '</div>';
+                                                                        echo '<div class="email-display"><strong>Email:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
                                                                     }
                                                                 } elseif (str_contains($mainText, 'WhatsApp')) {
-                                                                    echo '<span class="answer-badge badge-whatsapp">' . $mainText . '</span>';
+                                                                    echo '<span class="answer-badge badge-whatsapp">' .
+                                                                        $mainText .
+                                                                        '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="whatsapp-display"><strong>WhatsApp:</strong> ' . $additionalValue . '</div>';
+                                                                        echo '<div class="whatsapp-display"><strong>WhatsApp:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
                                                                     }
                                                                 } elseif (str_contains($mainText, 'Lainnya')) {
-                                                                    echo '<span class="answer-badge badge-other">' . $mainText . '</span>';
+                                                                    echo '<span class="answer-badge badge-other">' .
+                                                                        $mainText .
+                                                                        '</span>';
                                                                     if ($additionalValue) {
-                                                                        echo '<div class="other-display"><strong>Keterangan:</strong> ' . $additionalValue . '</div>';
+                                                                        echo '<div class="other-display"><strong>Keterangan:</strong> ' .
+                                                                            $additionalValue .
+                                                                            '</div>';
                                                                     }
                                                                 } else {
                                                                     echo $answerText;
@@ -523,111 +684,103 @@
                                                 @endif
                                             @elseif($question->question_type === 'likert_per_row')
                                                 @php
-                                                    // Handle data dari seeder (array PHP langsung atau JSON)
                                                     $answerValues = [];
-                                                    
-                                                    // Logic untuk membaca data dari seeder
-                                                    if ($answer) {
-                                                        // Coba dari answer field
-                                                        if ($answer->answer && is_string($answer->answer)) {
+                                                    if ($answer && $answer->answer) {
+                                                        if (is_string($answer->answer)) {
                                                             $answerValues = json_decode($answer->answer, true) ?? [];
-                                                        } 
-                                                        // Coba dari scale_value (backward compatibility)
-                                                        elseif ($answer->scale_value && is_string($answer->scale_value)) {
-                                                            $answerValues = json_decode($answer->scale_value, true) ?? [];
-                                                        }
-                                                        // Jika sudah array langsung
-                                                        elseif (is_array($answer->answer)) {
+                                                        } elseif (is_array($answer->answer)) {
                                                             $answerValues = $answer->answer;
                                                         }
                                                     }
-                                                    
-                                                    // Handle row items dari seeder (array PHP, bukan JSON)
+
                                                     $rowItems = $question->row_items;
                                                     if (is_string($rowItems)) {
                                                         $rowItems = json_decode($rowItems, true) ?? [];
                                                     }
-                                                    
-                                                    if (!is_array($rowItems)) {
-                                                        $rowItems = [];
+
+                                                    // Ambil scale information dari database
+                                                    $scaleInfo = [];
+                                                    if ($question->scale_information) {
+                                                        if (is_string($question->scale_information)) {
+                                                            $scaleInfo =
+                                                                json_decode($question->scale_information, true) ?? [];
+                                                        } else {
+                                                            $scaleInfo = $question->scale_information;
+                                                        }
                                                     }
                                                 @endphp
 
-                                                @if (count($answerValues) > 0 && is_array($answerValues))
+                                                @if (count($answerValues) > 0)
                                                     <div class="answer-text">
                                                         <table class="scale-table">
                                                             <tr>
-                                                                <th width="60%">
-                                                                    @if ($isFirstQuestion)
-                                                                        Kompetensi
-                                                                    @elseif($isSecondQuestion)
-                                                                        Metode Pembelajaran
-                                                                    @else
-                                                                        Item
-                                                                    @endif
-                                                                </th>
-                                                                <th width="20%">Skala</th>
-                                                                <th width="20%">Keterangan</th>
+                                                                <th>Item</th>
+                                                                <th>Skala</th>
+                                                                <th>Keterangan</th>
                                                             </tr>
                                                             @foreach ($rowItems as $key => $item)
-                                                                @php
-                                                                    // Penyesuaian untuk data seeder
-                                                                    $itemText = is_array($item) ? ($item['text'] ?? $item) : $item;
-                                                                    $itemKey = is_string($key) ? $key : $itemText;
-                                                                    
-                                                                    if (isset($answerValues[$itemKey])) {
-                                                                        $scaleValue = $answerValues[$itemKey];
-                                                                        $scaleLabel = '';
-                                                                        
-                                                                        // Penyesuaian label berdasarkan pertanyaan
-                                                                        if ($isSecondQuestion) {
-                                                                            // Untuk pertanyaan kedua (metode pembelajaran)
-                                                                            if ($scaleValue == 1) {
-                                                                                $scaleLabel = 'Tidak Sama Sekali';
-                                                                            } elseif ($scaleValue == 2) {
-                                                                                $scaleLabel = 'Kurang';
-                                                                            } elseif ($scaleValue == 3) {
-                                                                                $scaleLabel = 'Cukup';
-                                                                            } elseif ($scaleValue == 4) {
-                                                                                $scaleLabel = 'Besar';
-                                                                            } elseif ($scaleValue == 5) {
-                                                                                $scaleLabel = 'Sangat Besar';
-                                                                            }
-                                                                        } else {
-                                                                            // Untuk pertanyaan lain
-                                                                            if ($scaleValue == 1) {
-                                                                                $scaleLabel = 'Sangat Rendah';
-                                                                            } elseif ($scaleValue == 2) {
-                                                                                $scaleLabel = 'Rendah';
-                                                                            } elseif ($scaleValue == 3) {
-                                                                                $scaleLabel = 'Sedang';
-                                                                            } elseif ($scaleValue == 4) {
-                                                                                $scaleLabel = 'Tinggi';
-                                                                            } elseif ($scaleValue == 5) {
-                                                                                $scaleLabel = 'Sangat Tinggi';
-                                                                            }
+                                                                @if (isset($answerValues[$key]))
+                                                                    @php
+                                                                        $itemText = is_array($item)
+                                                                            ? $item['text'] ?? $item
+                                                                            : $item;
+                                                                        $scaleVal = $answerValues[$key];
+
+                                                                        // Gunakan data dari scale_information jika ada
+                                                                        $scaleDesc = 'Tidak tersedia';
+                                                                        if (isset($scaleInfo[$scaleVal])) {
+                                                                            $scaleDesc = $scaleInfo[$scaleVal];
+                                                                        } elseif ($scaleVal == 1) {
+                                                                            $scaleDesc = 'Sangat Rendah';
+                                                                        } elseif ($scaleVal == 2) {
+                                                                            $scaleDesc = 'Rendah';
+                                                                        } elseif ($scaleVal == 3) {
+                                                                            $scaleDesc = 'Cukup';
+                                                                        } elseif ($scaleVal == 4) {
+                                                                            $scaleDesc = 'Tinggi';
+                                                                        } elseif ($scaleVal == 5) {
+                                                                            $scaleDesc = 'Sangat Tinggi';
                                                                         }
-                                                                @endphp
-                                                                <tr>
-                                                                    <td>{{ $itemText }}</td>
-                                                                    <td class="scale-value">{{ $scaleValue }}</td>
-                                                                    <td class="scale-label">{{ $scaleLabel }}</td>
-                                                                </tr>
-                                                                @php
-                                                                    }
-                                                                @endphp
+                                                                    @endphp
+                                                                    <tr>
+                                                                        <td>{{ $itemText }}</td>
+                                                                        <td class="scale-value">{{ $scaleVal }}
+                                                                        </td>
+                                                                        <td>{{ $scaleDesc }}</td>
+                                                                    </tr>
+                                                                @endif
                                                             @endforeach
                                                         </table>
                                                     </div>
+                                                @else
+                                                    <div class="answer-text no-answer">Tidak diisi</div>
                                                 @endif
-                                            @elseif(in_array($question->question_type, ['textarea']))
+                                            @elseif($question->question_type === 'textarea')
                                                 @if ($answerText)
-                                                    <div class="answer-text" style="white-space: pre-line;">
-                                                        {{ $answerText }}</div>
+                                                    @php
+                                                        // SOLUSI PASTI: Hapus SEMUA whitespace di awal string
+                                                        // Termasuk newline, carriage return, tab, spasi
+                                                        $cleanedText = preg_replace('/^\s+/', '', $answerText);
+                                                        // Hapus whitespace di akhir
+                                                        $cleanedText = preg_replace('/\s+$/', '', $cleanedText);
+                                                        // Untuk bagian dalam, ganti multiple whitespace dengan satu spasi
+                                                        $cleanedText = preg_replace('/\s+/', ' ', $cleanedText);
+                                                    @endphp
+                                                    <div class="answer-text textarea-answer">
+                                                        {!! nl2br(e($cleanedText)) !!}
+                                                    </div>
+                                                @endif
+                                            @elseif($question->question_type === 'text')
+                                                @if ($answerText)
+                                                    <div class="answer-text {{ $isLongText ? 'long-text' : '' }}">
+                                                        {!! nl2br(e($answerText)) !!}
+                                                    </div>
                                                 @endif
                                             @else
                                                 @if ($answerText)
-                                                    <div class="answer-text">{{ $answerText }}</div>
+                                                    <div class="answer-text {{ $isVeryLongText ? 'long-text' : '' }}">
+                                                        {!! nl2br(e($answerText)) !!}
+                                                    </div>
                                                 @endif
                                             @endif
 
@@ -662,7 +815,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     {{-- DEBUG SCRIPT untuk melihat data --}}
     <script>
         console.log("DEBUG: Data jawaban");

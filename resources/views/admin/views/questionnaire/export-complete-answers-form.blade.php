@@ -12,7 +12,7 @@
                     <h5 class="mb-0"><i class="bi bi-download me-2"></i> Export Semua Jawaban Alumni</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.questionnaire.export.complete.pdf') }}" method="GET" target="_blank">
+                    <form id="completeExportForm" method="GET">
                         <div class="row mb-4">
                             <div class="col-md-12 mb-3">
                                 <div class="alert alert-info">
@@ -106,10 +106,16 @@
                             </a>
 
                             <div>
-                                <button type="submit" name="action" value="preview" class="btn btn-info me-2">
+                                <!-- Button Preview - pastikan formaction benar -->
+                                <button type="submit"
+                                    formaction="{{ route('admin.questionnaire.export.complete.pdf') }}?action=preview"
+                                    formtarget="_blank" name="action" value="preview" class="btn btn-info me-2">
                                     <i class="bi bi-eye me-2"></i> Preview PDF
                                 </button>
-                                <button type="submit" name="action" value="download" class="btn btn-danger">
+
+                                <!-- Button Download -->
+                                <button type="submit" formaction="{{ route('admin.questionnaire.export.complete.pdf') }}"
+                                    name="action" value="download" class="btn btn-danger">
                                     <i class="bi bi-file-pdf me-2"></i> Download PDF Lengkap
                                 </button>
                             </div>
@@ -166,3 +172,54 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        // Optional: JavaScript untuk handling jika diperlukan
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('completeExportForm');
+            const previewBtn = document.querySelector('button[formaction*="action=preview"]');
+            const downloadBtn = document.querySelector(
+                'button[formaction*="export.complete.pdf"]:not([formtarget])');
+
+            // Validasi form sebelum submit (optional)
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    // Validasi tanggal jika salah satu diisi
+                    const startDate = form.querySelector('[name="start_date"]').value;
+                    const endDate = form.querySelector('[name="end_date"]').value;
+
+                    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+                        e.preventDefault();
+                        alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir!');
+                        return false;
+                    }
+
+                    // Show loading indicator untuk download
+                    if (!e.submitter?.getAttribute('formtarget')) {
+                        const btn = e.submitter;
+                        if (btn) {
+                            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Memproses...';
+                            btn.disabled = true;
+
+                            // Reset setelah 10 detik (fallback)
+                            setTimeout(() => {
+                                btn.innerHTML =
+                                    '<i class="bi bi-file-pdf me-2"></i> Download PDF Lengkap';
+                                btn.disabled = false;
+                            }, 10000);
+                        }
+                    }
+                });
+            }
+
+            // Preview button click handler (optional)
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function(e) {
+                    // Tampilkan informasi bahwa preview akan dibuka di tab baru
+                    console.log('Opening preview in new tab...');
+                });
+            }
+        });
+    </script>
+@endpush

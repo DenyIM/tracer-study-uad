@@ -17,7 +17,7 @@ class AlumniSeeder extends Seeder
 
         // Data alumni utama
         $user = User::create([
-            'email' => 'test2100018138@webmail.uad.ac.id',
+            'email' => '1test2100018138@webmail.uad.ac.id',
             'password' => Hash::make('password'),
             'role' => 'alumni',
             'email_verified_at' => now(),
@@ -25,8 +25,84 @@ class AlumniSeeder extends Seeder
 
         Alumni::create([
             'user_id' => $user->id,
-            'fullname' => 'Budi Santoso',
-            'nim' => '20190001',
+            'fullname' => '1Budi Santoso',
+            'nim' => '123451',
+            'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
+            'phone' => '081298765432',
+            'study_program' => 'Informatika',
+            'graduation_date' => '2024-09-15',
+            'npwp' => '12.345.678.9-012.345',
+            'points' => 100,
+        ]);
+
+        $user = User::create([
+            'email' => '2test2100018138@webmail.uad.ac.id',
+            'password' => Hash::make('password'),
+            'role' => 'alumni',
+            'email_verified_at' => now(),
+        ]);
+
+        Alumni::create([
+            'user_id' => $user->id,
+            'fullname' => '2Budi Santoso',
+            'nim' => '123452',
+            'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
+            'phone' => '081298765432',
+            'study_program' => 'Informatika',
+            'graduation_date' => '2024-09-15',
+            'npwp' => '12.345.678.9-012.345',
+            'points' => 100,
+        ]);
+
+        $user = User::create([
+            'email' => '3test2100018138@webmail.uad.ac.id',
+            'password' => Hash::make('password'),
+            'role' => 'alumni',
+            'email_verified_at' => now(),
+        ]);
+
+        Alumni::create([
+            'user_id' => $user->id,
+            'fullname' => '3Budi Santoso',
+            'nim' => '123453',
+            'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
+            'phone' => '081298765432',
+            'study_program' => 'Informatika',
+            'graduation_date' => '2024-09-15',
+            'npwp' => '12.345.678.9-012.345',
+            'points' => 100,
+        ]);
+
+        $user = User::create([
+            'email' => '4test2100018138@webmail.uad.ac.id',
+            'password' => Hash::make('password'),
+            'role' => 'alumni',
+            'email_verified_at' => now(),
+        ]);
+
+        Alumni::create([
+            'user_id' => $user->id,
+            'fullname' => '4Budi Santoso',
+            'nim' => '123454',
+            'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
+            'phone' => '081298765432',
+            'study_program' => 'Informatika',
+            'graduation_date' => '2024-09-15',
+            'npwp' => '12.345.678.9-012.345',
+            'points' => 100,
+        ]);
+
+        $user = User::create([
+            'email' => '5test2100018138@webmail.uad.ac.id',
+            'password' => Hash::make('password'),
+            'role' => 'alumni',
+            'email_verified_at' => now(),
+        ]);
+
+        Alumni::create([
+            'user_id' => $user->id,
+            'fullname' => '5Budi Santoso',
+            'nim' => '123455',
             'date_of_birth' => '1999-05-10', // Opsional, bisa dihapus
             'phone' => '081298765432',
             'study_program' => 'Informatika',
@@ -40,7 +116,7 @@ class AlumniSeeder extends Seeder
         
         for ($i = 1; $i <= 20; $i++) {
             $user = User::create([
-                'email' => 'alumni' . ($i + 1) . '@example.com',
+                'email' => 'alumni' . ($i + 1) . '@webmail.uad.ac.id',
                 'password' => Hash::make('password123'),
                 'role' => 'alumni',
                 'email_verified_at' => rand(0, 1) ? now() : null,

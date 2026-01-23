@@ -407,36 +407,111 @@ class Question extends Model
     /**
      * Get validation rules as array
      */
-    public function getValidationRulesArrayAttribute(): array
+    public function getValidationRules(): array
     {
         $rules = [];
         
         if ($this->is_required) {
             $rules[] = 'required';
+        } else {
+            $rules[] = 'nullable';
         }
         
-        if ($this->validation_rules && is_array($this->validation_rules)) {
-            $rules = array_merge($rules, $this->validation_rules);
-        }
-        
-        if ($this->is_numeric) {
-            $rules[] = 'numeric';
-            if ($this->min_value !== null) {
-                $rules[] = 'min:' . $this->min_value;
-            }
-            if ($this->max_value !== null) {
-                $rules[] = 'max:' . $this->max_value;
-            }
-        }
-        
-        if ($this->max_length) {
-            $rules[] = 'max:' . $this->max_length;
-        }
-        
-        if ($this->input_type === 'email') {
-            $rules[] = 'email';
+        switch ($this->question_type) {
+            case 'text':
+            case 'textarea':
+                if ($this->max_length) {
+                    $rules[] = 'max:' . $this->max_length;
+                }
+                $rules[] = 'string';
+                break;
+                
+            case 'number':
+                $rules[] = 'numeric';
+                if ($this->min_value !== null) {
+                    $rules[] = 'min:' . $this->min_value;
+                }
+                if ($this->max_value !== null) {
+                    $rules[] = 'max:' . $this->max_value;
+                }
+                break;
+                
+            case 'date':
+                $rules[] = 'date';
+                break;
+                
+            case 'checkbox':
+                $rules[] = 'array';
+                if ($this->max_selections) {
+                    $rules[] = 'max:' . $this->max_selections;
+                }
+                break;
+                
+            case 'radio':
+            case 'dropdown':
+                if (is_array($this->available_options) && count($this->available_options) > 0) {
+                    $rules[] = 'in:' . implode(',', array_map(function($option) {
+                        return is_array($option) && isset($option['text']) ? $option['text'] : $option;
+                    }, $this->available_options));
+                }
+                break;
+                
+            case 'likert_scale':
+            case 'competency_scale':
+                $rules[] = 'numeric';
+                $rules[] = 'min:1';
+                $rules[] = 'max:5';
+                break;
+                
+            case 'likert_per_row':
+                $rules[] = 'array';
+                if ($this->is_required) {
+                    $rules[] = 'required';
+                    // Validasi bahwa semua item harus diisi
+                    $rules[] = function($attribute, $value, $fail) {
+                        $rowItems = $this->row_items;
+                        if (is_string($rowItems)) {
+                            $rowItems = json_decode($rowItems, true) ?? [];
+                        }
+                        
+                        foreach ($rowItems as $key => $item) {
+                            if (!isset($value[$key]) || empty($value[$key])) {
+                                $itemText = is_array($item) ? ($item['text'] ?? $item) : $item;
+                                $fail("Harap isi skala untuk: {$itemText}");
+                            }
+                        }
+                    };
+                }
+                break;
         }
         
         return $rules;
+    }
+
+    /**
+     * Get validation messages for this question
+     */
+    public function getValidationMessages(): array
+    {
+        $messages = [
+            'required' => 'Pertanyaan ini wajib diisi.',
+            'max' => [
+                'string' => 'Jawaban tidak boleh lebih dari :max karakter.',
+                'numeric' => 'Nilai tidak boleh lebih dari :max.',
+                'array' => 'Tidak boleh memilih lebih dari :max pilihan.',
+            ],
+            'min' => [
+                'numeric' => 'Nilai tidak boleh kurang dari :min.',
+            ],
+            'numeric' => 'Harap masukkan angka yang valid.',
+            'date' => 'Harap masukkan tanggal yang valid.',
+            'in' => 'Pilihan tidak valid.',
+        ];
+        
+        if ($this->question_type === 'likert_per_row' && $this->is_required) {
+            $messages['required'] = 'Harap isi semua skala untuk pertanyaan ini.';
+        }
+        
+        return $messages;
     }
 }

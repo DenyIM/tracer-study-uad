@@ -15,9 +15,9 @@
                             <p class="text-muted mb-0">Analisis data dari hasil kuesioner alumni</p>
                         </div>
                         <div>
-                            {{-- <a href="{{ route('admin.questionnaire.export.form') }}" class="btn btn-danger" target="_blank">
+                            <a href="{{ route('admin.questionnaire.export.form') }}" class="btn btn-danger" target="_blank">
                                 <i class="bi bi-file-pdf me-2"></i> Export PDF
-                            </a> --}}
+                            </a>
                             <a href="{{ route('admin.questionnaire.export.complete.form') }}" class="btn btn-danger"
                                 target="_blank">
                                 <i class="bi bi-file-pdf me-2"></i> Export Semua Jawaban
@@ -278,24 +278,24 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.graduate_status, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="graduateStatusChart"></canvas>
-                                                                                                        </div>
-                                                                                                        ${data.graduate_status.conclusion ? `
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="graduateStatusChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        ${data.graduate_status.conclusion ? `
                                 <div class="conclusion-box">
                                     <strong>Kesimpulan:</strong> ${data.graduate_status.conclusion}
                                 </div>
                                 ` : ''}
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.graduate_status.data_source || 'Database'}
-                                                                                                            ${data.graduate_status.total ? `<br><small>Total: ${data.graduate_status.total} alumni</small>` : ''}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-database-slash text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data kategori dari alumni</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.graduate_status.data_source || 'Database'}
+                                                                                                                                                            ${data.graduate_status.total ? `<br><small>Total: ${data.graduate_status.total} alumni</small>` : ''}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-database-slash text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data kategori dari alumni</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -308,23 +308,23 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.waiting_time, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="waitingTimeChart"></canvas>
-                                                                                                        </div>
-                                                                                                        ${data.waiting_time.conclusion ? `
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="waitingTimeChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        ${data.waiting_time.conclusion ? `
                                 <div class="conclusion-box">
                                     <strong>Kesimpulan:</strong> ${data.waiting_time.conclusion}
                                 </div>
                                 ` : ''}
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.waiting_time.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-clock-history text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data waktu tunggu</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.waiting_time.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-clock-history text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data waktu tunggu</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -337,23 +337,23 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.study_work_relevance, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="studyWorkRelevanceChart"></canvas>
-                                                                                                        </div>
-                                                                                                        ${data.study_work_relevance.conclusion ? `
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="studyWorkRelevanceChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        ${data.study_work_relevance.conclusion ? `
                                 <div class="conclusion-box">
                                     <strong>Kesimpulan:</strong> ${data.study_work_relevance.conclusion}
                                 </div>
                                 ` : ''}
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.study_work_relevance.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-link text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data relevansi</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.study_work_relevance.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-link text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data relevansi</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -366,18 +366,18 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.work_level, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="workLevelChart"></canvas>
-                                                                                                        </div>
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.work_level.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-building text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data tingkat perusahaan</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="workLevelChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.work_level.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-building text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data tingkat perusahaan</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -390,23 +390,23 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.salary_range, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="salaryRangeChart"></canvas>
-                                                                                                        </div>
-                                                                                                        ${data.salary_range.conclusion ? `
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="salaryRangeChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        ${data.salary_range.conclusion ? `
                                 <div class="conclusion-box">
                                     <strong>Kesimpulan:</strong> ${data.salary_range.conclusion}
                                 </div>
                                 ` : ''}
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.salary_range.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-cash text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data gaji</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.salary_range.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-cash text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data gaji</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -419,18 +419,18 @@
                         </div>
                         <div class="card-body">
                             ${data.learning_methods && data.learning_methods.methods && data.learning_methods.methods.length > 0 ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="learningMethodChart"></canvas>
-                                                                                                        </div>
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.learning_methods.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-book text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data metode pembelajaran</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="learningMethodChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.learning_methods.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-book text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data metode pembelajaran</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -443,18 +443,18 @@
                         </div>
                         <div class="card-body">
                             ${data.competence && data.competence.competencies && Object.keys(data.competence.competencies).length > 0 ? `
-                                                                                                        <div class="chart-container">
-                                                                                                            <canvas id="competenceChart"></canvas>
-                                                                                                        </div>
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.competence.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-award text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data kompetensi</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="chart-container">
+                                                                                                                                                            <canvas id="competenceChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.competence.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-award text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data kompetensi</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -467,23 +467,23 @@
                         </div>
                         <div class="card-body">
                             ${hasData(data.funding_source, 1) ? `
-                                                                                                        <div class="chart-container-medium">
-                                                                                                            <canvas id="fundingSourceChart"></canvas>
-                                                                                                        </div>
-                                                                                                        ${data.funding_source.dominant ? `
+                                                                                                                                                        <div class="chart-container-medium">
+                                                                                                                                                            <canvas id="fundingSourceChart"></canvas>
+                                                                                                                                                        </div>
+                                                                                                                                                        ${data.funding_source.dominant ? `
                                 <div class="conclusion-box">
                                     <strong>Kesimpulan:</strong> ${data.funding_source.dominant}
                                 </div>
                                 ` : ''}
-                                                                                                        <div class="data-source">
-                                                                                                            Sumber: ${data.funding_source.data_source || 'Database'}
-                                                                                                        </div>
-                                                                                                    ` : `
-                                                                                                        <div class="text-center py-4">
-                                                                                                            <i class="bi bi-wallet text-muted display-4"></i>
-                                                                                                            <p class="mt-3 text-muted">Belum ada data sumber biaya</p>
-                                                                                                        </div>
-                                                                                                    `}
+                                                                                                                                                        <div class="data-source">
+                                                                                                                                                            Sumber: ${data.funding_source.data_source || 'Database'}
+                                                                                                                                                        </div>
+                                                                                                                                                    ` : `
+                                                                                                                                                        <div class="text-center py-4">
+                                                                                                                                                            <i class="bi bi-wallet text-muted display-4"></i>
+                                                                                                                                                            <p class="mt-3 text-muted">Belum ada data sumber biaya</p>
+                                                                                                                                                        </div>
+                                                                                                                                                    `}
                         </div>
                     </div>
                 </div>
@@ -603,12 +603,12 @@
 
             // 6. Learning Method Chart - DINAMIS BERDASARKAN DATA
             if (data.learning_methods && data.learning_methods.methods && data.learning_methods.methods.length > 0) {
-                renderStackedBarChart('learningMethodChart', data.learning_methods);
+                renderLearningMethodStackedWithInsight('learningMethodChart', data.learning_methods); // OPTION 3
             }
 
             // 7. Competence Chart - DINAMIS BERDASARKAN DATA
             if (data.competence && data.competence.competencies && Object.keys(data.competence.competencies).length > 0) {
-                renderRadarChart('competenceChart', data.competence);
+                renderCompetenceChart('competenceChart', data.competence);
             }
 
             // 8. Funding Source Chart - WARNANYA DINAMIS
@@ -619,6 +619,191 @@
                     title: 'Sumberdana Pembiayaan Kuliah',
                     colors: generateColors(data.funding_source.labels.length)
                 });
+            }
+        }
+
+        function renderLearningMethodChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error(`Canvas dengan ID ${canvasId} tidak ditemukan`);
+                return;
+            }
+
+            try {
+                const methods = data.methods;
+                const scales = data.scales || ['1', '2', '3', '4', '5'];
+
+                // Generate colors untuk setiap skala
+                const scaleColors = ['#dc3545', '#ffc107', '#6c757d', '#0dcaf0', '#198754'];
+
+                const datasets = methods.map((method, index) => {
+                    return {
+                        label: method.name,
+                        data: method.values,
+                        backgroundColor: scaleColors[index % scaleColors.length],
+                        borderColor: scaleColors[index % scaleColors.length],
+                        borderWidth: 1
+                    };
+                });
+
+                new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: scales,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Skala (1-5)'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Persentase (%)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error(`Error rendering learning method chart ${canvasId}:`, error);
+            }
+        }
+
+        function renderCompetenceChart(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error(`Canvas dengan ID ${canvasId} tidak ditemukan`);
+                return;
+            }
+
+            try {
+                const competencies = Object.keys(data.competencies);
+                const scales = data.scales || ['1', '2', '3', '4', '5'];
+
+                // Ambil data untuk skala 4 dan 5 (Tinggi dan Sangat Tinggi)
+                const datasets = [{
+                        label: 'Skala 4-5 (Tinggi-Sangat Tinggi)',
+                        data: competencies.map(comp => {
+                            const values = data.competencies[comp];
+                            // Jumlahkan persentase skala 4 dan 5
+                            return (values[3] || 0) + (values[4] || 0);
+                        }),
+                        backgroundColor: '#19875480',
+                        borderColor: '#198754',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Rata-rata Skala',
+                        data: competencies.map(comp => {
+                            const values = data.competencies[comp];
+                            // Hitung rata-rata tertimbang
+                            let total = 0;
+                            let sum = 0;
+                            values.forEach((percent, index) => {
+                                total += percent;
+                                sum += percent * (index + 1);
+                            });
+                            return total > 0 ? (sum / total) * 20 : 0; // Convert to 0-100 scale
+                        }),
+                        backgroundColor: '#0d6efd80',
+                        borderColor: '#0d6efd',
+                        borderWidth: 2,
+                        type: 'line',
+                        fill: false
+                    }
+                ];
+
+                new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: competencies.map(comp =>
+                            comp.length > 20 ? comp.substring(0, 20) + '...' : comp
+                        ),
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Persentase (%)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.datasetIndex === 0) {
+                                            return `Tinggi-Sangat Tinggi: ${context.raw.toFixed(1)}%`;
+                                        } else {
+                                            return `Rata-rata Skala: ${(context.raw / 20).toFixed(2)}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error(`Error rendering competence chart ${canvasId}:`, error);
             }
         }
 
@@ -713,6 +898,142 @@
                 });
             } catch (error) {
                 console.error(`Error rendering donut chart ${canvasId}:`, error);
+            }
+        }
+
+        function renderLearningMethodStackedWithInsight(canvasId, data) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            try {
+                const methods = data.methods;
+                const methodLabels = methods.map(m =>
+                    m.name.length > 15 ? m.name.substring(0, 15) + '...' : m.name
+                );
+
+                // Siapkan data untuk stacked bar
+                const lowData = methods.map(m => m.values[0] + m.values[1]); // Skala 1-2
+                const mediumData = methods.map(m => m.values[2]); // Skala 3
+                const highData = methods.map(m => m.values[3] + m.values[4]); // Skala 4-5
+
+                // Hitung insight
+                const highestMethodIndex = highData.indexOf(Math.max(...highData));
+                const lowestMethodIndex = highData.indexOf(Math.min(...highData));
+                const highestMethod = methodLabels[highestMethodIndex];
+                const highestPercentage = Math.max(...highData).toFixed(1);
+                const lowestMethod = methodLabels[lowestMethodIndex];
+                const lowestPercentage = Math.min(...highData).toFixed(1);
+
+                new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: methodLabels,
+                        datasets: [{
+                                label: 'Rendah (Skala 1-2)',
+                                data: lowData,
+                                backgroundColor: '#dc3545',
+                                borderColor: '#dc3545',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Sedang (Skala 3)',
+                                data: mediumData,
+                                backgroundColor: '#ffc107',
+                                borderColor: '#ffc107',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Tinggi (Skala 4-5)',
+                                data: highData,
+                                backgroundColor: '#198754',
+                                borderColor: '#198754',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Persentase Alumni (%)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.raw.toFixed(1)}%`;
+                                    }
+                                }
+                            },
+                            // Custom plugin untuk menampilkan insight
+                            insight: {
+                                highestMethod: highestMethod,
+                                highestPercentage: highestPercentage,
+                                lowestMethod: lowestMethod,
+                                lowestPercentage: lowestPercentage
+                            }
+                        }
+                    },
+                    plugins: [{
+                        id: 'insightPlugin',
+                        afterDraw: function(chart) {
+                            if (chart.options.plugins.insight) {
+                                const insight = chart.options.plugins.insight;
+                                const ctx = chart.ctx;
+                                const width = chart.width;
+
+                                ctx.save();
+                                ctx.font = 'bold 14px Arial';
+                                ctx.fillStyle = '#198754';
+                                ctx.textAlign = 'center';
+                                // ctx.fillText(
+                                //     `📈 Paling Efektif: ${insight.highestMethod} (${insight.highestPercentage}% tinggi)`,
+                                //     width / 2,
+                                //     chart.height - 40
+                                // );
+
+                                ctx.fillStyle = '#dc3545';
+                                // ctx.fillText(
+                                //     `📉 Perlu Perbaikan: ${insight.lowestMethod} (${insight.lowestPercentage}% tinggi)`,
+                                //     width / 2,
+                                //     chart.height - 20
+                                // );
+                                ctx.restore();
+                            }
+                        }
+                    }]
+                });
+
+            } catch (error) {
+                console.error('Error rendering stacked bar:', error);
             }
         }
 

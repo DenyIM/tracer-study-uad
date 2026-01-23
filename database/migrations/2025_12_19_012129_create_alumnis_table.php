@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('graduation_date');
             $table->string('npwp', 50)->nullable();
             $table->integer('points')->default(0); 
+            $table->boolean('is_data_complete')->default(false);
             $table->timestamps();
         });
     }

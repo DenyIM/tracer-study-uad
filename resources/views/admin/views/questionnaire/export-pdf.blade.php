@@ -305,6 +305,107 @@
                 page-break-after: auto;
             }
         }
+
+        /* Grafik Table Styles */
+        .chart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 9px;
+        }
+
+        .chart-table th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 6px;
+            text-align: center;
+            border: 1px solid #34495e;
+        }
+
+        .chart-table td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .chart-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        /* Mini Chart Bars */
+        .mini-bar {
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin: 3px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Data Highlight */
+        .data-highlight {
+            background-color: #e8f4fc;
+            border-left: 3px solid #3498db;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+
+        .highlight-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            font-size: 10px;
+        }
+
+        .highlight-value {
+            font-size: 11px;
+            color: #2980b9;
+            font-weight: bold;
+        }
+
+        /* Icons in PDF */
+        .pdf-icon {
+            font-size: 10px;
+            margin-right: 3px;
+        }
+
+        /* Chart Score Card */
+        .score-card {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            margin: 2px;
+        }
+
+        .score-excellent {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .score-good {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .score-average {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .score-poor {
+            background-color: #e74c3c;
+            color: white;
+        }
     </style>
 </head>
 
@@ -382,6 +483,316 @@
     <!-- Ringkasan Grafik -->
     <div class="section">
         <div class="section-title">Ringkasan Data Grafik</div>
+
+        <!-- Detail Semua Grafik Tracer Study -->
+        <div class="section page-break">
+            <div class="section-title">Analisis Lengkap Tracer Study</div>
+
+            <!-- Grafik 1: Status Lulusan -->
+            @if (isset($chart_data['graduate_status']))
+                <div class="chart-summary mb-3">
+                    <div class="chart-item">
+                        <div class="chart-title">1. Status Lulusan Saat Ini</div>
+                        <div class="chart-data">
+                            @foreach ($chart_data['graduate_status']['labels'] as $index => $label)
+                                <div class="data-item">
+                                    <span>{{ $label }}</span>
+                                    <span
+                                        class="text-bold">{{ $chart_data['graduate_status']['values'][$index] ?? 0 }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if (isset($chart_data['graduate_status']['conclusion']))
+                            <div class="mt-2 text-muted" style="font-size: 9px;">
+                                📊 {{ $chart_data['graduate_status']['conclusion'] }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 2: Waktu Tunggu -->
+            @if (isset($chart_data['waiting_time']))
+                <div class="chart-summary mb-3">
+                    <div class="chart-item">
+                        <div class="chart-title">2. Waktu Tunggu Mendapat Pekerjaan</div>
+                        <div class="chart-data">
+                            @foreach ($chart_data['waiting_time']['labels'] as $index => $label)
+                                <div class="data-item">
+                                    <span>{{ $label }}</span>
+                                    <span
+                                        class="text-bold">{{ $chart_data['waiting_time']['values'][$index] ?? 0 }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if (isset($chart_data['waiting_time']['conclusion']))
+                            <div class="mt-2 text-muted" style="font-size: 9px;">
+                                ⏱️ {{ $chart_data['waiting_time']['conclusion'] }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 3: Hubungan Studi-Pekerjaan -->
+            @if (isset($chart_data['study_work_relevance']))
+                <div class="chart-summary mb-3">
+                    <div class="chart-item">
+                        <div class="chart-title">3. Hubungan Bidang Studi dengan Pekerjaan</div>
+                        <div class="chart-data">
+                            @foreach ($chart_data['study_work_relevance']['labels'] as $index => $label)
+                                <div class="data-item">
+                                    <span>{{ $label }}</span>
+                                    <span
+                                        class="text-bold">{{ $chart_data['study_work_relevance']['values'][$index] ?? 0 }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if (isset($chart_data['study_work_relevance']['conclusion']))
+                            <div class="mt-2 text-muted" style="font-size: 9px;">
+                                🔗 {{ $chart_data['study_work_relevance']['conclusion'] }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 4: Tingkat Tempat Kerja -->
+            @if (isset($chart_data['work_level']))
+                <div class="chart-summary mb-3">
+                    <div class="chart-item">
+                        <div class="chart-title">4. Tingkat Tempat Kerja</div>
+                        <div class="chart-data">
+                            @foreach ($chart_data['work_level']['labels'] as $index => $label)
+                                <div class="data-item">
+                                    <span>{{ $label }}</span>
+                                    <span
+                                        class="text-bold">{{ $chart_data['work_level']['values'][$index] ?? 0 }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 5: Kisaran Gaji -->
+            @if (isset($chart_data['salary_range']))
+                <div class="chart-summary mb-3">
+                    <div class="chart-item">
+                        <div class="chart-title">5. Kisaran Gaji Lulusan</div>
+                        <div class="chart-data">
+                            @foreach ($chart_data['salary_range']['labels'] as $index => $label)
+                                <div class="data-item">
+                                    <span>{{ $label }}</span>
+                                    <span
+                                        class="text-bold">{{ $chart_data['salary_range']['values'][$index] ?? 0 }}%</span>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if (isset($chart_data['salary_range']['conclusion']))
+                            <div class="mt-2 text-muted" style="font-size: 9px;">
+                                💰 {{ $chart_data['salary_range']['conclusion'] }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Grafik 6-8: Metode Pembelajaran, Kompetensi, Sumber Biaya -->
+        <div class="section page-break">
+            <div class="section-title">Analisis Lanjutan</div>
+
+            <!-- Grafik 6: Metode Pembelajaran -->
+            @if (isset($chart_data['learning_methods']) && isset($chart_data['learning_methods']['methods']))
+                <div class="mb-3">
+                    <div class="chart-title mb-2">6. Analisis Metode Pembelajaran</div>
+                    <div class="table-responsive">
+                        <table style="font-size: 9px;">
+                            <thead>
+                                <tr>
+                                    <th>Metode Pembelajaran</th>
+                                    @if (isset($chart_data['learning_methods']['scales']))
+                                        @foreach ($chart_data['learning_methods']['scales'] as $scale)
+                                            <th class="text-center">Skala {{ $scale }}</th>
+                                        @endforeach
+                                    @else
+                                        <th class="text-center">Skala 1</th>
+                                        <th class="text-center">Skala 2</th>
+                                        <th class="text-center">Skala 3</th>
+                                        <th class="text-center">Skala 4</th>
+                                        <th class="text-center">Skala 5</th>
+                                    @endif
+                                    <th class="text-center">Rata²</th>
+                                    <th class="text-center">Tinggi (4-5)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($chart_data['learning_methods']['methods'] as $method)
+                                    @php
+                                        $values = $method['values'];
+                                        $total = array_sum($values);
+                                        $average =
+                                            $total > 0
+                                                ? array_sum(
+                                                        array_map(
+                                                            function ($v, $i) {
+                                                                return $v * ($i + 1);
+                                                            },
+                                                            $values,
+                                                            array_keys($values),
+                                                        ),
+                                                    ) / $total
+                                                : 0;
+                                        $highPercentage =
+                                            $total > 0 ? ((($values[3] ?? 0) + ($values[4] ?? 0)) / $total) * 100 : 0;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $method['name'] }}</td>
+                                        @foreach ($values as $value)
+                                            <td class="text-center">{{ number_format($value, 1) }}%</td>
+                                        @endforeach
+                                        <td class="text-center">{{ number_format($average, 2) }}</td>
+                                        <td class="text-center">{{ number_format($highPercentage, 1) }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size: 9px;">
+                        📚 Skala 1-5: 1=Sangat Kecil, 5=Sangat Besar
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 7: Kompetensi Alumni -->
+            @if (isset($chart_data['competence']) && isset($chart_data['competence']['competencies']))
+                <div class="mb-3">
+                    <div class="chart-title mb-2">7. Tingkat Kompetensi Alumni</div>
+                    <div class="table-responsive">
+                        <table style="font-size: 9px;">
+                            <thead>
+                                <tr>
+                                    <th>Kompetensi</th>
+                                    @if (isset($chart_data['competence']['scales']))
+                                        @foreach ($chart_data['competence']['scales'] as $scale)
+                                            <th class="text-center">Skala {{ $scale }}</th>
+                                        @endforeach
+                                    @else
+                                        <th class="text-center">Skala 1</th>
+                                        <th class="text-center">Skala 2</th>
+                                        <th class="text-center">Skala 3</th>
+                                        <th class="text-center">Skala 4</th>
+                                        <th class="text-center">Skala 5</th>
+                                    @endif
+                                    <th class="text-center">Rata²</th>
+                                    <th class="text-center">Tinggi (4-5)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($chart_data['competence']['competencies'] as $competence => $values)
+                                    @php
+                                        $total = array_sum($values);
+                                        $average =
+                                            $total > 0
+                                                ? array_sum(
+                                                        array_map(
+                                                            function ($v, $i) {
+                                                                return $v * ($i + 1);
+                                                            },
+                                                            $values,
+                                                            array_keys($values),
+                                                        ),
+                                                    ) / $total
+                                                : 0;
+                                        $highPercentage =
+                                            $total > 0 ? ((($values[3] ?? 0) + ($values[4] ?? 0)) / $total) * 100 : 0;
+                                    @endphp
+                                    <tr>
+                                        <td>{{ strlen($competence) > 25 ? substr($competence, 0, 25) . '...' : $competence }}
+                                        </td>
+                                        @foreach ($values as $value)
+                                            <td class="text-center">{{ number_format($value, 1) }}%</td>
+                                        @endforeach
+                                        <td class="text-center">{{ number_format($average, 2) }}</td>
+                                        <td class="text-center">{{ number_format($highPercentage, 1) }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size: 9px;">
+                        🎯 Skala 1-5: 1=Sangat Rendah, 5=Sangat Tinggi
+                    </div>
+                </div>
+            @endif
+
+            <!-- Grafik 8: Sumber Biaya Kuliah -->
+            @if (isset($chart_data['funding_source']))
+                <div>
+                    <div class="chart-title mb-2">8. Sumber Biaya Kuliah</div>
+                    <div class="chart-data">
+                        @foreach ($chart_data['funding_source']['labels'] as $index => $label)
+                            <div class="data-item">
+                                <span>{{ $label }}</span>
+                                <span
+                                    class="text-bold">{{ $chart_data['funding_source']['values'][$index] ?? 0 }}%</span>
+                            </div>
+                        @endforeach
+                    </div>
+                    @if (isset($chart_data['funding_source']['dominant']))
+                        <div class="mt-2 text-muted" style="font-size: 9px;">
+                            💸 {{ $chart_data['funding_source']['dominant'] }}
+                        </div>
+                    @endif
+                </div>
+            @endif
+        </div>
+
+        <!-- Ringkasan Statistik Lanjutan -->
+        <div class="section">
+            <div class="section-title">Ringkasan Statistik Lanjutan</div>
+
+            <div class="stats-container">
+                @if (isset($chart_data['summary']))
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $chart_data['summary']['total_categories'] ?? 0 }}</div>
+                        <div class="stat-label">Total Kategori</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $chart_data['summary']['total_questionnaires'] ?? 0 }}</div>
+                        <div class="stat-label">Kuesioner</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $chart_data['summary']['total_questions'] ?? 0 }}</div>
+                        <div class="stat-label">Pertanyaan</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $chart_data['summary']['total_alumni_respondents'] ?? 0 }}</div>
+                        <div class="stat-label">Alumni Responden</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $chart_data['summary']['avg_completion_rate'] ?? 0 }}%</div>
+                        <div class="stat-label">Rata² Penyelesaian</div>
+                    </div>
+                @endif
+            </div>
+
+            @if (isset($chart_data['summary']['most_active_category']))
+                <div class="conclusion-box">
+                    <div class="conclusion-title">Kategori Paling Aktif:</div>
+                    <p>
+                        <strong>{{ $chart_data['summary']['most_active_category']['name'] ?? '-' }}</strong>
+                        dengan {{ $chart_data['summary']['most_active_category']['count'] ?? 0 }} alumni responden.
+                        Tanggal respons terakhir: {{ $chart_data['summary']['latest_response'] ?? '-' }}
+                    </p>
+                </div>
+            @endif
+        </div>
 
         <div class="chart-summary">
             <!-- Status Lulusan -->
@@ -579,7 +990,7 @@
             </ol>
         </div>
 
-        <div class="conclusion-box">
+        {{-- <div class="conclusion-box">
             <div class="conclusion-title">REKOMENDASI:</div>
             <ol>
                 <li><strong>Tingkatkan Response Rate:</strong> Lakukan follow-up ke alumni yang belum mengisi kuesioner.
@@ -593,7 +1004,7 @@
                 <li><strong>Update Berkala:</strong> Lakukan update kuesioner setiap semester untuk data yang relevan.
                 </li>
             </ol>
-        </div>
+        </div> --}}
     </div>
 
     <!-- Footer -->

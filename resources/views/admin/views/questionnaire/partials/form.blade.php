@@ -120,6 +120,17 @@
     }
 @endphp
 
+<style>
+    #optionsContainer,
+    #rowItemsContainer,
+    #scaleOptionsContainer,
+    #scaleInformationContainer,
+    #otherNoneOptionsContainer,
+    #additionalSettings {
+        display: none;
+    }
+</style>
+
 <form action="{{ isset($question) ? $routeUpdate : $routeStore }}" method="POST" id="questionForm" class="needs-validation"
     novalidate>
     @csrf
@@ -246,17 +257,23 @@
 
             <!-- Toggle untuk opsi lain dan tidak ada -->
             <div class="mb-4" id="otherNoneOptionsContainer" style="display: none;">
-                <label class="form-label fw-bold d-block">Opsi Tambahan</label>
-                <div class="d-flex flex-wrap gap-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="has_other_option" id="hasOtherOption"
-                            {{ old('has_other_option', $question->has_other_option ?? false) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="hasOtherOption">Opsi Lain</label>
+                <label class="form-label fw-bold d-block mb-3">Opsi Tambahan</label>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="has_other_option" id="hasOtherOption"
+                                {{ old('has_other_option', $question->has_other_option ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="hasOtherOption">Opsi Lain (dengan input teks)</label>
+                            <div class="form-text small">Menambahkan pilihan "Lainnya" dengan input teks</div>
+                        </div>
                     </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="has_none_option" id="hasNoneOption"
-                            {{ old('has_none_option', $question->has_none_option ?? false) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="hasNoneOption">Opsi Tidak Ada</label>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3" id="noneOptionContainer">
+                            <input class="form-check-input" type="checkbox" name="has_none_option" id="hasNoneOption"
+                                {{ old('has_none_option', $question->has_none_option ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="hasNoneOption">Opsi Tidak Ada</label>
+                            <div class="form-text small">Menambahkan pilihan "Tidak Ada"</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -390,7 +407,7 @@ communication|Komunikasi</pre>
         <div id="scaleInformationContainer" class="mb-4" style="display: none;">
             <div class="card border">
                 <div class="card-header bg-light">
-                    <label class="form-label fw-bold mb-0">Keterangan Opsi Skala (Opsional)</label>
+                    <label class="form-label fw-bold mb-0">Keterangan Opsi Skala</label>
                 </div>
                 <div class="card-body">
                     <textarea class="form-control @error('scale_information') is-invalid @enderror" name="scale_information"
@@ -406,7 +423,7 @@ communication|Komunikasi</pre>
 5|Sangat Puas</pre>
                         <div>
                             <i class="fas fa-info-circle"></i> Keterangan ini akan ditampilkan di halaman hasil
-                            kuesioner alumni
+                            kuesioner alumni. Pastikan jumlah keterangan sama dengan jumlah opsi skala di atas!
                         </div>
                     </div>
                     @error('scale_information')
@@ -431,6 +448,7 @@ communication|Komunikasi</pre>
                                 <input type="text" class="form-control @error('placeholder') is-invalid @enderror"
                                     name="placeholder" value="{{ old('placeholder', $question->placeholder ?? '') }}"
                                     placeholder="Contoh: Masukkan nama perusahaan">
+                                <div class="form-text">Teks yang ditampilkan di dalam input sebelum diisi</div>
                                 @error('placeholder')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -443,7 +461,8 @@ communication|Komunikasi</pre>
                                 <label class="form-label">Maksimal Panjang Teks</label>
                                 <input type="number" class="form-control @error('max_length') is-invalid @enderror"
                                     name="max_length" value="{{ old('max_length', $question->max_length ?? '') }}"
-                                    placeholder="Contoh: 255 karakter">
+                                    min="1" max="10000" placeholder="Contoh: 255 karakter">
+                                <div class="form-text">Jumlah maksimal karakter yang dapat diinput</div>
                                 @error('max_length')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -456,7 +475,8 @@ communication|Komunikasi</pre>
                                 <label class="form-label">Jumlah Baris Textarea</label>
                                 <input type="number" class="form-control @error('rows') is-invalid @enderror"
                                     name="rows" value="{{ old('rows', $question->rows ?? 4) }}" min="1"
-                                    max="10" placeholder="Contoh: 4">
+                                    max="20" placeholder="Contoh: 4">
+                                <div class="form-text">Tinggi textarea dalam jumlah baris</div>
                                 @error('rows')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -470,6 +490,7 @@ communication|Komunikasi</pre>
                                 <input type="number" class="form-control @error('min_value') is-invalid @enderror"
                                     name="min_value" value="{{ old('min_value', $question->min_value ?? '') }}"
                                     placeholder="Contoh: 0">
+                                <div class="form-text">Nilai terkecil yang dapat diinput</div>
                                 @error('min_value')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -479,6 +500,7 @@ communication|Komunikasi</pre>
                                 <input type="number" class="form-control @error('max_value') is-invalid @enderror"
                                     name="max_value" value="{{ old('max_value', $question->max_value ?? '') }}"
                                     placeholder="Contoh: 100">
+                                <div class="form-text">Nilai terbesar yang dapat diinput</div>
                                 @error('max_value')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -494,7 +516,8 @@ communication|Komunikasi</pre>
                                     name="max_selections"
                                     value="{{ old('max_selections', $question->max_selections ?? '') }}"
                                     min="1" placeholder="Contoh: 3">
-                                <div class="form-text">Kosongkan jika tidak dibatasi</div>
+                                <div class="form-text">Jumlah maksimal opsi yang dapat dipilih (kosongkan jika tidak
+                                    dibatasi)</div>
                                 @error('max_selections')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -520,288 +543,204 @@ communication|Komunikasi</pre>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const questionType = document.getElementById('questionType');
-            const optionsContainer = document.getElementById('optionsContainer');
-            const rowItemsContainer = document.getElementById('rowItemsContainer');
-            const scaleOptionsContainer = document.getElementById('scaleOptionsContainer');
-            const scaleInformationContainer = document.getElementById('scaleInformationContainer');
-            const otherNoneOptionsContainer = document.getElementById('otherNoneOptionsContainer');
-            const additionalSettings = document.getElementById('additionalSettings');
-            const scaleOptionsInput = document.getElementById('scaleOptionsInput');
-            const scaleOptionsError = document.getElementById('scaleOptionsError');
-            const form = document.getElementById('questionForm');
 
-            // Remove required attribute from scale_options initially (it's added conditionally)
-            if (scaleOptionsInput) {
-                scaleOptionsInput.removeAttribute('required');
-            }
-
-            // Function to update form fields based on question type
-            function updateFormFields() {
-                if (!questionType) return;
-
+            // Fungsi untuk menampilkan/menyembunyikan container
+            function toggleContainers() {
                 const selectedType = questionType.value;
 
-                // Hide all containers
-                optionsContainer.style.display = 'none';
-                rowItemsContainer.style.display = 'none';
-                scaleOptionsContainer.style.display = 'none';
-                scaleInformationContainer.style.display = 'none';
-                otherNoneOptionsContainer.style.display = 'none';
-                additionalSettings.style.display = 'none';
-
-                // Hide all additional settings
-                document.getElementById('minMaxContainer')?.style.display = 'none';
-                document.getElementById('maxLengthContainer')?.style.display = 'none';
-                document.getElementById('rowsContainer')?.style.display = 'none';
-                document.getElementById('maxSelectionsContainer')?.style.display = 'none';
-                document.getElementById('placeholderContainer')?.style.display = 'none';
-
-                // Show relevant containers based on question type
-                switch (selectedType) {
-                    case 'radio':
-                    case 'dropdown':
-                    case 'checkbox':
-                        optionsContainer.style.display = 'block';
-                        otherNoneOptionsContainer.style.display = 'flex';
-                        additionalSettings.style.display = 'block';
-                        document.getElementById('placeholderContainer').style.display = 'block';
-                        if (selectedType === 'checkbox') {
-                            document.getElementById('maxSelectionsContainer').style.display = 'block';
-                        }
-                        break;
-
-                    case 'likert_per_row':
-                        rowItemsContainer.style.display = 'block';
-                        scaleOptionsContainer.style.display = 'block';
-                        scaleInformationContainer.style.display = 'block';
-                        // Tidak menampilkan additionalSettings untuk likert_per_row
-                        break;
-
-                    case 'text':
-                        additionalSettings.style.display = 'block';
-                        document.getElementById('maxLengthContainer').style.display = 'block';
-                        document.getElementById('placeholderContainer').style.display = 'block';
-                        break;
-
-                    case 'textarea':
-                        additionalSettings.style.display = 'block';
-                        document.getElementById('maxLengthContainer').style.display = 'block';
-                        document.getElementById('rowsContainer').style.display = 'block';
-                        document.getElementById('placeholderContainer').style.display = 'block';
-                        break;
-
-                    case 'number':
-                        additionalSettings.style.display = 'block';
-                        document.getElementById('minMaxContainer').style.display = 'block';
-                        document.getElementById('placeholderContainer').style.display = 'block';
-                        break;
-
-                    case 'date':
-                        additionalSettings.style.display = 'block';
-                        document.getElementById('placeholderContainer').style.display = 'block';
-                        break;
-                }
-
-                // Update help text
-                updateQuestionTypeHelp();
-
-                // Update required attribute for scale_options
-                updateScaleOptionsRequired();
-            }
-
-            // Function to update question type help text
-            function updateQuestionTypeHelp() {
-                const type = questionType.value;
-                const helpTexts = {
-                    'text': 'Input teks singkat untuk jawaban pendek',
-                    'textarea': 'Input teks panjang untuk jawaban deskriptif',
-                    'number': 'Input angka untuk data numerik',
-                    'date': 'Input tanggal untuk data waktu',
-                    'radio': 'Pilihan tunggal (hanya satu jawaban)',
-                    'dropdown': 'Dropdown menu untuk pilihan tunggal',
-                    'checkbox': 'Pilihan ganda (bisa pilih banyak)',
-                    'likert_per_row': 'Format tabel dengan skala Likert untuk setiap baris item'
+                // Semua container yang akan dikontrol
+                const containers = {
+                    'optionsContainer': ['radio', 'dropdown', 'checkbox'],
+                    'rowItemsContainer': ['likert_per_row'],
+                    'scaleOptionsContainer': ['likert_per_row'],
+                    'scaleInformationContainer': ['likert_per_row'],
+                    'otherNoneOptionsContainer': ['radio', 'dropdown', 'checkbox'],
+                    'additionalSettings': ['text', 'textarea', 'number', 'date', 'radio', 'dropdown',
+                        'checkbox'
+                    ]
                 };
 
-                const helpElement = document.getElementById('questionTypeHelp');
-                if (type && helpTexts[type] && helpElement) {
-                    helpElement.innerHTML = `<i class="fas fa-info-circle"></i> ${helpTexts[type]}`;
+                // Atur display untuk setiap container
+                for (const [containerId, types] of Object.entries(containers)) {
+                    const container = document.getElementById(containerId);
+                    if (container) {
+                        if (types.includes(selectedType)) {
+                            container.style.display = containerId === 'otherNoneOptionsContainer' ? 'flex' :
+                                'block';
+                        } else {
+                            container.style.display = 'none';
+                        }
+                    }
+                }
+
+                // Atur display untuk additional settings
+                toggleAdditionalSettings(selectedType);
+
+                // Atur visibility opsi tidak ada
+                toggleNoneOption();
+            }
+
+            // Fungsi untuk additional settings
+            function toggleAdditionalSettings(selectedType) {
+                const settings = {
+                    'minMaxContainer': ['number'],
+                    'maxLengthContainer': ['text', 'textarea'],
+                    'rowsContainer': ['textarea'],
+                    'maxSelectionsContainer': ['checkbox'],
+                    'placeholderContainer': ['text', 'textarea', 'number', 'date']
+                };
+
+                // Sembunyikan semua dulu
+                for (const settingId in settings) {
+                    const element = document.getElementById(settingId);
+                    if (element) {
+                        element.style.display = 'none';
+                    }
+                }
+
+                // Tampilkan yang sesuai
+                for (const [settingId, types] of Object.entries(settings)) {
+                    if (types.includes(selectedType)) {
+                        const element = document.getElementById(settingId);
+                        if (element) {
+                            element.style.display = 'block';
+                        }
+                    }
                 }
             }
 
-            // Function to update required attribute for scale_options
-            function updateScaleOptionsRequired() {
-                if (!scaleOptionsInput) return;
-
-                const selectedType = questionType.value;
-
-                // Hanya required untuk likert_per_row
-                if (selectedType === 'likert_per_row') {
-                    scaleOptionsInput.setAttribute('required', 'required');
-                } else {
-                    scaleOptionsInput.removeAttribute('required');
-                }
+            // Pastikan additional settings tampil saat edit
+            if (questionType) {
+                // Trigger change event untuk menampilkan pengaturan yang sesuai
+                questionType.dispatchEvent(new Event('change'));
             }
 
-            // Function to validate scale options for likert_per_row
+
+
+            // Validasi scale options
             function validateScaleOptions() {
-                const selectedType = questionType.value;
+                const scaleOptionsInput = document.getElementById('scaleOptionsInput');
+                const scaleOptionsError = document.getElementById('scaleOptionsError');
 
-                // Hanya validasi untuk likert_per_row
-                if (selectedType !== 'likert_per_row') {
-                    scaleOptionsError.style.display = 'none';
+                if (!scaleOptionsInput || questionType.value !== 'likert_per_row') {
                     return true;
                 }
 
-                const scaleOptionsText = scaleOptionsInput.value.trim();
-                if (!scaleOptionsText) {
-                    scaleOptionsError.textContent = 'Opsi skala wajib diisi untuk tipe Likert per Baris.';
-                    scaleOptionsError.style.display = 'block';
-                    return false;
-                }
-
-                const scaleOptions = scaleOptionsText.split(',').map(opt => opt.trim()).filter(opt => opt !== '');
-
-                if (scaleOptions.length === 0) {
-                    scaleOptionsError.textContent = 'Opsi skala wajib diisi untuk tipe Likert per Baris.';
-                    scaleOptionsError.style.display = 'block';
-                    return false;
-                }
-
-                if (scaleOptions.length > 5) {
-                    scaleOptionsError.textContent = 'Maksimal 5 opsi skala untuk tipe Likert per Baris.';
-                    scaleOptionsError.style.display = 'block';
-                    return false;
-                }
-
-                // Validasi bahwa semua opsi adalah angka 1-5
-                for (const option of scaleOptions) {
-                    if (!/^\d+$/.test(option)) {
-                        scaleOptionsError.textContent = 'Opsi skala harus berupa angka.';
+                const value = scaleOptionsInput.value.trim();
+                if (!value) {
+                    if (scaleOptionsError) {
+                        scaleOptionsError.textContent = 'Opsi skala wajib diisi';
                         scaleOptionsError.style.display = 'block';
-                        return false;
                     }
-
-                    const num = parseInt(option);
-                    if (num < 1 || num > 5) {
-                        scaleOptionsError.textContent = 'Opsi skala harus antara 1 sampai 5.';
-                        scaleOptionsError.style.display = 'block';
-                        return false;
-                    }
+                    return false;
                 }
 
-                scaleOptionsError.style.display = 'none';
+                if (scaleOptionsError) {
+                    scaleOptionsError.style.display = 'none';
+                }
                 return true;
             }
 
-            // Event listeners
+            // Event listener untuk perubahan tipe pertanyaan
             if (questionType) {
-                updateFormFields();
+                // Panggil sekali saat load
+                toggleContainers();
+
+                // Tambahkan event listener
                 questionType.addEventListener('change', function() {
-                    updateFormFields();
+                    toggleContainers();
+                    toggleNoneOption();
                 });
             }
 
-            // Validate scale options on input
+            // Event listener untuk validasi scale options
+            const scaleOptionsInput = document.getElementById('scaleOptionsInput');
             if (scaleOptionsInput) {
                 scaleOptionsInput.addEventListener('input', validateScaleOptions);
             }
 
-            // Form validation on submit
+            // Event listener untuk form submit
+            // Validasi sebelum submit form
+            const form = document.getElementById('questionForm');
             if (form) {
                 form.addEventListener('submit', function(e) {
-                    // Validate scale options for likert_per_row
-                    if (!validateScaleOptions()) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Scroll to error
-                        scaleOptionsContainer.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                        return false;
-                    }
-
-                    // Basic form validation
-                    if (!form.checkValidity()) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Find first invalid element and scroll to it
-                        const invalidElements = form.querySelectorAll(':invalid');
-                        if (invalidElements.length > 0) {
-                            invalidElements[0].scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center'
-                            });
-                            invalidElements[0].focus();
+                    // Validasi max length jika ada
+                    const maxLengthInput = document.querySelector('input[name="max_length"]');
+                    if (maxLengthInput && maxLengthInput.value) {
+                        const maxLength = parseInt(maxLengthInput.value);
+                        if (maxLength < 1 || maxLength > 10000) {
+                            e.preventDefault();
+                            alert('Maksimal panjang teks harus antara 1 dan 10000 karakter');
+                            maxLengthInput.focus();
+                            return false;
                         }
-                        return false;
                     }
 
-                    // Disable submit button to prevent double submission
-                    const submitButton = document.getElementById('submitButton');
-                    if (submitButton) {
-                        submitButton.disabled = true;
-                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...';
+                    // Validasi min/max value
+                    const minValueInput = document.querySelector('input[name="min_value"]');
+                    const maxValueInput = document.querySelector('input[name="max_value"]');
+                    if (minValueInput && maxValueInput &&
+                        minValueInput.value && maxValueInput.value) {
+                        const minValue = parseFloat(minValueInput.value);
+                        const maxValue = parseFloat(maxValueInput.value);
+                        if (minValue > maxValue) {
+                            e.preventDefault();
+                            alert('Nilai minimum tidak boleh lebih besar dari nilai maksimum');
+                            minValueInput.focus();
+                            return false;
+                        }
                     }
 
-                    return true;
+                    // Validasi max selections
+                    const maxSelectionsInput = document.querySelector('input[name="max_selections"]');
+                    if (maxSelectionsInput && maxSelectionsInput.value) {
+                        const maxSelections = parseInt(maxSelectionsInput.value);
+                        if (maxSelections < 1) {
+                            e.preventDefault();
+                            alert('Maksimal pilihan harus lebih besar dari 0');
+                            maxSelectionsInput.focus();
+                            return false;
+                        }
+                    }
+
+                    // Validasi rows
+                    const rowsInput = document.querySelector('input[name="rows"]');
+                    if (rowsInput && rowsInput.value) {
+                        const rows = parseInt(rowsInput.value);
+                        if (rows < 1 || rows > 20) {
+                            e.preventDefault();
+                            alert('Jumlah baris harus antara 1 dan 20');
+                            rowsInput.focus();
+                            return false;
+                        }
+                    }
+
+                    // Nonaktifkan tombol submit untuk hindari double submit
+                    const submitBtn = document.getElementById('submitButton');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...';
+                    }
                 });
             }
-
-            // Bootstrap form validation
-            form.classList.add('was-validated');
-
-            // Auto-suggest examples
-            window.addOptionExample = function() {
-                const type = questionType.value;
-                const optionsInput = document.getElementById('optionsInput');
-                let example = '';
-
-                switch (type) {
-                    case 'radio':
-                    case 'dropdown':
-                        example = `Sangat Puas\nPuas\nCukup Puas\nKurang Puas\nTidak Puas`;
-                        break;
-                    case 'checkbox':
-                        example = `Website Karir Kampus\nLinkedIn\nJob Fair\nRekomendasi Dosen\nMedia Sosial`;
-                        break;
-                }
-
-                if (example && optionsInput) {
-                    optionsInput.value = example;
-                }
-            };
-
-            window.addRowItemExample = function() {
-                const rowItemsInput = document.getElementById('rowItemsInput');
-                let example =
-                    `ethics|Etika\nexpertise|Keahlian Bidang Ilmu\nenglish|Bahasa Inggris\nit_skills|Penggunaan Teknologi Informasi\ncommunication|Komunikasi`;
-
-                if (rowItemsInput) {
-                    rowItemsInput.value = example;
-                }
-            };
-
-            window.addScaleExample = function() {
-                let example = '1, 2, 3, 4, 5';
-
-                if (scaleOptionsInput) {
-                    scaleOptionsInput.value = example;
-                    validateScaleOptions();
-                }
-            };
-
-            window.addScaleInformationExample = function() {
-                const scaleInformationInput = document.getElementById('scaleInformationInput');
-                let example = `1|Sangat Tidak Puas\n2|Tidak Puas\n3|Cukup Puas\n4|Puas\n5|Sangat Puas`;
-
-                if (scaleInformationInput) {
-                    scaleInformationInput.value = example;
-                }
-            };
         });
+
+        // Fungsi untuk mengatur visibility opsi "Tidak Ada"
+        function toggleNoneOption() {
+            const selectedType = questionType.value;
+            const noneOptionContainer = document.getElementById('noneOptionContainer');
+
+            if (noneOptionContainer) {
+                // Sembunyikan untuk checkbox, tampilkan untuk radio dan dropdown
+                if (selectedType === 'checkbox') {
+                    noneOptionContainer.style.display = 'none';
+                    // Uncheck opsi tidak ada jika checkbox
+                    const hasNoneOption = document.getElementById('hasNoneOption');
+                    if (hasNoneOption) hasNoneOption.checked = false;
+                } else if (selectedType === 'radio' || selectedType === 'dropdown') {
+                    noneOptionContainer.style.display = 'block';
+                }
+            }
+        }
     </script>
 @endpush

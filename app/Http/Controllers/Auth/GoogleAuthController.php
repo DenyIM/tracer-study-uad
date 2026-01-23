@@ -110,7 +110,7 @@ class GoogleAuthController extends Controller
             
             // Redirect berdasarkan status data
             if ($alumni->is_data_complete) {
-                return redirect()->route('main');
+                return redirect()->route('public');
             } else {
                 // Simpan data untuk warning di form
                 session()->flash('email_warning', [

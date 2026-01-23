@@ -1455,52 +1455,89 @@ class UserController extends Controller
      */
     private function getRealLearningMethodData()
     {
-        // Cari pertanyaan tentang metode pembelajaran dengan skala
+        // Cari pertanyaan tentang metode pembelajaran dengan tipe likert_per_row
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%metode%pembelajaran%')
                 ->orWhere('question_text', 'like', '%cara%belajar%')
                 ->orWhere('question_text', 'like', '%teknik%pengajaran%');
             })
-            ->whereIn('question_type', ['likert_scale', 'likert_per_row', 'radio_per_row'])
+            ->where('question_type', 'likert_per_row')
             ->get();
         
-        $methodsData = [];
-        $scaleLabels = ['Sangat Besar', 'Besar', 'Cukup Besar', 'Kurang', 'Tidak Sama Sekali'];
+        if ($questions->isEmpty()) {
+            return null;
+        }
         
+        $methodsData = [];
+        $scaleLabels = ['1', '2', '3', '4', '5']; // Skala 1-5
+        
+        // Ambil jawaban untuk semua alumni
         foreach ($questions as $question) {
+            $answers = AnswerQuestion::where('question_id', $question->id)
+                ->whereNotNull('answer')
+                ->get();
+            
+            if ($answers->isEmpty()) {
+                continue;
+            }
+            
+            // Inisialisasi array untuk menghitung distribusi skala
+            $scaleCounts = [
+                '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0
+            ];
+            
+            // Parse jawaban JSON dan hitung distribusi
+            foreach ($answers as $answer) {
+                try {
+                    $answerData = json_decode($answer->answer, true);
+                    if (is_array($answerData)) {
+                        foreach ($answerData as $method => $scale) {
+                            if (isset($scaleCounts[$scale])) {
+                                $scaleCounts[$scale]++;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            
+            // Jika ada row_items di pertanyaan, gunakan itu
             if ($question->row_items && is_array($question->row_items)) {
                 foreach ($question->row_items as $itemKey => $itemLabel) {
-                    $methodsData[] = [
+                    $methodData = [
                         'name' => $itemLabel,
-                        'values' => [0, 0, 0, 0, 0] // Initialize with zeros for 5 scales
+                        'values' => array_values($scaleCounts)
                     ];
+                    $methodsData[] = $methodData;
                 }
             } else {
+                // Fallback: Gunakan nama pertanyaan
                 $methodsData[] = [
                     'name' => Str::limit($question->question_text, 50),
-                    'values' => [0, 0, 0, 0, 0]
+                    'values' => array_values($scaleCounts)
                 ];
             }
         }
         
-        // Ambil jawaban untuk setiap pertanyaan
-        foreach ($questions as $qIndex => $question) {
-            $answers = AnswerQuestion::where('question_id', $question->id)->get();
-            
-            foreach ($answers as $answer) {
-                if ($answer->scale_value !== null) {
-                    $scale = (int)$answer->scale_value;
-                    if ($scale >= 1 && $scale <= 5) {
-                        $methodsData[$qIndex]['values'][$scale - 1]++;
-                    }
-                }
+        if (empty($methodsData)) {
+            return null;
+        }
+        
+        // Konversi counts ke persentase
+        $totalResponses = array_sum($methodsData[0]['values']);
+        if ($totalResponses > 0) {
+            foreach ($methodsData as &$method) {
+                $method['values'] = array_map(function($count) use ($totalResponses) {
+                    return round(($count / $totalResponses) * 100, 2);
+                }, $method['values']);
             }
         }
         
         return [
             'methods' => $methodsData,
             'scales' => $scaleLabels,
-            'data_source' => 'Database (Dinamis - Analisis Metode Pembelajaran)'
+            'data_source' => 'Database (Dinamis - Analisis Pertanyaan Metode Pembelajaran)'
         ];
     }
 
@@ -1509,69 +1546,97 @@ class UserController extends Controller
      */
     private function getRealCompetenceData()
     {
-        // Cari pertanyaan tentang kompetensi dengan skala
+        // Cari pertanyaan tentang kompetensi dengan tipe likert_per_row
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%kompetensi%')
                 ->orWhere('question_text', 'like', '%kemampuan%')
                 ->orWhere('question_text', 'like', '%keahlian%')
                 ->orWhere('question_text', 'like', '%skill%');
             })
-            ->whereIn('question_type', ['likert_scale', 'likert_per_row', 'radio_per_row'])
+            ->where('question_type', 'likert_per_row')
             ->get();
         
-        $competencies = [];
-        $scaleLabels = ['Sangat Rendah', 'Rendah', 'Sedang', 'Tinggi', 'Sangat Tinggi'];
-        
-        foreach ($questions as $question) {
-            if ($question->row_items && is_array($question->row_items)) {
-                foreach ($question->row_items as $itemKey => $itemLabel) {
-                    $competencies[$itemLabel] = [0, 0, 0, 0, 0];
-                }
-            } else {
-                $competencies[Str::limit($question->question_text, 30)] = [0, 0, 0, 0, 0];
-            }
+        if ($questions->isEmpty()) {
+            return null;
         }
         
-        // Hitung jawaban untuk setiap kompetensi
+        $competencies = [];
+        
         foreach ($questions as $question) {
-            $answers = AnswerQuestion::where('question_id', $question->id)->get();
+            $answers = AnswerQuestion::where('question_id', $question->id)
+                ->whereNotNull('answer')
+                ->get();
             
+            if ($answers->isEmpty()) {
+                continue;
+            }
+            
+            // Parse row_items untuk mendapatkan label kompetensi
+            $rowItems = [];
             if ($question->row_items && is_array($question->row_items)) {
-                // Untuk pertanyaan per baris
-                $itemIndex = 0;
-                foreach ($question->row_items as $itemKey => $itemLabel) {
-                    foreach ($answers as $answer) {
-                        if ($answer->detailedAnswers) {
-                            foreach ($answer->detailedAnswers as $detail) {
-                                if ($detail->item_key === $itemKey && $detail->scale_value !== null) {
-                                    $scale = (int)$detail->scale_value;
-                                    if ($scale >= 1 && $scale <= 5) {
-                                        $competencies[$itemLabel][$scale - 1]++;
+                $rowItems = $question->row_items;
+            } else {
+                // Default jika tidak ada row_items
+                $rowItems = [
+                    'ethics' => 'Etika',
+                    'english' => 'Bahasa Inggris',
+                    'teamwork' => 'Kerja Tim',
+                    'expertise' => 'Keahlian Bidang',
+                    'it_skills' => 'Keterampilan IT',
+                    'communication' => 'Komunikasi',
+                    'self_development' => 'Pengembangan Diri'
+                ];
+            }
+            
+            // Inisialisasi data untuk setiap kompetensi
+            foreach ($rowItems as $key => $label) {
+                if (!isset($competencies[$label])) {
+                    $competencies[$label] = [0, 0, 0, 0, 0]; // Skala 1-5
+                }
+            }
+            
+            // Hitung distribusi skala dari jawaban
+            foreach ($answers as $answer) {
+                try {
+                    $answerData = json_decode($answer->answer, true);
+                    if (is_array($answerData)) {
+                        foreach ($answerData as $competenceKey => $scale) {
+                            // Cari label yang sesuai
+                            foreach ($rowItems as $key => $label) {
+                                if ($key === $competenceKey && isset($competencies[$label])) {
+                                    $scaleIndex = (int)$scale - 1; // Convert scale 1-5 to index 0-4
+                                    if ($scaleIndex >= 0 && $scaleIndex <= 4) {
+                                        $competencies[$label][$scaleIndex]++;
                                     }
+                                    break;
                                 }
                             }
                         }
                     }
-                    $itemIndex++;
+                } catch (\Exception $e) {
+                    continue;
                 }
-            } else {
-                // Untuk pertanyaan tunggal
-                foreach ($answers as $answer) {
-                    if ($answer->scale_value !== null) {
-                        $scale = (int)$answer->scale_value;
-                        if ($scale >= 1 && $scale <= 5) {
-                            $compName = Str::limit($question->question_text, 30);
-                            $competencies[$compName][$scale - 1]++;
-                        }
-                    }
-                }
+            }
+        }
+        
+        if (empty($competencies)) {
+            return null;
+        }
+        
+        // Konversi ke persentase untuk setiap kompetensi
+        foreach ($competencies as $competence => &$counts) {
+            $total = array_sum($counts);
+            if ($total > 0) {
+                $counts = array_map(function($count) use ($total) {
+                    return round(($count / $total) * 100, 2);
+                }, $counts);
             }
         }
         
         return [
             'competencies' => $competencies,
-            'scales' => $scaleLabels,
-            'data_source' => 'Database (Dinamis - Analisis Kompetensi)'
+            'scales' => ['1', '2', '3', '4', '5'], // Skala 1-5
+            'data_source' => 'Database (Dinamis - Analisis Pertanyaan Kompetensi)'
         ];
     }
 
@@ -1660,6 +1725,7 @@ class UserController extends Controller
             $categoryId = $request->get('category_id');
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
+            $action = $request->get('action', 'download'); // 'preview' or 'download'
             
             // Get data untuk laporan
             $reportData = $this->preparePDFReportData($categoryId, $startDate, $endDate);
@@ -1669,24 +1735,54 @@ class UserController extends Controller
             
             // Set options PDF
             $pdf->setPaper('A4', 'portrait');
-            $pdf->setOption('defaultFont', 'Arial');
+            $pdf->setOption('defaultFont', 'DejaVu Sans');
             $pdf->setOption('isHtml5ParserEnabled', true);
             $pdf->setOption('isRemoteEnabled', true);
+            $pdf->setOption('enable_php', true);
+            $pdf->setOption('dpi', 150);
             
-            $filename = 'laporan-kuesioner-alumni-' . date('Y-m-d') . '.pdf';
+            $filename = 'laporan-tracer-study-' . date('Y-m-d') . '.pdf';
             
-            return $pdf->download($filename);
+            if ($action === 'preview') {
+                // Tampilkan preview di browser
+                return $pdf->stream($filename);
+            } else {
+                // Download file
+                return $pdf->download($filename);
+            }
             
         } catch (\Exception $e) {
-            // Fallback: Tampilkan halaman HTML jika PDF error
-            if ($request->has('debug')) {
-                $reportData = $this->preparePDFReportData();
-                return view('admin.views.questionnaire.export-pdf', $reportData);
+            Log::error('PDF Export Error: ' . $e->getMessage());
+            
+            // Tampilkan error di preview
+            if ($request->has('debug') || $request->get('action') === 'preview') {
+                return response()->view('admin.views.questionnaire.export-error', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ], 500);
             }
             
             return redirect()->back()
-                ->with('error', 'Gagal mengexport PDF: ' . $e->getMessage());
+                ->with('error', 'Gagal mengexport PDF: ' . $e->getMessage())
+                ->withInput();
         }
+    }
+
+    /**
+     * Preview PDF report (alternatif)
+     */
+    public function previewPDFReport(Request $request)
+    {
+        $categoryId = $request->get('category_id');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        
+        $reportData = $this->preparePDFReportData($categoryId, $startDate, $endDate);
+        
+        // Tambahkan flag untuk preview mode
+        $reportData['is_preview'] = true;
+        
+        return view('admin.views.questionnaire.export-pdf-preview', $reportData);
     }
     
     /**
@@ -1812,35 +1908,38 @@ class UserController extends Controller
     private function getTracerChartsDataForPDF()
     {
         try {
-            // Gunakan data REAL dari database
-            $graduateStatus = $this->getRealGraduateStatusData();
-            $studyWorkRelevance = $this->getRealStudyWorkRelevanceData();
-            $salaryRange = $this->getRealSalaryRangeData();
-            
+            // Gunakan data REAL dari semua chart yang ada di dashboard
             return [
-                'graduate_status' => $graduateStatus,
-                'study_work_relevance' => $studyWorkRelevance,
-                'salary_range' => $salaryRange,
+                // Data utama dari dashboard
+                'graduate_status' => $this->getRealGraduateStatusData(),
+                'waiting_time' => $this->getRealWaitingTimeData(),
+                'study_work_relevance' => $this->getRealStudyWorkRelevanceData(),
+                'work_level' => $this->getRealWorkLevelData(),
+                'salary_range' => $this->getRealSalaryRangeData(),
+                'learning_methods' => $this->getRealLearningMethodData(),
+                'competence' => $this->getRealCompetenceData(),
+                'funding_source' => $this->getRealFundingSourceData(),
+                
+                // Ringkasan statistik
                 'summary' => [
                     'total_categories' => Category::count(),
                     'total_questionnaires' => Questionnaire::count(),
                     'total_questions' => Question::count(),
                     'total_alumni_respondents' => StatusQuestionnaire::distinct('alumni_id')->count(),
                     'latest_response' => AnswerQuestion::max('answered_at') ? 
-                        Carbon::parse(AnswerQuestion::max('answered_at'))->format('d F Y') : '-'
+                        Carbon::parse(AnswerQuestion::max('answered_at'))->format('d F Y') : '-',
+                    'most_active_category' => $this->getMostActiveCategory(),
+                    'avg_completion_rate' => $this->getAverageCompletionRate()
                 ]
             ];
             
         } catch (\Exception $e) {
-            // Fallback data
+            // Fallback data minimal
             return [
                 'graduate_status' => [
                     'labels' => ['Bekerja', 'Belum Bekerja', 'Studi Lanjut', 'Wirausaha'],
-                    'values' => [65, 15, 10, 10]
-                ],
-                'study_work_relevance' => [
-                    'labels' => ['Sangat Erat', 'Erat', 'Cukup', 'Kurang'],
-                    'values' => [40, 25, 20, 15]
+                    'values' => [65, 15, 10, 10],
+                    'conclusion' => 'Data sedang dimuat...'
                 ],
                 'summary' => [
                     'total_categories' => Category::count(),
@@ -1848,6 +1947,32 @@ class UserController extends Controller
                 ]
             ];
         }
+    }
+
+    /**
+     * Get most active category
+     */
+    private function getMostActiveCategory()
+    {
+        $category = Category::withCount('alumniStatuses')
+            ->orderBy('alumni_statuses_count', 'desc')
+            ->first();
+        
+        return $category ? [
+            'name' => $category->name,
+            'count' => $category->alumni_statuses_count
+        ] : null;
+    }
+
+    /**
+     * Get average completion rate
+     */
+    private function getAverageCompletionRate()
+    {
+        $totalAlumni = Alumni::count();
+        $totalCompleted = StatusQuestionnaire::where('status', 'completed')->count();
+        
+        return $totalAlumni > 0 ? round(($totalCompleted / $totalAlumni) * 100, 1) : 0;
     }
     
     /**
@@ -1885,7 +2010,20 @@ class UserController extends Controller
             $alumniId = $request->get('alumni_id');
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
-            $format = $request->get('format', 'detailed'); // detailed/summary
+            $format = $request->get('format', 'detailed');
+            $action = $request->get('action', 'download'); // 'preview' or 'download'
+            
+            // DEBUG: Log parameter yang diterima
+            Log::info('Complete Answers PDF Export Parameters:', [
+                'category_id' => $categoryId,
+                'questionnaire_id' => $questionnaireId,
+                'alumni_id' => $alumniId,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'format' => $format,
+                'action' => $action,
+                'all_params' => $request->all()
+            ]);
             
             // Get COMPLETE data untuk laporan
             $reportData = $this->prepareCompleteAnswersData(
@@ -1897,26 +2035,65 @@ class UserController extends Controller
                 $format
             );
             
+            // Tambahkan metadata
+            $reportData['is_complete_export'] = true;
+            $reportData['action'] = $action;
+            $reportData['generated_at'] = now()->format('d F Y H:i:s');
+            
             // Load view PDF
             $pdf = Pdf::loadView('admin.views.questionnaire.export-complete-answers', $reportData);
             
             // Set options PDF
             $pdf->setPaper('A4', $format === 'summary' ? 'portrait' : 'landscape');
-            $pdf->setOption('defaultFont', 'Arial');
+            $pdf->setOption('defaultFont', 'DejaVu Sans');
             $pdf->setOption('isHtml5ParserEnabled', true);
             $pdf->setOption('isRemoteEnabled', true);
-            $pdf->setOption('isPhpEnabled', true);
+            $pdf->setOption('enable_php', true);
+            $pdf->setOption('dpi', 150);
             
             $filename = 'laporan-lengkap-jawaban-alumni-' . date('Y-m-d-H-i') . '.pdf';
             
-            return $pdf->download($filename);
+            // DEBUG: Log action yang akan diambil
+            Log::info('PDF Action Decision:', [
+                'action' => $action,
+                'filename' => $filename
+            ]);
+            
+            if ($action === 'preview') {
+                // Tampilkan preview di browser (stream)
+                Log::info('Streaming PDF for preview');
+                return $pdf->stream($filename);
+            } else {
+                // Download file
+                Log::info('Downloading PDF');
+                return $pdf->download($filename);
+            }
             
         } catch (\Exception $e) {
             // Log error
-            Log::error('PDF Export Error: ' . $e->getMessage());
+            Log::error('Complete Answers PDF Export Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             
+            // Cek jika request ajax atau direct
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengexport PDF: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            // Jika action=preview, tampilkan error page
+            if ($request->get('action') === 'preview') {
+                return response()->view('admin.views.errors.pdf-export-error', [
+                    'error' => $e->getMessage(),
+                    'title' => 'Export Complete Answers Error'
+                ], 500);
+            }
+            
+            // Redirect back dengan error
             return redirect()->back()
-                ->with('error', 'Gagal mengexport PDF: ' . $e->getMessage());
+                ->with('error', 'Gagal mengexport PDF: ' . $e->getMessage())
+                ->withInput();
         }
     }
     
@@ -2116,12 +2293,20 @@ class UserController extends Controller
      */
     public function showCompleteAnswersExportForm()
     {
-        $categories = Category::all();
-        $questionnaires = Questionnaire::all();
-        $alumni = Alumni::has('answers')->limit(100)->get();
-        
-        return view('admin.views.questionnaire.export-complete-answers-form', 
-            compact('categories', 'questionnaires', 'alumni'));
+        try {
+            $categories = Category::all();
+            $questionnaires = Questionnaire::all();
+            $alumni = Alumni::has('answers')->limit(100)->get();
+            
+            return view('admin.views.questionnaire.export-complete-answers-form', 
+                compact('categories', 'questionnaires', 'alumni'));
+                
+        } catch (\Exception $e) {
+            Log::error('Error loading complete answers form: ' . $e->getMessage());
+            
+            return redirect()->route('admin.views.dashboard')
+                ->with('error', 'Gagal memuat halaman export: ' . $e->getMessage());
+        }
     }
     
     /**
@@ -2129,16 +2314,26 @@ class UserController extends Controller
      */
     public function previewCompleteAnswersPDF(Request $request)
     {
+        $categoryId = $request->get('category_id');
+        $questionnaireId = $request->get('questionnaire_id');
+        $alumniId = $request->get('alumni_id');
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        $format = $request->get('format', 'detailed');
+        
         $reportData = $this->prepareCompleteAnswersData(
-            $request->get('category_id'),
-            $request->get('questionnaire_id'),
-            $request->get('alumni_id'),
-            $request->get('start_date'),
-            $request->get('end_date'),
-            $request->get('format', 'detailed')
+            $categoryId,
+            $questionnaireId,
+            $alumniId,
+            $startDate,
+            $endDate,
+            $format
         );
         
-        return view('admin.views.questionnaire.export-complete-answers', $reportData);
+        $reportData['is_preview'] = true;
+        $reportData['is_complete_export'] = true;
+        
+        return view('admin.views.questionnaire.export-complete-answers-preview', $reportData);
     }
 
     /**
