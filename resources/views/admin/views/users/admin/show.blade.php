@@ -8,14 +8,14 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Detail Data Administrator</h5>
             <div>
-                <!-- Edit Button (Only for Super Admin & Admin Sistem) -->
+                <!-- Edit Button (Only for System Administrator & Super Admin) -->
                 @if (auth()->user()->canEditAdmin())
                     <a href="{{ route('admin.views.users.admin.edit', $admin->id) }}" class="btn btn-warning me-2">
                         <i class="bi bi-pencil me-2"></i> Edit
                     </a>
                 @else
                     <button class="btn btn-warning me-2" disabled data-bs-toggle="tooltip" data-bs-placement="top"
-                        title="Hanya Super Admin dan Admin Sistem yang dapat mengedit">
+                        title="Hanya System Administrator dan Super Admin yang dapat mengedit">
                         <i class="bi bi-pencil me-2"></i> Edit
                     </button>
                 @endif
@@ -44,8 +44,8 @@
 
                     @php
                         $badgeClass = match ($admin->job_title) {
+                            'System Administrator' => 'bg-danger',
                             'Super Admin' => 'bg-danger',
-                            'Admin Sistem' => 'bg-primary',
                             'Admin Akademik' => 'bg-info',
                             'Admin Keuangan' => 'bg-warning',
                             'Admin Alumni' => 'bg-success',

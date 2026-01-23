@@ -11,10 +11,10 @@
                 <p class="text-muted mb-0">Total {{ $admins->count() }} admin terdaftar</p>
                 <small class="text-muted">
                     <i class="bi bi-info-circle me-1"></i>
-                    @if (auth()->user()->canEditAdmin() && auth()->user()->canDeleteAdmin())
-                        Anda memiliki akses penuh (Super Admin / Admin Sistem)
-                    @elseif(auth()->user()->canEditAdmin())
-                        Anda hanya dapat melihat dan mengedit data
+                    @if (auth()->user()->canCreateAdmin() && auth()->user()->canDeleteAdmin())
+                        Anda memiliki akses penuh (System Administrator)
+                    @elseif(auth()->user()->canCreateAdmin())
+                        Anda dapat melihat, menambah, dan mengedit data (Super Admin)
                     @else
                         Anda hanya dapat melihat data
                     @endif
@@ -27,7 +27,7 @@
                     </a>
                 @else
                     <button class="btn btn-success me-2" disabled data-bs-toggle="tooltip" data-bs-placement="bottom"
-                        title="Hanya Super Admin dan Admin Sistem yang dapat menambah admin">
+                        title="Hanya System Administrator dan Super Admin yang dapat menambah admin">
                         <i class="bi bi-plus-circle me-2"></i> Tambah Admin
                     </button>
                 @endif
@@ -42,7 +42,6 @@
                         <tr>
                             <th width="50">No</th>
                             <th>Admin</th>
-                            {{-- <th>Email</th> --}}
                             <th>No. Telepon</th>
                             <th>Jabatan</th>
                             <th>Status</th>
@@ -78,12 +77,6 @@
                                         </div>
                                     </div>
                                 </td>
-                                {{-- <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-envelope me-2 text-muted"></i>
-                                        {{ $admin->user->email }}
-                                    </div>
-                                </td> --}}
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <i class="bi bi-telephone me-2 text-muted"></i>
@@ -93,8 +86,8 @@
                                 <td>
                                     @php
                                         $badgeClass = match ($admin->job_title) {
+                                            'System Administrator' => 'bg-danger',
                                             'Super Admin' => 'bg-danger',
-                                            'Admin Sistem' => 'bg-primary',
                                             'Admin Akademik' => 'bg-info',
                                             'Admin Keuangan' => 'bg-warning',
                                             'Admin Alumni' => 'bg-success',
@@ -103,8 +96,8 @@
                                         };
 
                                         $iconClass = match ($admin->job_title) {
+                                            'System Administrator' => 'bi-shield-check',
                                             'Super Admin' => 'bi-shield-check',
-                                            'Admin Sistem' => 'bi-gear',
                                             'Admin Akademik' => 'bi-mortarboard',
                                             'Admin Keuangan' => 'bi-cash-coin',
                                             'Admin Alumni' => 'bi-people',
@@ -145,7 +138,7 @@
                                             <i class="bi bi-eye"></i>
                                         </a>
 
-                                        <!-- Edit Button (Only for Super Admin & Admin Sistem) -->
+                                        <!-- Edit Button (Only for System Administrator & Super Admin) -->
                                         @if (auth()->user()->canEditAdmin())
                                             <a href="{{ route('admin.views.users.admin.edit', $admin->id) }}"
                                                 class="btn btn-action btn-edit me-1" data-bs-toggle="tooltip"
@@ -155,12 +148,12 @@
                                         @else
                                             <button class="btn btn-action btn-secondary me-1" disabled
                                                 data-bs-toggle="tooltip" data-bs-placement="top"
-                                                title="Hanya Super Admin dan Admin Sistem yang dapat mengedit">
+                                                title="Hanya System Administrator dan Super Admin yang dapat mengedit">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         @endif
 
-                                        <!-- Delete Button (Only for Super Admin & Admin Sistem, and can't delete self) -->
+                                        <!-- Delete Button (Only for System Administrator, and can't delete self) -->
                                         @if ($admin->user_id === auth()->id())
                                             <button class="btn btn-action btn-secondary" disabled data-bs-toggle="tooltip"
                                                 data-bs-placement="top" title="Tidak dapat menghapus akun sendiri">
@@ -180,7 +173,7 @@
                                         @else
                                             <button class="btn btn-action btn-secondary" disabled data-bs-toggle="tooltip"
                                                 data-bs-placement="top"
-                                                title="Hanya Super Admin dan Admin Sistem yang dapat menghapus">
+                                                title="Hanya System Administrator yang dapat menghapus">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         @endif
@@ -214,8 +207,10 @@
                     <div>
                         <h6 class="alert-heading mb-1">Informasi Hak Akses</h6>
                         <p class="mb-0">
-                            <strong>Super Admin & Admin Sistem:</strong> Dapat melihat, menambah, mengedit, dan menghapus
-                            semua data admin.<br>
+                            <strong>System Administrator:</strong> Dapat melihat, menambah, mengedit, dan menghapus semua
+                            data admin.<br>
+                            <strong>Super Admin:</strong> Dapat melihat, menambah, dan mengedit data admin (tidak bisa
+                            menghapus).<br>
                             <strong>Admin lainnya (Akademik, Keuangan, Alumni, Staff):</strong> Hanya dapat melihat data
                             admin.
                         </p>

@@ -60,6 +60,10 @@
                             <span>Login terakhir:
                                 {{ $admin->user->last_login_at ? $admin->user->last_login_at->format('d/m/Y H:i') : 'Belum pernah' }}</span>
                         </div>
+                        <div class="info-item">
+                            <i class="bi bi-person-badge me-2 text-primary"></i>
+                            <span>Jabatan: {{ $admin->job_title }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,32 +110,14 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                                <select class="form-select @error('job_title') is-invalid @enderror" name="job_title"
-                                    required>
-                                    <option value="">Pilih Jabatan</option>
-                                    <option value="Super Admin"
-                                        {{ old('job_title', $admin->job_title) == 'Super Admin' ? 'selected' : '' }}>Super
-                                        Admin</option>
-                                    <option value="Admin Sistem"
-                                        {{ old('job_title', $admin->job_title) == 'Admin Sistem' ? 'selected' : '' }}>Admin
-                                        Sistem</option>
-                                    <option value="Admin Akademik"
-                                        {{ old('job_title', $admin->job_title) == 'Admin Akademik' ? 'selected' : '' }}>
-                                        Admin Akademik</option>
-                                    <option value="Admin Keuangan"
-                                        {{ old('job_title', $admin->job_title) == 'Admin Keuangan' ? 'selected' : '' }}>
-                                        Admin Keuangan</option>
-                                    <option value="Admin Alumni"
-                                        {{ old('job_title', $admin->job_title) == 'Admin Alumni' ? 'selected' : '' }}>Admin
-                                        Alumni</option>
-                                    <option value="Staff"
-                                        {{ old('job_title', $admin->job_title) == 'Staff' ? 'selected' : '' }}>Staff
-                                    </option>
-                                </select>
-                                @error('job_title')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Jabatan</label>
+                                <input type="text" class="form-control" value="{{ $admin->job_title }}" readonly
+                                    disabled>
+                                <small class="form-text text-muted">
+                                    Jabatan tidak dapat diubah di halaman profil.
+                                    Hubungi System Administrator atau Super Admin
+                                    untuk perubahan jabatan.
+                                </small>
                             </div>
 
                             <div class="col-12">
@@ -157,8 +143,7 @@
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label class="form-label">Password Saat Ini <span class="text-danger">*</span></label>
-                                <input type="password"
-                                    class="form-control @error('current_password') is-invalid @enderror"
+                                <input type="password" class="form-control @error('current_password') is-invalid @enderror"
                                     name="current_password" required>
                                 @error('current_password')
                                     <div class="invalid-feedback">{{ $message }}</div>

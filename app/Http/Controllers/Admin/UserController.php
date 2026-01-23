@@ -264,7 +264,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'required|string|max:20',
-            'job_title' => 'required|string|max:100',
+            'job_title' => 'required|string|max:100|in:System Administrator,Super Admin,Admin Akademik,Admin Keuangan,Admin Alumni,Staff',
         ]);
 
         // Create user
@@ -318,7 +318,7 @@ class UserController extends Controller
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($admin->user_id)],
             'password' => 'nullable|string|min:8|confirmed',
             'phone' => 'required|string|max:20',
-            'job_title' => 'required|string|max:100',
+            'job_title' => 'required|string|max:100|in:System Administrator,Super Admin,Admin Akademik,Admin Keuangan,Admin Alumni,Staff',
         ]);
 
         // Update user

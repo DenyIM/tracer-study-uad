@@ -28,7 +28,9 @@ class AdminProfileController extends Controller
     public function updateProfile(Request $request)
     {
         $admin = Admin::where('user_id', Auth::id())->firstOrFail();
+        $user = Auth::user();
         
+        // Validasi tanpa job_title karena tidak bisa diubah di profile
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
             'email' => [
@@ -37,7 +39,6 @@ class AdminProfileController extends Controller
                 Rule::unique('users', 'email')->ignore($admin->user_id),
             ],
             'phone' => 'required|string|max:20',
-            'job_title' => 'required|string|max:100',
         ]);
 
         // Update user email
@@ -45,11 +46,10 @@ class AdminProfileController extends Controller
             'email' => $validated['email'],
         ]);
 
-        // Update admin profile
+        // Update admin profile (tanpa mengubah job_title)
         $admin->update([
             'fullname' => $validated['fullname'],
             'phone' => $validated['phone'],
-            'job_title' => $validated['job_title'],
         ]);
 
         return redirect()->route('admin.profile')

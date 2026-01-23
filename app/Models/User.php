@@ -110,9 +110,10 @@ class User extends Authenticatable
     }
 
     // ============ PERMISSION METHODS ============
-    
+
     /**
      * Check if user has permission to edit admin data
+     * System Administrator & Super Admin can edit
      */
     public function canEditAdmin(): bool
     {
@@ -120,12 +121,13 @@ class User extends Authenticatable
             return false;
         }
         
-        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
+        $allowedJobs = ['System Administrator', 'Super Admin'];
         return in_array($this->admin->job_title, $allowedJobs);
     }
-    
+
     /**
      * Check if user has permission to delete admin data
+     * Only System Administrator can delete
      */
     public function canDeleteAdmin(): bool
     {
@@ -133,12 +135,12 @@ class User extends Authenticatable
             return false;
         }
         
-        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
-        return in_array($this->admin->job_title, $allowedJobs);
+        return $this->admin->job_title === 'System Administrator';
     }
-    
+
     /**
      * Check if user has permission to create admin
+     * System Administrator & Super Admin can create
      */
     public function canCreateAdmin(): bool
     {
@@ -146,10 +148,10 @@ class User extends Authenticatable
             return false;
         }
         
-        $allowedJobs = ['System Administrator', 'Super Admin', 'Admin Sistem'];
+        $allowedJobs = ['System Administrator', 'Super Admin'];
         return in_array($this->admin->job_title, $allowedJobs);
     }
-    
+
     /**
      * Get current admin's job title
      */
@@ -160,5 +162,29 @@ class User extends Authenticatable
         }
         
         return null;
+    }
+
+    /**
+     * Check if user is System Administrator
+     */
+    public function isSystemAdministrator(): bool
+    {
+        if (!$this->isAdmin() || !$this->admin) {
+            return false;
+        }
+        
+        return $this->admin->job_title === 'System Administrator';
+    }
+
+    /**
+     * Check if user is Super Admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        if (!$this->isAdmin() || !$this->admin) {
+            return false;
+        }
+        
+        return $this->admin->job_title === 'Super Admin';
     }
 }

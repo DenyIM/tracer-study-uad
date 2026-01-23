@@ -12,7 +12,8 @@
                     <h5 class="alert-heading mb-1">Akses Ditolak!</h5>
                     <p class="mb-0">
                         Anda tidak memiliki izin untuk mengedit data admin.
-                        Hanya <strong>Super Admin</strong> dan <strong>Admin Sistem</strong> yang dapat mengedit data admin.
+                        Hanya <strong>System Administrator</strong> dan <strong>Super Admin</strong> yang dapat mengedit
+                        data admin.
                         <br>
                         <small class="text-muted">Jabatan Anda: <strong>{{ auth()->user()->job_title }}</strong></small>
                     </p>
@@ -180,13 +181,13 @@
                                     <select class="form-select @error('job_title') is-invalid @enderror" name="job_title"
                                         required>
                                         <option value="">Pilih Jabatan</option>
+                                        <option value="System Administrator"
+                                            {{ old('job_title', $admin->job_title) == 'System Administrator' ? 'selected' : '' }}>
+                                            System Administrator
+                                        </option>
                                         <option value="Super Admin"
                                             {{ old('job_title', $admin->job_title) == 'Super Admin' ? 'selected' : '' }}>
                                             Super Admin
-                                        </option>
-                                        <option value="Admin Sistem"
-                                            {{ old('job_title', $admin->job_title) == 'Admin Sistem' ? 'selected' : '' }}>
-                                            Admin Sistem
                                         </option>
                                         <option value="Admin Akademik"
                                             {{ old('job_title', $admin->job_title) == 'Admin Akademik' ? 'selected' : '' }}>
@@ -375,7 +376,7 @@
         function confirmDeleteAdmin(adminName) {
             return confirm(
                 `⚠️ PERINGATAN!\n\nAnda akan menghapus administrator "${adminName}" secara permanen.\n\nTindakan ini tidak dapat dibatalkan. Apakah Anda yakin?`
-                );
+            );
         }
     </script>
 @endpush
