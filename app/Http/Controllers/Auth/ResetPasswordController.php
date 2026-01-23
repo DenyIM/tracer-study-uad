@@ -31,9 +31,9 @@ class ResetPasswordController extends Controller
     public function sendResetLink(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9]+@webmail\.uad\.ac\.id$/']
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@(?:webmail|[a-zA-Z0-9.-]+)\.uad\.ac\.id$/']
         ], [
-            'email.regex' => 'Email harus menggunakan format UAD: namanim@webmail.uad.ac.id'
+            'email.regex' => 'Email harus menggunakan format UAD: @webmail.uad.ac.id untuk alumni atau @*.uad.ac.id untuk admin'
         ]);
 
         // Cek apakah email terdaftar

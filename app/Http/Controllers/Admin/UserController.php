@@ -33,19 +33,16 @@ class UserController extends Controller
     {
         $query = Alumni::with('user')->latest();
         
-        // Filter by study program
         if ($request->has('study_program') && $request->study_program) {
             $query->where('study_program', $request->study_program);
         }
         
-        // Filter by graduation year
         if ($request->has('graduation_year') && $request->graduation_year) {
             $query->whereYear('graduation_date', $request->graduation_year);
         }
         
         $alumni = $query->paginate(10);
         
-        // Get unique study programs for filter dropdown
         $studyPrograms = Alumni::distinct('study_program')->pluck('study_program');
         $graduationYears = Alumni::selectRaw('YEAR(graduation_date) as year')
             ->distinct()
@@ -62,12 +59,10 @@ class UserController extends Controller
     {
         $alumni->load('user');
         
-        // Get questionnaire statistics for this alumni
         $questionnaireStats = StatusQuestionnaire::where('alumni_id', $alumni->id)
             ->with('category')
             ->get();
         
-        // Get achievements
         $achievements = AlumniAchievement::where('alumni_id', $alumni->id)
             ->latest()
             ->get();
@@ -133,24 +128,18 @@ class UserController extends Controller
      */
     public function alumniDestroy(Alumni $alumni)
     {
-        // Delete all related data
         try {
             DB::beginTransaction();
             
-            // Delete questionnaire answers
             AnswerQuestion::where('alumni_id', $alumni->id)->delete();
             
-            // Delete questionnaire status
             StatusQuestionnaire::where('alumni_id', $alumni->id)->delete();
             
-            // Delete achievements
             AlumniAchievement::where('alumni_id', $alumni->id)->delete();
             
-            // Delete alumni
             $user = $alumni->user;
             $alumni->delete();
             
-            // Delete user
             $user->delete();
             
             DB::commit();
@@ -191,15 +180,13 @@ class UserController extends Controller
             'points' => 'nullable|integer|min:0',
         ]);
 
-        // Create user with default password
         $user = User::create([
             'email' => $validated['email'],
-            'password' => Hash::make('password123'), // Default password
+            'password' => Hash::make('password123'), 
             'role' => 'alumni',
-            'email_verified_at' => now(), // Auto verify for admin-created accounts
+            'email_verified_at' => now(), 
         ]);
 
-        // Create alumni profile
         Alumni::create([
             'user_id' => $user->id,
             'fullname' => $validated['fullname'],
@@ -239,7 +226,6 @@ class UserController extends Controller
      */
     public function adminCreate()
     {
-        // Check permission
         if (!Auth::user()->canCreateAdmin()) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Anda tidak memiliki izin untuk menambah admin');
@@ -253,7 +239,6 @@ class UserController extends Controller
      */
     public function adminStore(Request $request)
     {
-        // Check permission
         if (!Auth::user()->canCreateAdmin()) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Anda tidak memiliki izin untuk menambah admin');
@@ -267,7 +252,6 @@ class UserController extends Controller
             'job_title' => 'required|string|max:100|in:System Administrator,Super Admin,Admin Akademik,Admin Keuangan,Admin Alumni,Staff',
         ]);
 
-        // Create user
         $user = User::create([
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -275,7 +259,6 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        // Create admin profile
         Admin::create([
             'user_id' => $user->id,
             'fullname' => $validated['fullname'],
@@ -292,7 +275,6 @@ class UserController extends Controller
      */
     public function adminEdit(Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canEditAdmin()) {
             return redirect()->route('admin.views.users.admin.show', $admin->id)
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit admin');
@@ -307,7 +289,6 @@ class UserController extends Controller
      */
     public function adminUpdate(Request $request, Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canEditAdmin()) {
             return redirect()->route('admin.views.users.admin.show', $admin->id)
                 ->with('error', 'Anda tidak memiliki izin untuk mengedit admin');
@@ -321,14 +302,12 @@ class UserController extends Controller
             'job_title' => 'required|string|max:100|in:System Administrator,Super Admin,Admin Akademik,Admin Keuangan,Admin Alumni,Staff',
         ]);
 
-        // Update user
         $userData = ['email' => $validated['email']];
         if ($request->filled('password')) {
             $userData['password'] = Hash::make($validated['password']);
         }
         $admin->user->update($userData);
 
-        // Update admin
         $admin->update([
             'fullname' => $validated['fullname'],
             'phone' => $validated['phone'],
@@ -344,26 +323,22 @@ class UserController extends Controller
     */
     public function adminDestroy(Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canDeleteAdmin()) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Anda tidak memiliki izin untuk menghapus admin');
         }
         
-        // Check if trying to delete last admin
         $adminCount = Admin::count();
         if ($adminCount <= 1) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Tidak dapat menghapus admin terakhir');
         }
 
-        // Check if trying to delete self
         if ($admin->user_id === Auth::id()) {
             return redirect()->route('admin.views.users.admin.index')
                 ->with('error', 'Tidak dapat menghapus akun sendiri');
         }
 
-        // Delete associated user
         $user = $admin->user;
         $admin->delete();
         $user->delete();
@@ -413,24 +388,19 @@ class UserController extends Controller
     */
     public function dashboard()
     {
-        // Data statistik dasar
         $alumniCount = Alumni::count();
         $totalAnswers = AnswerQuestion::count();
         $totalPoints = AnswerQuestion::sum('points');
         
-        // Status penyelesaian
         $totalAlumniCompleted = StatusQuestionnaire::where('status', 'completed')->count();
         $totalAlumniInProgress = StatusQuestionnaire::where('status', 'in_progress')->count();
         $totalAlumniNotStarted = StatusQuestionnaire::where('status', 'not_started')->count();
         
-        // Rata-rata penyelesaian
         $totalAlumni = $alumniCount ?: 1;
         $avgCompletionRate = round(($totalAlumniCompleted / $totalAlumni) * 100);
         
-        // Kategori
         $categories = Category::withCount('questionnaires')->get();
         
-        // Analisis pertanyaan populer per kategori
         $topQuestionsByCategory = [];
         foreach ($categories as $category) {
             $questions = Question::whereHas('questionnaire.category', function($q) use ($category) {
@@ -453,7 +423,6 @@ class UserController extends Controller
             $topQuestionsByCategory[$category->id] = $questions;
         }
         
-        // Tambahkan semua kategori
         $allQuestions = Question::withCount('answers')
             ->orderBy('answers_count', 'desc')
             ->limit(10)
@@ -470,7 +439,6 @@ class UserController extends Controller
         
         $topQuestionsByCategory['all'] = $allQuestions;
         
-        // Jawaban populer
         $popularAnswers = AnswerQuestion::select('question_id', 'answer')
             ->selectRaw('COUNT(*) as count')
             ->whereNotNull('answer')
@@ -492,15 +460,12 @@ class UserController extends Controller
                 ];
             })->toArray();
         
-        // Analisis per tipe pertanyaan
         $multipleChoiceAnalysis = $this->analyzeMultipleChoiceQuestions();
         $scaleAnalysis = $this->analyzeScaleQuestions();
         $textAnalysis = $this->analyzeTextQuestions();
         
-        // Analisis kata kunci
         $keywordAnalysis = $this->analyzeKeywords();
         
-        // Top alumni
         $topAlumni = Alumni::with(['statuses', 'statuses.category'])
             ->withCount(['answers as total_answers'])
             ->withSum('answers as total_points', 'points')
@@ -514,7 +479,6 @@ class UserController extends Controller
                     : 0;
             });
         
-        // Data untuk chart
         $dashboardData = $this->prepareChartData();
         
         return view('admin.views.dashboard.index', compact(
@@ -552,12 +516,10 @@ class UserController extends Controller
                 ->whereNotNull('selected_options')
                 ->get()
                 ->flatMap(function($answer) {
-                    // Decode JSON dan pastikan selalu array
                     $options = json_decode($answer->selected_options, true);
                     return is_array($options) ? $options : [];
                 });
             
-            // Konversi ke array sebelum menggunakan array_count_values
             $answersArray = $answers->toArray();
             $counts = array_count_values($answersArray);
             arsort($counts);
@@ -568,7 +530,7 @@ class UserController extends Controller
                 'total_answers' => $question->answers_count,
                 'distribution' => array_slice($counts, 0, 5, true)
             ];
-        })->toArray(); // Jangan lupa konversi ke array
+        })->toArray(); 
     }
 
     private function analyzeScaleQuestions()
@@ -618,7 +580,6 @@ class UserController extends Controller
                 ->pluck('answer')
                 ->toArray();
             
-            // Analisis kata kunci sederhana
             $allText = implode(' ', $answers);
             $words = str_word_count(strtolower($allText), 1);
             $stopWords = ['dan', 'di', 'ke', 'dari', 'yang', 'untuk', 'pada', 'dengan', 'ini', 'itu'];
@@ -668,26 +629,20 @@ class UserController extends Controller
     {
         $data = [];
         
-        // Data status penyelesaian
         $data['completionStatus'] = [
             StatusQuestionnaire::where('status', 'completed')->count(),
             StatusQuestionnaire::where('status', 'in_progress')->count(),
             StatusQuestionnaire::where('status', 'not_started')->count()
         ];
         
-        // Data tren bulanan
         $data['monthlyTrend'] = $this->getMonthlyTrend();
         
-        // Data untuk chart pilihan ganda
         $data['multipleChoiceCharts'] = $this->getMultipleChoiceCharts();
         
-        // Data untuk chart skala
         $data['scaleCharts'] = $this->getScaleCharts();
         
-        // Data untuk chart pertanyaan per kategori
         $data['categoryQuestionsCharts'] = $this->getCategoryQuestionsCharts();
         
-        // Data untuk word cloud
         $data['wordCloud'] = $this->getWordCloudData();
         
         return $data;
@@ -855,7 +810,6 @@ class UserController extends Controller
             return array_slice($colors, 0, $count);
         }
         
-        // Generate random colors jika perlu lebih banyak
         $generated = [];
         for ($i = 0; $i < $count; $i++) {
             $generated[] = '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
@@ -898,15 +852,12 @@ class UserController extends Controller
         $totalAnswers = AnswerQuestion::count();
         $totalPoints = AnswerQuestion::sum('points') ?? 0;
         
-        // Real-time statistics
         $todayAnswers = AnswerQuestion::whereDate('answered_at', today())->count();
         $weekAnswers = AnswerQuestion::where('answered_at', '>=', now()->subWeek())->count();
         $monthAnswers = AnswerQuestion::where('answered_at', '>=', now()->subMonth())->count();
         
-        // Recent activities count
         $recentActivitiesCount = AnswerQuestion::where('answered_at', '>=', now()->subHours(24))->count();
         
-        // Completion rate
         $totalCompleted = StatusQuestionnaire::where('status', 'completed')->count();
         $totalStatus = StatusQuestionnaire::count();
         $completionRate = $totalStatus > 0 ? round(($totalCompleted / $totalStatus) * 100, 1) : 0;
@@ -945,12 +896,10 @@ class UserController extends Controller
                 $alumni = Alumni::find($alumniId);
                 
                 if ($alumni) {
-                    // Delete all related data
                     AnswerQuestion::where('alumni_id', $alumniId)->delete();
                     StatusQuestionnaire::where('alumni_id', $alumniId)->delete();
                     AlumniAchievement::where('alumni_id', $alumniId)->delete();
                     
-                    // Delete user
                     $user = $alumni->user;
                     $alumni->delete();
                     $user->delete();
@@ -976,7 +925,6 @@ class UserController extends Controller
     {
         $query = Alumni::with('user');
         
-        // Apply filters
         if ($request->has('study_program') && $request->study_program) {
             $query->where('study_program', $request->study_program);
         }
@@ -998,7 +946,6 @@ class UserController extends Controller
         $callback = function() use ($alumni) {
             $file = fopen('php://output', 'w');
             
-            // Header
             fputcsv($file, [
                 'NIM',
                 'Nama Lengkap',
@@ -1053,7 +1000,6 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
             
-            // Skip header row
             array_shift($csvData);
             
             foreach ($csvData as $row) {
@@ -1061,12 +1007,10 @@ class UserController extends Controller
                     $email = trim($row[2] ?? '');
                     $nim = trim($row[0] ?? '');
                     
-                    // Check if email or NIM already exists
                     $existingEmail = User::where('email', $email)->exists();
                     $existingNIM = Alumni::where('nim', $nim)->exists();
                     
                     if (!$existingEmail && !$existingNIM) {
-                        // Create user
                         $user = User::create([
                             'email' => $email,
                             'password' => Hash::make('password123'),
@@ -1074,7 +1018,6 @@ class UserController extends Controller
                             'email_verified_at' => now(),
                         ]);
                         
-                        // Create alumni
                         Alumni::create([
                             'user_id' => $user->id,
                             'nim' => $nim,
@@ -1157,7 +1100,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage(),
-                'data' => $this->getFallbackData() // Fallback ke data statis jika error
+                'data' => $this->getFallbackData() 
             ], 500);
         }
     }
@@ -1200,7 +1143,6 @@ class UserController extends Controller
      */
     private function getRealWaitingTimeData()
     {
-        // Cari pertanyaan yang berhubungan dengan waktu tunggu pekerjaan
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%lama%pekerjaan%')
                 ->orWhere('question_text', 'like', '%waktu%kerja%')
@@ -1224,7 +1166,6 @@ class UserController extends Controller
             foreach ($answers as $answer) {
                 $answerText = strtolower($answer->answer);
                 
-                // Analisis jawaban teks untuk ekstrak angka bulan
                 preg_match('/(\d+)\s*(bulan|month)/', $answerText, $matches);
                 
                 if (count($matches) >= 2) {
@@ -1238,7 +1179,6 @@ class UserController extends Controller
                         $waitingData['WT > 18 bulan']++;
                     }
                 }
-                // Analisis pilihan ganda
                 elseif ($answer->selected_options) {
                     $selected = json_decode($answer->selected_options, true);
                     if (is_array($selected)) {
@@ -1276,7 +1216,6 @@ class UserController extends Controller
      */
     private function getRealStudyWorkRelevanceData()
     {
-        // Cari pertanyaan tentang hubungan studi-pekerjaan
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%hubungan%studi%kerja%')
                 ->orWhere('question_text', 'like', '%erat%bidang%studi%')
@@ -1298,7 +1237,6 @@ class UserController extends Controller
             $answers = AnswerQuestion::where('question_id', $question->id)->get();
             
             foreach ($answers as $answer) {
-                // Untuk skala Likert
                 if ($answer->scale_value !== null) {
                     $scale = (int)$answer->scale_value;
                     if ($scale >= 4) $relevanceData['Sangat Erat']++;
@@ -1307,7 +1245,6 @@ class UserController extends Controller
                     elseif ($scale == 1) $relevanceData['Kurang Erat']++;
                     else $relevanceData['Tidak Sama Sekali']++;
                 }
-                // Untuk pilihan teks
                 elseif ($answer->answer) {
                     $answerText = strtolower($answer->answer);
                     if (strpos($answerText, 'sangat erat') !== false) $relevanceData['Sangat Erat']++;
@@ -1316,7 +1253,6 @@ class UserController extends Controller
                     elseif (strpos($answerText, 'kurang') !== false) $relevanceData['Kurang Erat']++;
                     elseif (strpos($answerText, 'tidak') !== false) $relevanceData['Tidak Sama Sekali']++;
                 }
-                // Untuk pilihan ganda
                 elseif ($answer->selected_options) {
                     $selected = json_decode($answer->selected_options, true);
                     if (is_array($selected)) {
@@ -1423,7 +1359,6 @@ class UserController extends Controller
                 if ($answer->answer) {
                     $answerText = strtolower($answer->answer);
                     
-                    // Ekstrak angka dari jawaban
                     preg_match_all('/\d+/', $answerText, $matches);
                     if (!empty($matches[0])) {
                         $numbers = array_map('intval', $matches[0]);
@@ -1455,7 +1390,6 @@ class UserController extends Controller
      */
     private function getRealLearningMethodData()
     {
-        // Cari pertanyaan tentang metode pembelajaran dengan tipe likert_per_row
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%metode%pembelajaran%')
                 ->orWhere('question_text', 'like', '%cara%belajar%')
@@ -1469,9 +1403,8 @@ class UserController extends Controller
         }
         
         $methodsData = [];
-        $scaleLabels = ['1', '2', '3', '4', '5']; // Skala 1-5
+        $scaleLabels = ['1', '2', '3', '4', '5']; 
         
-        // Ambil jawaban untuk semua alumni
         foreach ($questions as $question) {
             $answers = AnswerQuestion::where('question_id', $question->id)
                 ->whereNotNull('answer')
@@ -1481,12 +1414,10 @@ class UserController extends Controller
                 continue;
             }
             
-            // Inisialisasi array untuk menghitung distribusi skala
             $scaleCounts = [
                 '1' => 0, '2' => 0, '3' => 0, '4' => 0, '5' => 0
             ];
             
-            // Parse jawaban JSON dan hitung distribusi
             foreach ($answers as $answer) {
                 try {
                     $answerData = json_decode($answer->answer, true);
@@ -1502,7 +1433,6 @@ class UserController extends Controller
                 }
             }
             
-            // Jika ada row_items di pertanyaan, gunakan itu
             if ($question->row_items && is_array($question->row_items)) {
                 foreach ($question->row_items as $itemKey => $itemLabel) {
                     $methodData = [
@@ -1512,7 +1442,6 @@ class UserController extends Controller
                     $methodsData[] = $methodData;
                 }
             } else {
-                // Fallback: Gunakan nama pertanyaan
                 $methodsData[] = [
                     'name' => Str::limit($question->question_text, 50),
                     'values' => array_values($scaleCounts)
@@ -1524,7 +1453,6 @@ class UserController extends Controller
             return null;
         }
         
-        // Konversi counts ke persentase
         $totalResponses = array_sum($methodsData[0]['values']);
         if ($totalResponses > 0) {
             foreach ($methodsData as &$method) {
@@ -1546,7 +1474,6 @@ class UserController extends Controller
      */
     private function getRealCompetenceData()
     {
-        // Cari pertanyaan tentang kompetensi dengan tipe likert_per_row
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%kompetensi%')
                 ->orWhere('question_text', 'like', '%kemampuan%')
@@ -1571,12 +1498,10 @@ class UserController extends Controller
                 continue;
             }
             
-            // Parse row_items untuk mendapatkan label kompetensi
             $rowItems = [];
             if ($question->row_items && is_array($question->row_items)) {
                 $rowItems = $question->row_items;
             } else {
-                // Default jika tidak ada row_items
                 $rowItems = [
                     'ethics' => 'Etika',
                     'english' => 'Bahasa Inggris',
@@ -1588,23 +1513,20 @@ class UserController extends Controller
                 ];
             }
             
-            // Inisialisasi data untuk setiap kompetensi
             foreach ($rowItems as $key => $label) {
                 if (!isset($competencies[$label])) {
-                    $competencies[$label] = [0, 0, 0, 0, 0]; // Skala 1-5
+                    $competencies[$label] = [0, 0, 0, 0, 0]; 
                 }
             }
             
-            // Hitung distribusi skala dari jawaban
             foreach ($answers as $answer) {
                 try {
                     $answerData = json_decode($answer->answer, true);
                     if (is_array($answerData)) {
                         foreach ($answerData as $competenceKey => $scale) {
-                            // Cari label yang sesuai
                             foreach ($rowItems as $key => $label) {
                                 if ($key === $competenceKey && isset($competencies[$label])) {
-                                    $scaleIndex = (int)$scale - 1; // Convert scale 1-5 to index 0-4
+                                    $scaleIndex = (int)$scale - 1; 
                                     if ($scaleIndex >= 0 && $scaleIndex <= 4) {
                                         $competencies[$label][$scaleIndex]++;
                                     }
@@ -1623,7 +1545,6 @@ class UserController extends Controller
             return null;
         }
         
-        // Konversi ke persentase untuk setiap kompetensi
         foreach ($competencies as $competence => &$counts) {
             $total = array_sum($counts);
             if ($total > 0) {
@@ -1635,7 +1556,7 @@ class UserController extends Controller
         
         return [
             'competencies' => $competencies,
-            'scales' => ['1', '2', '3', '4', '5'], // Skala 1-5
+            'scales' => ['1', '2', '3', '4', '5'], 
             'data_source' => 'Database (Dinamis - Analisis Pertanyaan Kompetensi)'
         ];
     }
@@ -1705,7 +1626,6 @@ class UserController extends Controller
      */
     private function getFallbackData()
     {
-        // Return minimal fallback structure
         return [
             'graduate_status' => [
                 'labels' => ['Data sedang dimuat...'],
@@ -1721,19 +1641,15 @@ class UserController extends Controller
     public function exportQuestionnaireResultsPDF(Request $request)
     {
         try {
-            // Parameter filter
             $categoryId = $request->get('category_id');
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
-            $action = $request->get('action', 'download'); // 'preview' or 'download'
+            $action = $request->get('action', 'download'); 
             
-            // Get data untuk laporan
             $reportData = $this->preparePDFReportData($categoryId, $startDate, $endDate);
             
-            // Load view PDF
             $pdf = PDF::loadView('admin.views.questionnaire.export-pdf', $reportData);
             
-            // Set options PDF
             $pdf->setPaper('A4', 'portrait');
             $pdf->setOption('defaultFont', 'DejaVu Sans');
             $pdf->setOption('isHtml5ParserEnabled', true);
@@ -1744,17 +1660,14 @@ class UserController extends Controller
             $filename = 'laporan-tracer-study-' . date('Y-m-d') . '.pdf';
             
             if ($action === 'preview') {
-                // Tampilkan preview di browser
                 return $pdf->stream($filename);
             } else {
-                // Download file
                 return $pdf->download($filename);
             }
             
         } catch (\Exception $e) {
             Log::error('PDF Export Error: ' . $e->getMessage());
             
-            // Tampilkan error di preview
             if ($request->has('debug') || $request->get('action') === 'preview') {
                 return response()->view('admin.views.questionnaire.export-error', [
                     'error' => $e->getMessage(),
@@ -1779,7 +1692,6 @@ class UserController extends Controller
         
         $reportData = $this->preparePDFReportData($categoryId, $startDate, $endDate);
         
-        // Tambahkan flag untuk preview mode
         $reportData['is_preview'] = true;
         
         return view('admin.views.questionnaire.export-pdf-preview', $reportData);
@@ -1790,13 +1702,11 @@ class UserController extends Controller
      */
     private function preparePDFReportData($categoryId = null, $startDate = null, $endDate = null)
     {
-        // 1. DATA STATISTIK
         $totalAlumni = Alumni::count();
         $alumniWithAnswers = StatusQuestionnaire::distinct('alumni_id')->count();
         $totalAnswers = AnswerQuestion::count();
         $totalQuestions = Question::count();
         
-        // 2. DATA ALUMNI DENGAN JAWABAN
         $alumniQuery = Alumni::with([
             'user',
             'statuses.category',
@@ -1819,17 +1729,14 @@ class UserController extends Controller
             }
         ])->has('answers');
         
-        $alumni = $alumniQuery->limit(50)->get(); // Batasi untuk PDF
+        $alumni = $alumniQuery->limit(50)->get(); 
         
-        // 3. DATA GRAFIK (ambil dari method yang sudah ada)
         $chartData = $this->getTracerChartsDataForPDF();
         
-        // 4. DATA KATEGORI
         $categories = Category::withCount(['questionnaires', 'alumniStatuses'])
             ->orderBy('order')
             ->get();
         
-        // 5. PERTANYAAN PALING SERING DIJAWAB
         $topQuestions = Question::withCount('answers')
             ->orderBy('answers_count', 'desc')
             ->limit(10)
@@ -1844,7 +1751,6 @@ class UserController extends Controller
                 ];
             });
         
-        // 6. ALUMNI TOP (berdasarkan jumlah jawaban)
         $topAlumni = Alumni::withCount('answers')
             ->withSum('answers as total_points', 'points')
             ->orderBy('total_points', 'desc')
@@ -1863,7 +1769,6 @@ class UserController extends Controller
             });
         
         return [
-            // Metadata
             'title' => 'Laporan Hasil Kuesioner Alumni',
             'subtitle' => 'Sistem Tracer Study',
             'date' => now()->format('d F Y'),
@@ -1873,7 +1778,6 @@ class UserController extends Controller
             'category_filter' => $categoryId ? 
                 Category::find($categoryId)->name ?? 'Semua Kategori' : 'Semua Kategori',
             
-            // Data Statistik
             'total_alumni' => $totalAlumni,
             'alumni_with_answers' => $alumniWithAnswers,
             'total_answers' => $totalAnswers,
@@ -1883,16 +1787,13 @@ class UserController extends Controller
             'response_rate' => $totalAlumni > 0 ? 
                 round(($alumniWithAnswers / $totalAlumni) * 100, 2) : 0,
             
-            // Data Utama
             'alumni' => $alumni,
             'categories' => $categories,
             'top_questions' => $topQuestions,
             'top_alumni' => $topAlumni,
             
-            // Data Grafik (untuk tampilan di PDF)
             'chart_data' => $chartData,
             
-            // Filter
             'filters' => [
                 'category_id' => $categoryId,
                 'start_date' => $startDate,
@@ -1908,9 +1809,7 @@ class UserController extends Controller
     private function getTracerChartsDataForPDF()
     {
         try {
-            // Gunakan data REAL dari semua chart yang ada di dashboard
             return [
-                // Data utama dari dashboard
                 'graduate_status' => $this->getRealGraduateStatusData(),
                 'waiting_time' => $this->getRealWaitingTimeData(),
                 'study_work_relevance' => $this->getRealStudyWorkRelevanceData(),
@@ -1920,7 +1819,6 @@ class UserController extends Controller
                 'competence' => $this->getRealCompetenceData(),
                 'funding_source' => $this->getRealFundingSourceData(),
                 
-                // Ringkasan statistik
                 'summary' => [
                     'total_categories' => Category::count(),
                     'total_questionnaires' => Questionnaire::count(),
@@ -1934,7 +1832,6 @@ class UserController extends Controller
             ];
             
         } catch (\Exception $e) {
-            // Fallback data minimal
             return [
                 'graduate_status' => [
                     'labels' => ['Bekerja', 'Belum Bekerja', 'Studi Lanjut', 'Wirausaha'],
@@ -2004,16 +1901,14 @@ class UserController extends Controller
     public function exportCompleteAnswersPDF(Request $request)
     {
         try {
-            // Parameter filter
             $categoryId = $request->get('category_id');
             $questionnaireId = $request->get('questionnaire_id');
             $alumniId = $request->get('alumni_id');
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
             $format = $request->get('format', 'detailed');
-            $action = $request->get('action', 'download'); // 'preview' or 'download'
+            $action = $request->get('action', 'download'); 
             
-            // DEBUG: Log parameter yang diterima
             Log::info('Complete Answers PDF Export Parameters:', [
                 'category_id' => $categoryId,
                 'questionnaire_id' => $questionnaireId,
@@ -2025,7 +1920,6 @@ class UserController extends Controller
                 'all_params' => $request->all()
             ]);
             
-            // Get COMPLETE data untuk laporan
             $reportData = $this->prepareCompleteAnswersData(
                 $categoryId, 
                 $questionnaireId, 
@@ -2035,15 +1929,12 @@ class UserController extends Controller
                 $format
             );
             
-            // Tambahkan metadata
             $reportData['is_complete_export'] = true;
             $reportData['action'] = $action;
             $reportData['generated_at'] = now()->format('d F Y H:i:s');
             
-            // Load view PDF
             $pdf = Pdf::loadView('admin.views.questionnaire.export-complete-answers', $reportData);
             
-            // Set options PDF
             $pdf->setPaper('A4', $format === 'summary' ? 'portrait' : 'landscape');
             $pdf->setOption('defaultFont', 'DejaVu Sans');
             $pdf->setOption('isHtml5ParserEnabled', true);
@@ -2053,28 +1944,23 @@ class UserController extends Controller
             
             $filename = 'laporan-lengkap-jawaban-alumni-' . date('Y-m-d-H-i') . '.pdf';
             
-            // DEBUG: Log action yang akan diambil
             Log::info('PDF Action Decision:', [
                 'action' => $action,
                 'filename' => $filename
             ]);
             
             if ($action === 'preview') {
-                // Tampilkan preview di browser (stream)
                 Log::info('Streaming PDF for preview');
                 return $pdf->stream($filename);
             } else {
-                // Download file
                 Log::info('Downloading PDF');
                 return $pdf->download($filename);
             }
             
         } catch (\Exception $e) {
-            // Log error
             Log::error('Complete Answers PDF Export Error: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             
-            // Cek jika request ajax atau direct
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
@@ -2082,7 +1968,6 @@ class UserController extends Controller
                 ], 500);
             }
             
-            // Jika action=preview, tampilkan error page
             if ($request->get('action') === 'preview') {
                 return response()->view('admin.views.errors.pdf-export-error', [
                     'error' => $e->getMessage(),
@@ -2090,7 +1975,6 @@ class UserController extends Controller
                 ], 500);
             }
             
-            // Redirect back dengan error
             return redirect()->back()
                 ->with('error', 'Gagal mengexport PDF: ' . $e->getMessage())
                 ->withInput();
@@ -2108,14 +1992,12 @@ class UserController extends Controller
         $endDate = null,
         $format = 'detailed'
     ) {
-        // 1. QUERY UTAMA: AMBIL SEMUA JAWABAN
         $answersQuery = AnswerQuestion::with([
             'alumni.user',
             'question.questionnaire.category',
             'detailedAnswers'
         ])->orderBy('answered_at', 'desc');
         
-        // Apply filters
         if ($categoryId) {
             $answersQuery->whereHas('question.questionnaire', function($q) use ($categoryId) {
                 $q->where('category_id', $categoryId);
@@ -2140,13 +2022,10 @@ class UserController extends Controller
             $answersQuery->whereDate('answered_at', '<=', $endDate);
         }
         
-        // Get all answers (tidak dibatasi untuk PDF lengkap)
         $allAnswers = $answersQuery->get();
         
-        // 2. GROUP ANSWERS BY ALUMNI
         $answersByAlumni = $allAnswers->groupBy('alumni_id');
         
-        // 3. GET ALUMNI DATA
         $alumniData = [];
         foreach ($answersByAlumni as $alumniId => $answers) {
             $alumni = Alumni::with('user')->find($alumniId);
@@ -2163,7 +2042,6 @@ class UserController extends Controller
             }
         }
         
-        // 4. GET QUESTIONS DATA (untuk header table)
         $questions = Question::with(['questionnaire.category'])
             ->when($categoryId, function($q) use ($categoryId) {
                 $q->whereHas('questionnaire', function($query) use ($categoryId) {
@@ -2176,7 +2054,6 @@ class UserController extends Controller
             ->orderByRaw('questionnaire_id, `order`')
             ->get();
         
-        // 5. GET SUMMARY STATISTICS
         $summaryStats = [
             'total_alumni' => count($alumniData),
             'total_answers' => $allAnswers->count(),
@@ -2191,7 +2068,6 @@ class UserController extends Controller
                 $allAnswers->max('answered_at')->format('d M Y') : '-'
         ];
         
-        // 6. GET FILTER INFO
         $filterInfo = [];
         if ($categoryId) {
             $category = Category::find($categoryId);
@@ -2206,7 +2082,6 @@ class UserController extends Controller
             $filterInfo['alumni'] = $alumni ? $alumni->fullname . ' (' . $alumni->nim . ')' : '-';
         }
         
-        // 7. PREPARE MATRIX DATA (untuk format summary)
         $answerMatrix = [];
         if ($format === 'summary') {
             foreach ($alumniData as $alumniId => $data) {
@@ -2218,7 +2093,6 @@ class UserController extends Controller
                     'prodi' => $alumni->study_program ?? '-',
                 ];
                 
-                // Add answers for each question
                 foreach ($questions as $question) {
                     $answer = $data['answers']->firstWhere('question_id', $question->id);
                     $row['q_' . $question->id] = $this->formatAnswerForMatrix($answer);
@@ -2229,23 +2103,19 @@ class UserController extends Controller
         }
         
         return [
-            // Metadata
             'title' => 'Laporan Lengkap Jawaban Alumni',
             'subtitle' => 'Detail Semua Jawaban Kuesioner',
             'date' => now()->format('d F Y'),
             'generated_at' => now()->format('d F Y H:i:s'),
             'format' => $format,
             
-            // Main Data
             'alumni_data' => $alumniData,
             'questions' => $questions,
             'all_answers' => $allAnswers,
             'answer_matrix' => $answerMatrix,
             
-            // Statistics
             'summary_stats' => $summaryStats,
             
-            // Filters
             'filters' => [
                 'category_id' => $categoryId,
                 'questionnaire_id' => $questionnaireId,
@@ -2256,7 +2126,6 @@ class UserController extends Controller
                 'has_filters' => $categoryId || $questionnaireId || $alumniId || $startDate || $endDate
             ],
             
-            // Options
             'show_all_details' => true,
             'max_answers_per_page' => $format === 'detailed' ? 15 : 50,
         ];
@@ -2341,7 +2210,6 @@ class UserController extends Controller
      */
     public function adminUploadPhoto(Request $request, Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canEditAdmin()) {
             return redirect()->route('admin.views.users.admin.show', $admin->id)
                 ->with('error', 'Anda tidak memiliki izin untuk mengupload foto admin');
@@ -2351,15 +2219,12 @@ class UserController extends Controller
             'profile_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Delete old photo if exists
         if ($admin->user->pp_url && Storage::exists($admin->user->pp_url)) {
             Storage::delete($admin->user->pp_url);
         }
 
-        // Store new photo
         $path = $request->file('profile_photo')->store('profile-photos', 'public');
 
-        // Update user photo URL
         $admin->user->update([
             'pp_url' => $path,
         ]);
@@ -2373,7 +2238,6 @@ class UserController extends Controller
      */
     public function adminDeletePhoto(Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canEditAdmin()) {
             return redirect()->route('admin.views.users.admin.show', $admin->id)
                 ->with('error', 'Anda tidak memiliki izin untuk menghapus foto admin');
@@ -2396,7 +2260,6 @@ class UserController extends Controller
      */
     public function adminVerifyEmail(Admin $admin)
     {
-        // Check permission
         if (!Auth::user()->canEditAdmin()) {
             return redirect()->route('admin.views.users.admin.show', $admin->id)
                 ->with('error', 'Anda tidak memiliki izin untuk memverifikasi email admin');

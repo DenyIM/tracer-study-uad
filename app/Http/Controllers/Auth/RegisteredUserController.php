@@ -45,7 +45,7 @@ class RegisteredUserController extends Controller
             'npwp' => ['nullable', 'string', 'max:20'],
             'agree_terms' => ['required', 'accepted'],
         ], [
-            'email.regex' => 'Email harus menggunakan format UAD: namanim@webmail.uad.ac.id',
+            'email.regex' => 'Email harus menggunakan format alumni UAD: namanim@webmail.uad.ac.id',
             'agree_terms.accepted' => 'Anda harus menyetujui syarat dan ketentuan',
         ]);
 

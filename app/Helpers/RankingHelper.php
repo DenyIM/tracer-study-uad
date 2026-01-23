@@ -9,12 +9,11 @@ use Illuminate\Support\Facades\Log;
 class RankingHelper
 {
     /**
-     * Get alumni rank based on alumni.points (MySQL compatible)
+     * Get alumni rank based on alumni.points
      */
     public static function getAlumniRank($alumniId)
     {
         try {
-            // Get current alumni total points from alumni table
             $alumni = Alumni::find($alumniId);
             if (!$alumni) {
                 return 1;
@@ -22,16 +21,12 @@ class RankingHelper
             
             $currentPoints = $alumni->points ?? 0;
             
-            // Count alumni with higher points from alumni table
             $higherCount = Alumni::where('points', '>', $currentPoints)->count();
             
-            // Rank = higher count + 1
             $ranking = $higherCount + 1;
             
-            // Total participants
             $totalParticipants = Alumni::count();
             
-            // If points 0, last rank
             if ($currentPoints <= 0 && $totalParticipants > 0) {
                 $ranking = $totalParticipants;
             }

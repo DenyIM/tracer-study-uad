@@ -41,10 +41,9 @@ Route::get('/lupa-pass', function () {
     return view('auth.reset-password');
 })->name('lupa-pass');
 
-// Static Pages (for development/testing)
-Route::get('/go-to-kuesioner1', function () {
-    return view('questionnaire.dashboard.index');
-});
+// Route::get('/go-to-kuesioner1', function () {
+//     return view('questionnaire.dashboard.index');
+// });
 
 Route::get('/nav-kuesioner', function () {
     return view('questionnaire.dashboard.index');
@@ -90,20 +89,19 @@ Route::get('/back-to-main', function () {
     return view('questionnaire.dashboard.index');
 });
 
-Route::get('/next-section2', function () {
-    return view('pages.section2-kuesioner');
-});
+// Route::get('/next-section2', function () {
+//     return view('pages.section2-kuesioner');
+// });
 
-Route::get('/next-section3', function () {
-    return view('pages.section3-kuesioner');
-});
+// Route::get('/next-section3', function () {
+//     return view('pages.section3-kuesioner');
+// });
 
 // ==============================================
 // AUTHENTICATION ROUTES
 // ==============================================
 
 Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
-    // Profile routes - semua bisa handle JSON response
     Route::get('/', [ProfileController::class, 'edit'])->name('edit');
     Route::patch('/update', [ProfileController::class, 'update'])->name('update');
     Route::post('/password/update', [ProfileController::class, 'updatePassword'])->name('password.update');
@@ -166,13 +164,13 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::post('/profile/delete-photo', [AdminProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // Dashboard API for real-time stats
+    // Dashboard API 
     Route::get('/dashboard/stats', [UserController::class, 'getDashboardStats'])->name('dashboard.stats');
     
     // Tracer Study Charts API
     Route::get('/tracer-charts', [UserController::class, 'getTracerChartsData'])->name('tracer.charts');
     
-    // Export Questionnaire Results to PDF (SINGLE VERSION - RECOMMENDED)
+    // Export Questionnaire Results to PDF 
     Route::get('/questionnaire/export/pdf-form', [UserController::class, 'showExportPDFForm'])
         ->name('questionnaire.export.form');
 
@@ -186,7 +184,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/export/complete-answers-pdf', [UserController::class, 'exportCompleteAnswersPDF'])
         ->name('questionnaire.export.complete.pdf');
         
-    // Preview Route (optional)
+    // Preview Route
     Route::get('/export/complete-answers-preview', [UserController::class, 'previewCompleteAnswersPDF'])
         ->name('questionnaire.export.complete.preview');
 
@@ -308,7 +306,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
 Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')->name('questionnaire.')->group(function () {
     
-    // ===== QUESTIONNAIRE COMPLETION ===== (DI ATAS/URUTAN PERTAMA)
+    // ===== QUESTIONNAIRE COMPLETION ===== 
     Route::get('/completed', [AlumniQuestionnaireController::class, 'completed'])->name('completed');
 
     Route::controller(CategoryController::class)->group(function () {
@@ -337,7 +335,7 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->prefix('questionnaire')-
     // ===== ANSWERS & RESULTS VIEW =====
     Route::get('/answers', [AnswerController::class, 'index'])->name('questionnaire.answers.index');
     Route::get('/answers/category/{categorySlug}', [AnswerController::class, 'showCategoryAnswers'])
-        ->name('answers.category'); // <-- Nama ini
+        ->name('answers.category'); 
     Route::get('/answers/{categorySlug}/export', [AnswerController::class, 'exportPDF'])
         ->name('answers.export');
     
@@ -386,10 +384,10 @@ Route::middleware(['auth', 'verified', 'role:alumni'])->group(function () {
 });
 
 // ==============================================
-// ADDITIONAL STATIC ROUTES (for blade testing)
+// ADDITIONAL STATIC ROUTES 
 // ==============================================
 
-// Kuesioner Pages (Static for reference)
+// Kuesioner Pages 
 Route::get('/kuesioner', function () {
     return view('questionnaire.fill');
 })->name('kuesioner.page');

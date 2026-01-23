@@ -29,7 +29,6 @@ class QuestionnaireController extends Controller
             ->orderBy('order')
             ->get();
             
-        // Check if editing
         $category = null;
         if ($request->has('edit')) {
             $category = Category::find($request->edit);
@@ -115,7 +114,7 @@ class QuestionnaireController extends Controller
     }
     
     /**
-     * Hapus kategori (select delete)
+     * Hapus kategori
      */
     public function destroyCategory(Request $request)
     {
@@ -130,13 +129,9 @@ class QuestionnaireController extends Controller
             foreach ($request->ids as $id) {
                 $category = Category::findOrFail($id);
                 
-                // Hapus semua data terkait kategori
                 foreach ($category->questionnaires as $questionnaire) {
-                    // Hanya hapus kuesioner khusus (non-general)
                     if (!$questionnaire->is_general) {
-                        // Hapus semua questions dan relasinya
                         foreach ($questionnaire->questions as $question) {
-                            // Hapus answers
                             AnswerQuestion::where('question_id', $question->id)->delete();
                             QuestionAnswer::whereHas('answerQuestion', function($q) use ($question) {
                                 $q->where('question_id', $question->id);
@@ -144,20 +139,16 @@ class QuestionnaireController extends Controller
                             $question->delete();
                         }
                         
-                        // Hapus progress records
                         QuestionnaireProgress::where('questionnaire_id', $questionnaire->id)->delete();
                         
-                        // Hapus dari sequence
                         QuestionnaireSequence::where('questionnaire_id', $questionnaire->id)->delete();
                         
                         $questionnaire->delete();
                     }
                 }
                 
-                // Hapus status questionnaire
                 \App\Models\StatusQuestionnaire::where('category_id', $id)->delete();
                 
-                // Hapus kategori
                 $category->delete();
             }
             
@@ -184,12 +175,11 @@ class QuestionnaireController extends Controller
     {
         $category = Category::findOrFail($categoryId);
         $questionnaires = $category->questionnaires()
-            ->where('is_general', false) // Hanya tampilkan yang bukan umum
+            ->where('is_general', false)
             ->withCount('questions')
             ->orderBy('order')
             ->get();
             
-        // Check if editing
         $questionnaire = null;
         if ($request->has('edit')) {
             $questionnaire = Questionnaire::find($request->edit);
@@ -222,19 +212,18 @@ class QuestionnaireController extends Controller
         $data = $request->only(['name', 'slug', 'description', 'order']);
         $data['category_id'] = $categoryId;
         $data['is_required'] = $request->filled('is_required');
-        $data['is_general'] = false; // Selalu false untuk kuesioner spesifik
+        $data['is_general'] = false; 
         $data['order'] = $data['order'] ?? 0;
         
         try {
             DB::transaction(function () use ($data, $category) {
                 $questionnaire = Questionnaire::create($data);
                 
-                // Tambahkan ke sequence
                 $maxOrder = QuestionnaireSequence::where('category_id', $category->id)
                     ->whereHas('questionnaire', function($q) {
                         $q->where('is_general', false);
                     })
-                    ->max('order') ?? 1; // Mulai dari 2 karena umum di order 1
+                    ->max('order') ?? 1; 
                 
                 QuestionnaireSequence::create([
                     'category_id' => $category->id,
@@ -262,7 +251,6 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::findOrFail($id);
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Kuesioner umum tidak dapat diedit dari sini.');
@@ -288,7 +276,6 @@ class QuestionnaireController extends Controller
         try {
             $questionnaire->update($data);
             
-            // Update sequence
             QuestionnaireSequence::where('questionnaire_id', $id)
                 ->update(['is_required' => $data['is_required']]);
             
@@ -318,14 +305,11 @@ class QuestionnaireController extends Controller
             foreach ($request->ids as $id) {
                 $questionnaire = Questionnaire::findOrFail($id);
                 
-                // Pastikan bukan kuesioner umum
                 if ($questionnaire->is_general) {
                     continue;
                 }
                 
-                // Hapus semua questions dan relasinya
                 foreach ($questionnaire->questions as $question) {
-                    // Hapus answers
                     AnswerQuestion::where('question_id', $question->id)->delete();
                     QuestionAnswer::whereHas('answerQuestion', function($q) use ($question) {
                         $q->where('question_id', $question->id);
@@ -333,13 +317,10 @@ class QuestionnaireController extends Controller
                     $question->delete();
                 }
                 
-                // Hapus progress records
                 QuestionnaireProgress::where('questionnaire_id', $id)->delete();
                 
-                // Hapus dari sequence
                 QuestionnaireSequence::where('questionnaire_id', $id)->delete();
                 
-                // Hapus kuesioner
                 $questionnaire->delete();
             }
             
@@ -364,12 +345,10 @@ class QuestionnaireController extends Controller
      */
     public function generalQuestionnaires(Request $request)
     {
-        // Ambil semua kategori yang aktif
         $categories = Category::where('is_active', true)
             ->orderBy('order')
             ->get();
             
-        // Ambil kuesioner umum untuk kategori pertama atau kategori yang dipilih
         $selectedCategoryId = $request->get('category_id', $categories->first()->id ?? null);
         $selectedCategory = Category::find($selectedCategoryId);
         
@@ -381,7 +360,6 @@ class QuestionnaireController extends Controller
                 ->where('is_general', true)
                 ->first();
                 
-            // Jika belum ada, buat otomatis
             if (!$generalQuestionnaire) {
                 $generalQuestionnaire = Questionnaire::create([
                     'category_id' => $selectedCategory->id,
@@ -393,7 +371,6 @@ class QuestionnaireController extends Controller
                     'is_general' => true,
                 ]);
                 
-                // Tambahkan ke sequence
                 QuestionnaireSequence::updateOrCreate(
                     [
                         'category_id' => $selectedCategory->id,
@@ -407,7 +384,6 @@ class QuestionnaireController extends Controller
                 );
             }
             
-            // Ambil pertanyaan untuk kuesioner umum
             $questions = $generalQuestionnaire->questions()
                 ->orderBy('order')
                 ->get();
@@ -428,7 +404,6 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::findOrFail($id);
         
-        // Pastikan ini adalah kuesioner umum
         if (!$questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Hanya kuesioner umum yang dapat diedit dari sini.');
@@ -469,7 +444,6 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         
-        // Pastikan ini adalah kuesioner umum
         if (!$questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Hanya dapat menambahkan pertanyaan ke kuesioner umum.');
@@ -498,7 +472,6 @@ class QuestionnaireController extends Controller
                 ->withInput();
         }
 
-        // Validasi khusus untuk likert_per_row
         if ($request->question_type === 'likert_per_row') {
             if (!$request->filled('scale_options')) {
                 return redirect()->back()
@@ -513,7 +486,6 @@ class QuestionnaireController extends Controller
                     ->withInput();
             }
 
-            // Validasi bahwa opsi skala harus angka 1-5
             foreach ($scaleOptions as $option) {
                 if (!is_numeric($option) || $option < 1 || $option > 5) {
                     return redirect()->back()
@@ -523,14 +495,12 @@ class QuestionnaireController extends Controller
             }
         }
         
-        // Parse options dari textarea ke array
         $options = null;
         if ($request->filled('options')) {
             $options = array_filter(array_map('trim', explode("\n", $request->options)));
             $options = !empty($options) ? json_encode($options) : null;
         }
         
-        // Parse row_items dari textarea ke array
         $rowItems = null;
         if ($request->filled('row_items')) {
             $lines = array_filter(array_map('trim', explode("\n", $request->row_items)));
@@ -546,14 +516,12 @@ class QuestionnaireController extends Controller
             $rowItems = !empty($rowItems) ? json_encode($rowItems) : null;
         }
         
-        // Parse scale_options
         $scaleOptions = null;
         if ($request->filled('scale_options')) {
             $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
             $scaleOptions = !empty($scaleOptions) ? json_encode($scaleOptions) : null;
         }
 
-        // Parse scale_information (keterangan untuk setiap opsi skala)
         $scaleInformation = null;
         if ($request->filled('scale_information')) {
             $scaleInformation = [];
@@ -607,7 +575,6 @@ class QuestionnaireController extends Controller
         $question = Question::findOrFail($id);
         $questionnaire = $question->questionnaire;
         
-        // Pastikan ini adalah kuesioner umum
         if (!$questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Hanya dapat mengedit pertanyaan di kuesioner umum.');
@@ -636,7 +603,6 @@ class QuestionnaireController extends Controller
                 ->withInput();
         }
 
-        // Validasi khusus untuk likert_per_row
         if ($request->question_type === 'likert_per_row') {
             if (!$request->filled('scale_options')) {
                 return redirect()->back()
@@ -651,7 +617,6 @@ class QuestionnaireController extends Controller
                     ->withInput();
             }
 
-            // Validasi bahwa opsi skala harus angka 1-5
             foreach ($scaleOptions as $option) {
                 if (!is_numeric($option) || $option < 1 || $option > 5) {
                     return redirect()->back()
@@ -661,14 +626,12 @@ class QuestionnaireController extends Controller
             }
         }
         
-        // Parse options dari textarea ke array
         $options = null;
         if ($request->filled('options')) {
             $options = array_filter(array_map('trim', explode("\n", $request->options)));
             $options = !empty($options) ? json_encode($options) : null;
         }
         
-        // Parse row_items dari textarea ke array
         $rowItems = null;
         if ($request->filled('row_items')) {
             $lines = array_filter(array_map('trim', explode("\n", $request->row_items)));
@@ -684,14 +647,12 @@ class QuestionnaireController extends Controller
             $rowItems = !empty($rowItems) ? json_encode($rowItems) : null;
         }
         
-        // Parse scale_options
         $scaleOptions = null;
         if ($request->filled('scale_options')) {
             $scaleOptions = array_filter(array_map('trim', explode(',', $request->scale_options)));
             $scaleOptions = !empty($scaleOptions) ? json_encode($scaleOptions) : null;
         }
 
-        // Parse scale_information (keterangan untuk setiap opsi skala)
         $scaleInformation = null;
         if ($request->filled('scale_information')) {
             $scaleInformation = [];
@@ -769,13 +730,11 @@ class QuestionnaireController extends Controller
             foreach ($request->ids as $id) {
                 $question = Question::findOrFail($id);
                 
-                // Hapus answers
                 AnswerQuestion::where('question_id', $id)->delete();
                 QuestionAnswer::whereHas('answerQuestion', function($q) use ($id) {
                     $q->where('question_id', $id);
                 })->delete();
                 
-                // Hapus pertanyaan
                 $question->delete();
             }
             
@@ -803,7 +762,6 @@ class QuestionnaireController extends Controller
         $category = Category::findOrFail($categoryId);
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->route('admin.questionnaire.general-questionnaires', ['category_id' => $categoryId])
                 ->with('error', 'Kuesioner umum dikelola di halaman khusus.');
@@ -813,7 +771,6 @@ class QuestionnaireController extends Controller
             ->orderBy('order')
             ->get();
         
-        // Check if editing
         $question = null;
         if ($request->has('edit')) {
             $question = Question::find($request->edit);
@@ -834,7 +791,6 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Tidak dapat menambahkan pertanyaan ke kuesioner umum dari sini.');
@@ -863,7 +819,6 @@ class QuestionnaireController extends Controller
                 ->withInput();
         }
 
-        // Validasi khusus untuk likert_per_row
         if ($request->question_type === 'likert_per_row') {
             if (!$request->filled('scale_options')) {
                 return redirect()->back()
@@ -878,7 +833,6 @@ class QuestionnaireController extends Controller
                     ->withInput();
             }
 
-            // Validasi bahwa opsi skala harus angka 1-5
             foreach ($scaleOptions as $option) {
                 if (!is_numeric($option) || $option < 1 || $option > 5) {
                     return redirect()->back()
@@ -888,7 +842,6 @@ class QuestionnaireController extends Controller
             }
         }
         
-        // Parse options dari textarea ke array
         $options = $this->formatOptions($request->options);
         $rowItems = $this->formatRowItems($request->row_items);
         $scaleOptions = $this->formatScaleOptions($request->scale_options);
@@ -932,7 +885,6 @@ class QuestionnaireController extends Controller
         $question = Question::findOrFail($id);
         $questionnaire = $question->questionnaire;
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Tidak dapat mengedit pertanyaan kuesioner umum dari sini.');
@@ -961,7 +913,6 @@ class QuestionnaireController extends Controller
                 ->withInput();
         }
 
-        // Validasi khusus untuk likert_per_row
         if ($request->question_type === 'likert_per_row') {
             if (!$request->filled('scale_options')) {
                 return redirect()->back()
@@ -976,7 +927,6 @@ class QuestionnaireController extends Controller
                     ->withInput();
             }
 
-            // Validasi bahwa opsi skala harus angka 1-5
             foreach ($scaleOptions as $option) {
                 if (!is_numeric($option) || $option < 1 || $option > 5) {
                     return redirect()->back()
@@ -986,7 +936,6 @@ class QuestionnaireController extends Controller
             }
         }
         
-        // Parse options dari textarea ke array
         $options = $this->formatOptions($request->options);
         $rowItems = $this->formatRowItems($request->row_items);
         $scaleOptions = $this->formatScaleOptions($request->scale_options);
@@ -1051,24 +1000,19 @@ class QuestionnaireController extends Controller
         $formattedOptions = [];
         
         foreach ($lines as $line) {
-            // Skip empty lines
             if (empty($line)) continue;
             
-            // Handle format dengan pipe: value|text
             if (strpos($line, '|') !== false) {
                 $parts = explode('|', $line, 2);
                 $value = trim($parts[0]);
                 $text = trim($parts[1] ?? $parts[0]);
                 
-                // Jika value dan text sama, simpan sebagai string
-                // Jika berbeda, simpan sebagai array
                 if ($value === $text) {
                     $formattedOptions[] = $text;
                 } else {
                     $formattedOptions[] = ['text' => $text];
                 }
             } else {
-                // Format sederhana
                 $formattedOptions[] = $line;
             }
         }
@@ -1157,13 +1101,11 @@ class QuestionnaireController extends Controller
             foreach ($request->ids as $id) {
                 $question = Question::findOrFail($id);
                 
-                // Hapus answers
                 AnswerQuestion::where('question_id', $id)->delete();
                 QuestionAnswer::whereHas('answerQuestion', function($q) use ($id) {
                     $q->where('question_id', $id);
                 })->delete();
                 
-                // Hapus pertanyaan
                 $question->delete();
             }
             
@@ -1198,7 +1140,6 @@ class QuestionnaireController extends Controller
             DB::transaction(function () use ($request, $categoryId) {
                 foreach ($request->order as $item) {
                     $questionnaire = Questionnaire::find($item['id']);
-                    // Skip kuesioner umum
                     if ($questionnaire && !$questionnaire->is_general) {
                         Questionnaire::where('id', $item['id'])
                             ->where('category_id', $categoryId)
@@ -1206,7 +1147,7 @@ class QuestionnaireController extends Controller
                         
                         QuestionnaireSequence::where('questionnaire_id', $item['id'])
                             ->where('category_id', $categoryId)
-                            ->update(['order' => $item['order'] + 1]); // +1 karena umum di order 1
+                            ->update(['order' => $item['order'] + 1]); 
                     }
                 }
             });
@@ -1336,7 +1277,6 @@ class QuestionnaireController extends Controller
         $category = Category::findOrFail($categoryId);
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->route('admin.questionnaire.general-questionnaires', ['category_id' => $categoryId])
                 ->with('error', 'Kuesioner umum dikelola di halaman khusus.');
@@ -1360,7 +1300,6 @@ class QuestionnaireController extends Controller
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         $question = Question::findOrFail($id);
         
-        // Pastikan bukan kuesioner umum
         if ($questionnaire->is_general) {
             return redirect()->route('admin.questionnaire.general-questionnaires', ['category_id' => $categoryId])
                 ->with('error', 'Kuesioner umum dikelola di halaman khusus.');
@@ -1383,7 +1322,6 @@ class QuestionnaireController extends Controller
     {
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         
-        // Pastikan ini adalah kuesioner umum
         if (!$questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Hanya dapat menambahkan pertanyaan ke kuesioner umum.');
@@ -1407,7 +1345,6 @@ class QuestionnaireController extends Controller
         $questionnaire = Questionnaire::findOrFail($questionnaireId);
         $question = Question::findOrFail($id);
         
-        // Pastikan ini adalah kuesioner umum
         if (!$questionnaire->is_general) {
             return redirect()->back()
                 ->with('error', 'Hanya dapat mengedit pertanyaan di kuesioner umum.');

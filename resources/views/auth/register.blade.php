@@ -381,7 +381,7 @@
                         <input type="email" name="email" value="{{ old('email') }}" class="form-control"
                             id="email" placeholder="namanim@webmail.uad.ac.id" required>
                         <div class="email-help">
-                            Format email: namanim@webmail.uad.ac.id
+                            Gunakan Email yang telah disediakan UAD!
                         </div>
                         <div class="invalid-feedback" id="emailError">
                             Email harus menggunakan format: namanim@webmail.uad.ac.id

@@ -371,7 +371,8 @@
                         <input type="email" class="form-control" id="email" name="email"
                             value="{{ old('email') }}" placeholder="namanim@webmail.uad.ac.id" required>
                         <div class="email-help">
-                            Gunakan email UAD: namanim@webmail.uad.ac.id
+                            Gunakan Email yang telah disediakan UAD!
+                            {{-- Admin: nama@domain.uad.ac.id --}}
                         </div>
                         @error('email')
                             <div class="text-danger mt-1">{{ $message }}</div>
@@ -446,8 +447,12 @@
 
         // Validasi format email UAD (client-side)
         function validateUADEmail(email) {
-            const emailRegex = /^[a-zA-Z0-9]+@webmail\.uad\.ac\.id$/;
-            return emailRegex.test(email);
+            // Format alumni: @webmail.uad.ac.id
+            const alumniPattern = /^[a-zA-Z0-9]+@webmail\.uad\.ac\.id$/;
+            // Format admin: @*.uad.ac.id (di mana * bisa berupa apa saja)
+            const adminPattern = /^[a-zA-Z0-9]+@[a-zA-Z0-9.-]+\.uad\.ac\.id$/;
+
+            return alumniPattern.test(email) || adminPattern.test(email);
         }
 
         // Toggle Password Visibility
@@ -473,7 +478,11 @@
             if (email && !validateUADEmail(email)) {
                 e.preventDefault();
                 alert(
-                    'Email harus menggunakan format UAD: namanim@webmail.uad.ac.id\nContoh: deny2100018138@webmail.uad.ac.id'
+                    'Email harus menggunakan format UAD:\n' +
+                    '- Alumni: namanim@webmail.uad.ac.id\n' +
+                    // '- Admin: nama@domain.uad.ac.id\n\n' +
+                    'Contoh Alumni: alumni1234567890@webmail.uad.ac.id'
+                    // 'Contoh Admin: admin@fti.uad.ac.id'
                 );
                 document.getElementById('email').focus();
                 return false;

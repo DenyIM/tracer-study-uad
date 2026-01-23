@@ -26,10 +26,18 @@ class GoogleAuthController extends Controller
             $email = $googleUser->getEmail();
             $googleName = $googleUser->getName();
             
-            // **VALIDASI 1: Format email UAD**
-            if (!$this->isValidUADEmail($email)) {
+            // **VALIDASI: Format email UAD (alumni atau admin)**
+            $isAlumniEmail = $this->isValidUADEmail($email);
+            $isAdminEmail = $this->isValidAdminEmail($email);
+            
+            if (!$isAlumniEmail && !$isAdminEmail) {
                 return redirect()->route('login')
-                    ->with('error', 'Hanya email @webmail.uad.ac.id yang diperbolehkan.');
+                    ->with('error', 'Hanya email UAD yang diperbolehkan: @webmail.uad.ac.id untuk alumni atau @*.uad.ac.id untuk admin.');
+            }
+            
+            // Jika email admin, coba login sebagai admin
+            if ($isAdminEmail && !$isAlumniEmail) {
+                return $this->handleAdminGoogleLogin($googleUser);
             }
             
             // **VALIDASI 2: Extract dan validasi data dari email**
@@ -125,18 +133,40 @@ class GoogleAuthController extends Controller
             
         } catch (\Exception $e) {
             Log::error('Google Auth Error: ' . $e->getMessage());
-            
-            // Pesan error yang user-friendly
-            $errorMessage = 'Login dengan Google gagal.';
-            
-            if (strpos($e->getMessage(), 'Integrity constraint violation') !== false) {
-                $errorMessage = 'Terjadi kesalahan database. Silakan hubungi administrator.';
-            } elseif (strpos($e->getMessage(), 'Connection') !== false) {
-                $errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-            }
-            
-            return redirect()->route('login')->with('error', $errorMessage);
+            return redirect()->route('login')->with('error', 'Login dengan Google gagal.');
         }
+    }
+
+    /**
+     * Handle Google login untuk admin
+     */
+    private function handleAdminGoogleLogin($googleUser)
+    {
+        $email = $googleUser->getEmail();
+        
+        // Cek apakah user sudah ada
+        $user = User::where('email', $email)->first();
+        
+        if (!$user) {
+            return redirect()->route('login')
+                ->with('error', 'Akun admin tidak ditemukan. Silakan gunakan login manual.');
+        }
+        
+        // Pastikan user adalah admin
+        if ($user->role !== 'admin') {
+            return redirect()->route('login')
+                ->with('error', 'Email ini terdaftar sebagai alumni, bukan admin.');
+        }
+        
+        // Update google_id jika belum ada
+        if (!$user->google_id) {
+            $user->update(['google_id' => $googleUser->getId()]);
+        }
+        
+        // Login user
+        Auth::login($user);
+        
+        return redirect()->route('admin.views.dashboard');
     }
     
     /**
@@ -184,5 +214,28 @@ class GoogleAuthController extends Controller
         // Cari nama di googleName (bisa lebih panjang)
         return strpos($googleNameNorm, $emailNameNorm) !== false || 
                strpos($emailNameNorm, substr($googleNameNorm, 0, 3)) !== false;
+    }
+
+    /**
+     * Validasi format email untuk admin (Google login)
+     * Format: nama@domain.uad.ac.id
+     */
+    private function isValidAdminEmail($email)
+    {
+        // Pattern: nama@domain.uad.ac.id (domain bisa berupa apapun)
+        $pattern = '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.uad\.ac\.id$/';
+        
+        return preg_match($pattern, $email) === 1;
+    }
+
+    /**
+     * Cek apakah email milik admin
+     * Admin memiliki format: nama@domain.uad.ac.id
+     * Bukan webmail.uad.ac.id
+     */
+    private function isAdminEmail($email)
+    {
+        return $this->isValidAdminEmail($email) && 
+            !$this->isValidUADEmail($email); // Bukan format alumni
     }
 }

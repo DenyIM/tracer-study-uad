@@ -27,20 +27,17 @@ class QuestionnaireExport implements WithMultipleSheets
         $sheets = [];
         
         if ($this->categoryId) {
-            // Export single category
             $category = Category::find($this->categoryId);
             if ($category) {
                 $sheets[] = new CategorySheet($category);
             }
         } else {
-            // Export all categories
             $categories = Category::with('questionnaires.questions')->get();
             foreach ($categories as $category) {
                 $sheets[] = new CategorySheet($category);
             }
         }
         
-        // Add summary sheet
         $sheets[] = new SummarySheet($this->categoryId);
         
         return $sheets;
@@ -137,7 +134,6 @@ class CategorySheet implements FromCollection, WithHeadings, WithMapping, WithTi
     
     public function title(): string
     {
-        // Excel sheet name max 31 chars
         return mb_substr($this->category->name, 0, 31, 'UTF-8');
     }
 }

@@ -18,7 +18,6 @@ class LeaderboardAdminController extends Controller
      */
     public function dashboard(Request $request)
     {
-        // Stats utama
         $totalAlumni = Alumni::count();
         $totalPoints = Alumni::sum('points');
         $topThreeAlumni = Alumni::with('user')
@@ -26,13 +25,11 @@ class LeaderboardAdminController extends Controller
             ->limit(3)
             ->get();
         
-        // Submission stats
         $pendingForumSubmissions = ForumSubmission::where('status', 'pending')->count();
         $pendingJobSubmissions = JobSubmission::where('status', 'pending')->count();
         $approvedForumSubmissions = ForumSubmission::where('status', 'approved')->count();
         $approvedJobSubmissions = JobSubmission::where('status', 'approved')->count();
         
-        // Recent submissions
         $recentForumSubmissions = ForumSubmission::with('alumni.user')
             ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
@@ -45,7 +42,6 @@ class LeaderboardAdminController extends Controller
             ->limit(5)
             ->get();
         
-        // Recent points awards
         $recentPoints = Alumni::where('points', '>', 0)
             ->orderBy('updated_at', 'desc')
             ->limit(10)
@@ -86,7 +82,6 @@ class LeaderboardAdminController extends Controller
         
         $alumni = $query->paginate($perPage);
         
-        // Hitung ranking
         $rankedAlumni = [];
         $startRank = ($alumni->currentPage() - 1) * $alumni->perPage() + 1;
         
@@ -220,17 +215,15 @@ class LeaderboardAdminController extends Controller
             
             $submission = ForumSubmission::findOrFail($id);
             
-            // Update submission
             $submission->update([
                 'status' => 'approved',
-                'points_awarded' => 2000, // 2000 points untuk forum
+                'points_awarded' => 2000, 
                 'admin_notes' => $request->admin_notes,
                 'verified_at' => now(),
                 'verified_by' => Auth::id(),
                 'updated_at' => now(),
             ]);
             
-            // Update alumni points
             $alumni = $submission->alumni;
             $alumni->increment('points', 2000);
             $alumni->updated_at = now();
@@ -266,17 +259,15 @@ class LeaderboardAdminController extends Controller
             
             $submission = JobSubmission::findOrFail($id);
             
-            // Update submission
             $submission->update([
                 'status' => 'approved',
-                'points_awarded' => 3000, // 3000 points untuk job
+                'points_awarded' => 3000, 
                 'admin_notes' => $request->admin_notes,
                 'verified_at' => now(),
                 'verified_by' => Auth::id(),
                 'updated_at' => now(),
             ]);
             
-            // Update alumni points
             $alumni = $submission->alumni;
             $alumni->increment('points', 3000);
             $alumni->updated_at = now();
@@ -473,7 +464,6 @@ class LeaderboardAdminController extends Controller
             $oldPoints = $alumni->points;
             $alumni->update(['points' => $request->points]);
             
-            // Log perubahan points
             DB::table('point_adjustments')->insert([
                 'alumni_id' => $id,
                 'old_points' => $oldPoints,
@@ -503,7 +493,6 @@ class LeaderboardAdminController extends Controller
      */
     public function getStatistics()
     {
-        // Submission stats per month
         $forumStats = ForumSubmission::select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
                 DB::raw('COUNT(*) as total'),
@@ -528,7 +517,6 @@ class LeaderboardAdminController extends Controller
             ->orderBy('month')
             ->get();
         
-        // Category distribution
         $forumCategories = ForumSubmission::select('category', DB::raw('COUNT(*) as count'))
             ->where('status', 'approved')
             ->groupBy('category')
@@ -539,7 +527,6 @@ class LeaderboardAdminController extends Controller
             ->groupBy('field')
             ->get();
         
-        // Top alumni contributors
         $topForumContributors = ForumSubmission::select('alumni_id', DB::raw('COUNT(*) as count'))
             ->where('status', 'approved')
             ->groupBy('alumni_id')

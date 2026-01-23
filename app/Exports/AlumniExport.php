@@ -28,7 +28,6 @@ class AlumniExport implements FromQuery, WithHeadings, WithMapping, WithStyles
             ->with('alumni')
             ->orderBy('created_at', 'desc');
 
-        // Apply filters from request
         if ($this->request->filled('study_program')) {
             $query->whereHas('alumni', function ($q) {
                 $q->where('study_program', $this->request->study_program);
@@ -81,10 +80,8 @@ class AlumniExport implements FromQuery, WithHeadings, WithMapping, WithStyles
     public function styles(Worksheet $sheet)
     {
         return [
-            // Style the first row as bold text
             1 => ['font' => ['bold' => true]],
 
-            // Auto size columns
             'A' => ['width' => 15],
             'B' => ['width' => 30],
             'C' => ['width' => 30],

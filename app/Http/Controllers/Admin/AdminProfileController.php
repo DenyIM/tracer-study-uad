@@ -30,7 +30,6 @@ class AdminProfileController extends Controller
         $admin = Admin::where('user_id', Auth::id())->firstOrFail();
         $user = Auth::user();
         
-        // Validasi tanpa job_title karena tidak bisa diubah di profile
         $validated = $request->validate([
             'fullname' => 'required|string|max:255',
             'email' => [
@@ -41,12 +40,10 @@ class AdminProfileController extends Controller
             'phone' => 'required|string|max:20',
         ]);
 
-        // Update user email
         $admin->user->update([
             'email' => $validated['email'],
         ]);
 
-        // Update admin profile (tanpa mengubah job_title)
         $admin->update([
             'fullname' => $validated['fullname'],
             'phone' => $validated['phone'],
@@ -68,13 +65,11 @@ class AdminProfileController extends Controller
 
         $user = Auth::user();
 
-        // Check current password
         if (!Hash::check($request->current_password, $user->password)) {
             return redirect()->back()
                 ->with('error', 'Password saat ini tidak sesuai');
         }
 
-        // Update password
         $user->update([
             'password' => Hash::make($request->password),
         ]);
@@ -94,15 +89,12 @@ class AdminProfileController extends Controller
 
         $user = Auth::user();
 
-        // Delete old photo if exists
         if ($user->pp_url && Storage::exists($user->pp_url)) {
             Storage::delete($user->pp_url);
         }
 
-        // Store new photo
         $path = $request->file('profile_photo')->store('profile-photos', 'public');
 
-        // Update user photo URL
         $user->update([
             'pp_url' => $path,
         ]);

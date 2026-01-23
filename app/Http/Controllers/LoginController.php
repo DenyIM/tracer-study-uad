@@ -16,8 +16,10 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@(?:webmail|[a-zA-Z0-9.-]+)\.uad\.ac\.id$/'],
+            'password' => ['required'],
+        ], [
+            'email.regex' => 'Email harus menggunakan format UAD: @webmail.uad.ac.id untuk alumni atau @*.uad.ac.id untuk admin'
         ]);
 
         if (Auth::guard('admin')->attempt($credentials, $request->remember)) {
