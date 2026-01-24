@@ -208,8 +208,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
             Route::post('/bulk-delete', [UserController::class, 'alumniBulkDestroy'])->name('bulk-destroy');
             
             // Import/Export
-            Route::get('/export', [UserController::class, 'exportAlumni'])->name('export');
-            Route::post('/import', [UserController::class, 'importAlumni'])->name('import');
+            // Route::get('/export', [UserController::class, 'exportAlumni'])->name('export');
+            // Route::post('/import', [UserController::class, 'importAlumni'])->name('import');
             Route::get('/admin/questionnaire/export/pdf', [UserController::class, 'exportQuestionnaireResultsPDF'])
                 ->name('admin.questionnaire.export.pdf');
             Route::get('/admin/users/alumni/export', [UserController::class, 'exportAlumni'])
