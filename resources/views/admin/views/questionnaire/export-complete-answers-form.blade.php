@@ -56,12 +56,15 @@
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label fw-bold">Tanggal Mulai</label>
-                                <input type="date" name="start_date" class="form-control">
+                                <input type="date" name="start_date" class="form-control"
+                                    value="{{ date('Y-m-d', strtotime('-1 month')) }}">
+                                <small class="text-muted">Default: 1 bulan terakhir</small>
                             </div>
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label fw-bold">Tanggal Akhir</label>
-                                <input type="date" name="end_date" class="form-control">
+                                <input type="date" name="end_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                <small class="text-muted">Default: hari ini</small>
                             </div>
 
                             <div class="col-md-3 mb-3">
@@ -218,6 +221,77 @@
                 previewBtn.addEventListener('click', function(e) {
                     // Tampilkan informasi bahwa preview akan dibuka di tab baru
                     console.log('Opening preview in new tab...');
+                });
+            }
+        });
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('completeExportForm');
+
+            if (form) {
+                // Validasi tanggal
+                const startDateInput = form.querySelector('[name="start_date"]');
+                const endDateInput = form.querySelector('[name="end_date"]');
+
+                function validateDates() {
+                    if (startDateInput.value && endDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const endDate = new Date(endDateInput.value);
+
+                        if (startDate > endDate) {
+                            alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir!');
+                            startDateInput.value = '';
+                            endDateInput.value = '';
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                if (startDateInput && endDateInput) {
+                    startDateInput.addEventListener('change', validateDates);
+                    endDateInput.addEventListener('change', validateDates);
+                }
+
+                // Submit handler untuk warning jika filter tanggal terlalu ketat
+                form.addEventListener('submit', function(e) {
+                    const startDate = startDateInput ? startDateInput.value : '';
+                    const endDate = endDateInput ? endDateInput.value : '';
+                    const category = form.querySelector('[name="category_id"]')?.value;
+                    const alumni = form.querySelector('[name="alumni_id"]')?.value;
+
+                    // Jika semua filter diisi (mungkin terlalu spesifik)
+                    if (startDate && endDate && category && alumni) {
+                        if (!confirm(
+                                'Filter yang Anda pilih sangat spesifik. Mungkin tidak ada data yang sesuai. Lanjutkan?'
+                            )) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+
+                    // Jika tanggal di masa depan
+                    const today = new Date();
+                    const startDateObj = startDate ? new Date(startDate) : null;
+                    const endDateObj = endDate ? new Date(endDate) : null;
+
+                    if (startDateObj && startDateObj > today) {
+                        if (!confirm('Tanggal mulai di masa depan. Mungkin tidak ada data. Lanjutkan?')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+
+                    if (endDateObj && endDateObj > today) {
+                        if (!confirm('Tanggal akhir di masa depan. Lanjutkan?')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
                 });
             }
         });

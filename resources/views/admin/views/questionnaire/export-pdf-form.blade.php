@@ -12,7 +12,7 @@
                     <h5 class="mb-0">Export Laporan PDF</h5>
                 </div>
                 <div class="card-body">
-                    <form id="pdfExportForm" action="{{ route('admin.questionnaire.export.pdf') }}" method="GET">
+                    <form id="pdfExportForm" method="GET">
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Pilih Kategori</label>
@@ -25,11 +25,14 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Tanggal Mulai</label>
-                                <input type="date" name="start_date" class="form-control">
+                                <input type="date" name="start_date" class="form-control"
+                                    value="{{ date('Y-m-d', strtotime('-1 month')) }}">
+                                <small class="text-muted">Default: 1 bulan lalu</small>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Tanggal Akhir</label>
-                                <input type="date" name="end_date" class="form-control">
+                                <input type="date" name="end_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                <small class="text-muted">Default: hari ini</small>
                             </div>
                         </div>
 
@@ -41,7 +44,18 @@
                                 <li>Data per kategori</li>
                                 <li>Pertanyaan paling sering dijawab</li>
                                 <li>Top 10 alumni aktif</li>
-                                <li>Kesimpulan dan rekomendasi</li>
+                                <li>Analisis grafik tracer study</li>
+                                {{-- <li>Kesimpulan dan rekomendasi</li> --}}
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Tips:</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>Biarkan tanggal kosong untuk semua data</li>
+                                <li>Tanggal mulai tidak boleh lebih besar dari tanggal akhir</li>
+                                <li>Filter tanggal membantu mempersempit data yang ditampilkan</li>
                             </ul>
                         </div>
 
@@ -51,123 +65,165 @@
                             </a>
 
                             <div>
-                                <button type="button" id="previewBtn" class="btn btn-info">
+                                <!-- Button dengan onclick JavaScript -->
+                                <button type="button" onclick="exportPDF('preview')" class="btn btn-info me-2">
                                     <i class="bi bi-eye me-2"></i> Preview
                                 </button>
-                                <button type="submit" class="btn btn-primary">
+
+                                <button type="button" onclick="exportPDF('download')" class="btn btn-primary">
                                     <i class="bi bi-download me-2"></i> Download PDF
                                 </button>
                             </div>
                         </div>
                     </form>
+                </div>
+            </div>
 
-                    @push('scripts')
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                const previewBtn = document.getElementById('previewBtn');
-                                const form = document.getElementById('pdfExportForm');
-
-                                console.log('Preview button:', previewBtn);
-                                console.log('Form element:', form);
-
-                                if (previewBtn && form) {
-                                    previewBtn.addEventListener('click', function(e) {
-                                        e.preventDefault();
-                                        generatePreview();
-                                    });
-                                } else {
-                                    console.error('Element tidak ditemukan!');
-                                }
-                            });
-
-                            function generatePreview() {
-                                try {
-                                    const form = document.getElementById('pdfExportForm');
-
-                                    if (!form) {
-                                        throw new Error('Form dengan ID "pdfExportForm" tidak ditemukan!');
-                                    }
-
-                                    // Ambil semua nilai form
-                                    const formData = new FormData(form);
-                                    const params = new URLSearchParams();
-
-                                    // Tambahkan semua parameter
-                                    for (const [key, value] of formData.entries()) {
-                                        if (value) {
-                                            params.append(key, value);
-                                        }
-                                    }
-
-                                    // Tambahkan action=preview
-                                    params.append('action', 'preview');
-
-                                    // Build URL
-                                    const baseUrl = "{{ route('admin.questionnaire.export.pdf') }}";
-                                    const previewUrl = `${baseUrl}?${params.toString()}`;
-
-                                    console.log('Generated URL:', previewUrl);
-
-                                    // Buka di tab baru
-                                    window.open(previewUrl, '_blank', 'noopener,noreferrer');
-
-                                } catch (error) {
-                                    console.error('Error:', error);
-                                    // Tampilkan toast error
-                                    showToast('Error: ' + error.message, 'error');
-                                }
-                            }
-
-                            // Toast notification function
-                            function showToast(message, type = 'info') {
-                                // Cek jika Bootstrap Toast tersedia
-                                if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-                                    // Buat toast element
-                                    const toastHtml = `
-            <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'info'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi ${type === 'error' ? 'bi-exclamation-triangle' : 'bi-info-circle'} me-2"></i>
-                        ${message}
+            <!-- Preview Data Statistics -->
+            {{-- <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i> Preview Statistik</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="display-6 text-primary">{{ $totalAlumni ?? 0 }}</div>
+                            <div class="text-muted small">Total Alumni</div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="display-6 text-success">{{ $totalAnswers ?? 0 }}</div>
+                            <div class="text-muted small">Total Jawaban</div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="display-6 text-info">{{ $responseRate ?? 0 }}%</div>
+                            <div class="text-muted small">Response Rate</div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="display-6 text-warning">{{ $categories->count() ?? 0 }}</div>
+                            <div class="text-muted small">Kategori</div>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Data terakhir diperbarui: {{ now()->format('d M Y H:i') }}
+                        </small>
+                    </div>
                 </div>
-            </div>
-        `;
-
-                                    // Buat container jika belum ada
-                                    let toastContainer = document.getElementById('toastContainer');
-                                    if (!toastContainer) {
-                                        toastContainer = document.createElement('div');
-                                        toastContainer.id = 'toastContainer';
-                                        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-                                        document.body.appendChild(toastContainer);
-                                    }
-
-                                    // Tambahkan toast
-                                    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-
-                                    // Inisialisasi dan tampilkan toast
-                                    const toastEl = toastContainer.lastElementChild;
-                                    const toast = new bootstrap.Toast(toastEl);
-                                    toast.show();
-
-                                    // Hapus setelah 5 detik
-                                    setTimeout(() => {
-                                        if (toastEl.parentNode) {
-                                            toastEl.parentNode.removeChild(toastEl);
-                                        }
-                                    }, 5000);
-
-                                } else {
-                                    // Fallback ke alert jika Bootstrap tidak tersedia
-                                    alert(message);
-                                }
-                            }
-                        </script>
-                    @endpush
-                </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        function exportPDF(actionType) {
+            const form = document.getElementById('pdfExportForm');
+            if (!form) {
+                alert('Form tidak ditemukan!');
+                return;
+            }
+
+            // Validasi form dulu
+            if (!validateForm()) {
+                return;
+            }
+
+            // Buat form baru
+            const newForm = document.createElement('form');
+            newForm.method = 'GET';
+            newForm.action = "{{ route('admin.questionnaire.export.pdf') }}";
+
+            // Set target berdasarkan action
+            if (actionType === 'preview') {
+                newForm.target = '_blank';
+            }
+
+            // Copy semua input dari form asli
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                if (input.name) {
+                    const clone = input.cloneNode(true);
+                    newForm.appendChild(clone);
+                }
+            });
+
+            // Tambahkan action parameter
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = actionType;
+            newForm.appendChild(actionInput);
+
+            // Submit form
+            document.body.appendChild(newForm);
+            newForm.submit();
+            document.body.removeChild(newForm);
+
+            // Show loading
+            showLoading(actionType);
+        }
+
+        function validateForm() {
+            const form = document.getElementById('pdfExportForm');
+            const startDate = form.querySelector('[name="start_date"]').value;
+            const endDate = form.querySelector('[name="end_date"]').value;
+
+            // Validasi tanggal
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                if (start > end) {
+                    alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir!');
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function showLoading(actionType) {
+            const buttons = document.querySelectorAll('button[onclick*="exportPDF"]');
+            buttons.forEach(btn => {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Memproses...';
+                btn.disabled = true;
+
+                // Reset setelah 5 detik
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 5000);
+            });
+        }
+    </script>
+@endpush
+
+@push('styles')
+    <style>
+        /* Date input styling */
+        input[type="date"] {
+            position: relative;
+        }
+
+        input[type="date"]:invalid {
+            border-color: #dc3545;
+        }
+
+        input[type="date"]:valid {
+            border-color: #198754;
+        }
+
+        /* Small text helper */
+        .text-muted.small {
+            font-size: 0.8rem;
+        }
+
+        /* Preview stats */
+        .display-6 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+    </style>
+@endpush

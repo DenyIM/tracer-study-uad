@@ -320,6 +320,38 @@
         </div>
     </div>
 
+    <!-- Jika tidak ada data -->
+    @if ($has_no_data)
+        <div class="alert alert-warning"
+            style="background-color: #fff3cd; border-color: #ffeaa7; color: #856404; padding: 15px; margin-bottom: 20px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">
+                <i class="bi bi-exclamation-triangle"></i> TIDAK ADA DATA
+            </div>
+            <p>
+                Tidak ditemukan jawaban dari alumni berdasarkan filter yang dipilih:
+            </p>
+            <ul>
+                @if (!empty($filters['start_date']))
+                    <li>Tanggal mulai: {{ $filters['start_date'] }}</li>
+                @endif
+                @if (!empty($filters['end_date']))
+                    <li>Tanggal akhir: {{ $filters['end_date'] }}</li>
+                @endif
+                @if (!empty($filters['category_id']))
+                    <li>Kategori: {{ $filters['filter_info']['category'] ?? '-' }}</li>
+                @endif
+                @if (!empty($filters['alumni_id']))
+                    <li>Alumni: {{ $filters['filter_info']['alumni'] ?? '-' }}</li>
+                @endif
+            </ul>
+            <p>
+                <strong>Saran:</strong> Coba ubah filter tanggal atau pilih filter lainnya.
+            </p>
+        </div>
+    @else
+        <!-- Tampilkan data normal jika ada -->
+    @endif
+
     <!-- Filters Info -->
     @if ($filters['has_filters'])
         <div class="filters-box">

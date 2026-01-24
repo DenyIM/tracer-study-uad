@@ -212,6 +212,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
             Route::post('/import', [UserController::class, 'importAlumni'])->name('import');
             Route::get('/admin/questionnaire/export/pdf', [UserController::class, 'exportQuestionnaireResultsPDF'])
                 ->name('admin.questionnaire.export.pdf');
+            Route::get('/admin/users/alumni/export', [UserController::class, 'exportAlumni'])
+                ->name('export');
         });
 
         // Admin Management
@@ -223,6 +225,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
             Route::get('/{admin}/edit', [UserController::class, 'adminEdit'])->name('edit');
             Route::put('/{admin}', [UserController::class, 'adminUpdate'])->name('update');
             Route::delete('/{admin}', [UserController::class, 'adminDestroy'])->name('destroy');
+            Route::get('/admin/users/admin/export', [UserController::class, 'exportAdmins'])
+                ->name('export');
             
             // Additional admin actions
             Route::post('/{admin}/upload-photo', [UserController::class, 'adminUploadPhoto'])->name('upload-photo');

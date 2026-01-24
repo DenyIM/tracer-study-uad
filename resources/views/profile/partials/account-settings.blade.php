@@ -17,7 +17,7 @@
             </div>
 
             <!-- Tema Aplikasi -->
-            <div class="setting-item">
+            {{-- <div class="setting-item">
                 <div class="setting-icon">
                     <i class="fas fa-palette"></i>
                 </div>
@@ -32,7 +32,7 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Pengaturan Notifikasi -->
             <div class="setting-item" onclick="openNotificationModal()">

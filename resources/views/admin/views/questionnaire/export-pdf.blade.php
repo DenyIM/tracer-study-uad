@@ -415,11 +415,36 @@
         <div class="title">{{ $title }}</div>
         <div class="subtitle">{{ $subtitle }}</div>
         <div class="report-info">
-            Periode: {{ $period }} |
+            Periode: <strong>{{ $period }}</strong> |
             Kategori: {{ $category_filter }} |
             Dicetak: {{ $generated_at }}
+
+            @if ($is_date_filtered)
+                <br>
+                <span style="color: #e74c3c; font-weight: bold;">
+                    <i class="bi bi-calendar-check"></i> Data difilter berdasarkan tanggal: {{ $filter_date_range }}
+                </span>
+            @endif
         </div>
     </div>
+
+    <!-- Jika tidak ada data untuk periode tersebut -->
+    @if (!$has_data_for_period && $is_date_filtered)
+        <div class="alert alert-warning"
+            style="background-color: #fff3cd; border: 2px solid #ffc107; margin-bottom: 20px;">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">
+                <i class="bi bi-exclamation-triangle"></i> PERHATIAN: DATA TIDAK DITEMUKAN
+            </div>
+            <p>
+                <strong>Tidak ada data kuesioner</strong> untuk periode
+                <strong>{{ $filter_date_range }}</strong>.
+            </p>
+            <p class="mb-0">
+                <i class="bi bi-lightbulb"></i> <strong>Saran:</strong>
+                Coba periksa rentang tanggal atau gunakan periode yang lebih luas.
+            </p>
+        </div>
+    @endif
 
     <!-- Filter Info -->
     @if ($filters['has_filters'])

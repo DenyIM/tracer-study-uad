@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AdminsExport;
+use App\Exports\AlumniExport;
 
 
 class UserController extends Controller
@@ -31,7 +34,19 @@ class UserController extends Controller
      */
     public function alumniIndex(Request $request)
     {
-        $query = Alumni::with('user')->latest();
+        $query = Alumni::with('user');
+        
+        // Filter search by name or NIM
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('fullname', 'like', '%' . $search . '%')
+                ->orWhere('nim', 'like', '%' . $search . '%')
+                ->orWhereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('email', 'like', '%' . $search . '%');
+                });
+            });
+        }
         
         if ($request->has('study_program') && $request->study_program) {
             $query->where('study_program', $request->study_program);
@@ -41,7 +56,31 @@ class UserController extends Controller
             $query->whereYear('graduation_date', $request->graduation_year);
         }
         
-        $alumni = $query->paginate(10);
+        // Filter by email status
+        if ($request->has('email_status') && $request->email_status) {
+            if ($request->email_status == 'verified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNotNull('email_verified_at');
+                });
+            } elseif ($request->email_status == 'unverified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNull('email_verified_at');
+                });
+            }
+        }
+        
+        // Filter by points
+        if ($request->has('points_filter') && $request->points_filter) {
+            if ($request->points_filter == 'has_points') {
+                $query->where('points', '>', 0);
+            } elseif ($request->points_filter == 'no_points') {
+                $query->where('points', 0)->orWhereNull('points');
+            } elseif ($request->points_filter == 'high_points') {
+                $query->where('points', '>', 100);
+            }
+        }
+        
+        $alumni = $query->latest()->paginate(10);
         
         $studyPrograms = Alumni::distinct('study_program')->pluck('study_program');
         $graduationYears = Alumni::selectRaw('YEAR(graduation_date) as year')
@@ -206,10 +245,116 @@ class UserController extends Controller
     /**
      * Display a listing of admin users.
      */
-    public function adminIndex()
+    public function adminIndex(Request $request)
     {
-        $admins = Admin::with('user')->latest()->get();
+        $query = Admin::with('user');
+        
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('fullname', 'like', '%' . $search . '%')
+                ->orWhereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('email', 'like', '%' . $search . '%');
+                });
+            });
+        }
+        
+        if ($request->has('job_title') && $request->job_title) {
+            $query->where('job_title', $request->job_title);
+        }
+        
+        if ($request->has('status') && $request->status) {
+            if ($request->status == 'verified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNotNull('email_verified_at');
+                });
+            } elseif ($request->status == 'unverified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNull('email_verified_at');
+                });
+            }
+        }
+        
+        $admins = $query->latest()->paginate(10);
+        
         return view('admin.views.users.admin.index', compact('admins'));
+    }
+
+    /**
+     * Export admin data.
+     */
+    public function exportAdmins(Request $request)
+    {
+        $query = Admin::with('user');
+        
+        // Apply filters
+        if ($request->has('job_title') && $request->job_title) {
+            $query->where('job_title', $request->job_title);
+        }
+        
+        if ($request->has('status') && $request->status) {
+            if ($request->status == 'verified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNotNull('email_verified_at');
+                });
+            } elseif ($request->status == 'unverified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNull('email_verified_at');
+                });
+            }
+        }
+        
+        $admins = $query->get();
+        
+        $format = $request->get('format', 'csv');
+        
+        if ($format === 'pdf') {
+            // Export to PDF
+            $pdf = PDF::loadView('admin.views.users.exports.admins-pdf', compact('admins'));
+            $pdf->setPaper('A4', 'landscape'); // Tambahkan ini
+            return $pdf->download('data-admin-' . date('Y-m-d') . '.pdf');
+        } elseif ($format === 'excel') {
+            // Export to Excel
+            return Excel::download(new AdminsExport($admins), 'data-admin-' . date('Y-m-d') . '.xlsx');
+        } else {
+            // Export to CSV (default)
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="data-admin-' . date('Y-m-d') . '.csv"',
+            ];
+            
+            $callback = function() use ($admins) {
+                $file = fopen('php://output', 'w');
+                
+                // CSV Header
+                fputcsv($file, [
+                    'Nama Lengkap',
+                    'Email',
+                    'Jabatan',
+                    'No. Telepon',
+                    'Status Verifikasi',
+                    'Tanggal Bergabung',
+                    'Terakhir Login'
+                ]);
+                
+                // CSV Data
+                foreach ($admins as $admin) {
+                    fputcsv($file, [
+                        $admin->fullname,
+                        $admin->user->email,
+                        $admin->job_title,
+                        $admin->phone ?? '-',
+                        $admin->user->email_verified_at ? 'Terverifikasi' : 'Belum Verifikasi',
+                        $admin->created_at->format('d-m-Y'),
+                        $admin->user->last_login_at ? $admin->user->last_login_at->format('d-m-Y H:i') : '-'
+                    ]);
+                }
+                
+                fclose($file);
+            };
+            
+            return response()->stream($callback, 200, $headers);
+        }
     }
 
     /**
@@ -925,6 +1070,7 @@ class UserController extends Controller
     {
         $query = Alumni::with('user');
         
+        // Apply filters from modal
         if ($request->has('study_program') && $request->study_program) {
             $query->where('study_program', $request->study_program);
         }
@@ -933,53 +1079,102 @@ class UserController extends Controller
             $query->whereYear('graduation_date', $request->graduation_year);
         }
         
+        if ($request->has('email_status') && $request->email_status) {
+            if ($request->email_status == 'verified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNotNull('email_verified_at');
+                });
+            } elseif ($request->email_status == 'unverified') {
+                $query->whereHas('user', function($userQuery) {
+                    $userQuery->whereNull('email_verified_at');
+                });
+            }
+        }
+        
+        // Also apply filters from search form if exists
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('fullname', 'like', '%' . $search . '%')
+                ->orWhere('nim', 'like', '%' . $search . '%')
+                ->orWhereHas('user', function($userQuery) use ($search) {
+                    $userQuery->where('email', 'like', '%' . $search . '%');
+                });
+            });
+        }
+        
+        if ($request->has('points_filter') && $request->points_filter) {
+            if ($request->points_filter == 'has_points') {
+                $query->where('points', '>', 0);
+            } elseif ($request->points_filter == 'no_points') {
+                $query->where('points', 0)->orWhereNull('points');
+            } elseif ($request->points_filter == 'high_points') {
+                $query->where('points', '>', 100);
+            }
+        }
+        
         $alumni = $query->get();
         
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="alumni-data-' . date('Y-m-d') . '.csv"',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
+        $format = $request->get('format', 'csv');
+        
+        if ($format === 'pdf') {
+            // Export to PDF
+            $pdf = PDF::loadView('admin.views.users.exports.alumni-pdf', compact('alumni'));
+            $pdf->setPaper('A4', 'landscape'); // Tambahkan ini
+            return $pdf->download('data-alumni-' . date('Y-m-d') . '.pdf');
+        } elseif ($format === 'excel') {
+            // Export to Excel
+            return Excel::download(new AlumniExport($alumni), 'data-alumni-' . date('Y-m-d') . '.xlsx');
+        } else {
+            // Export to CSV (default)
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="data-alumni-' . date('Y-m-d') . '.csv"',
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
 
-        $callback = function() use ($alumni) {
-            $file = fopen('php://output', 'w');
-            
-            fputcsv($file, [
-                'NIM',
-                'Nama Lengkap',
-                'Email',
-                'Program Studi',
-                'Tanggal Lulus',
-                'No. Telepon',
-                'NPWP',
-                'Ranking',
-                'Points',
-                'Status Verifikasi',
-                'Tanggal Bergabung'
-            ]);
-
-            foreach ($alumni as $item) {
+            $callback = function() use ($alumni) {
+                $file = fopen('php://output', 'w');
+                
                 fputcsv($file, [
-                    $item->nim,
-                    $item->fullname,
-                    $item->user->email,
-                    $item->study_program,
-                    $item->graduation_date ? $item->graduation_date->format('d-m-Y') : '',
-                    $item->phone,
-                    $item->npwp ?? '-',
-                    $item->ranking ?? '-',
-                    $item->points ?? '0',
-                    $item->user->email_verified_at ? 'Terverifikasi' : 'Belum',
-                    $item->created_at->format('d-m-Y H:i:s')
+                    'NIM',
+                    'Nama Lengkap',
+                    'Email',
+                    'Program Studi',
+                    'Tanggal Lulus',
+                    'No. Telepon',
+                    'NPWP',
+                    'Ranking',
+                    'Points',
+                    'Status Verifikasi',
+                    'Tanggal Bergabung',
+                    'Terakhir Login'
                 ]);
-            }
 
-            fclose($file);
-        };
+                foreach ($alumni as $item) {
+                    fputcsv($file, [
+                        $item->nim,
+                        $item->fullname,
+                        $item->user->email,
+                        $item->study_program,
+                        $item->graduation_date ? $item->graduation_date->format('d-m-Y') : '',
+                        $item->phone,
+                        $item->npwp ?? '-',
+                        $item->ranking ?? '-',
+                        $item->points ?? '0',
+                        $item->user->email_verified_at ? 'Terverifikasi' : 'Belum',
+                        $item->created_at->format('d-m-Y H:i:s'),
+                        $item->user->last_login_at ? $item->user->last_login_at->format('d-m-Y H:i') : '-'
+                    ]);
+                }
 
-        return response()->stream($callback, 200, $headers);
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
     }
     
     /**
@@ -1051,20 +1246,34 @@ class UserController extends Controller
     public function getTracerChartsData()
     {
         try {
-            // 1. Status Lulusan Saat Ini - Dinamis berdasarkan kategori yang dipilih alumni
+            // 1. Status Lulusan Saat Ini
             $statusData = $this->getRealGraduateStatusData();
             
-            // 2. Waktu Tunggu Mendapat Pekerjaan - Dinamis dari pertanyaan
+            // 2. Waktu Tunggu Mendapat Pekerjaan
             $waitingTimeData = $this->getRealWaitingTimeData();
             
-            // 3. Hubungan Bidang Studi dengan Pekerjaan - Dinamis dari pertanyaan
+            // 3. Hubungan Bidang Studi dengan Pekerjaan - DENGAN VALIDASI
             $relevanceData = $this->getRealStudyWorkRelevanceData();
+            if (!isset($relevanceData['labels']) || !isset($relevanceData['values'])) {
+                $relevanceData = [
+                    'labels' => ['Sangat Erat', 'Erat', 'Cukup Erat', 'Kurang Erat', 'Tidak Sama Sekali'],
+                    'values' => [0, 0, 0, 0, 0],
+                    'conclusion' => 'Data sedang dimuat...'
+                ];
+            }
             
-            // 4. Tingkat Tempat Kerja - Dinamis dari pertanyaan
+            // 4. Tingkat Tempat Kerja
             $workLevelData = $this->getRealWorkLevelData();
             
-            // 5. Kisaran Gaji - Dinamis dari pertanyaan
+            // 5. Kisaran Gaji - DENGAN VALIDASI
             $salaryRangeData = $this->getRealSalaryRangeData();
+            if (!isset($salaryRangeData['labels']) || !isset($salaryRangeData['values'])) {
+                $salaryRangeData = [
+                    'labels' => ['< Rp1.000.000', 'Rp1.000.000 - Rp3.000.000', 'Rp3.000.001 - Rp5.000.000', 'Rp5.000.001 - Rp10.000.000', '> Rp10.000.000'],
+                    'values' => [0, 0, 0, 0, 0],
+                    'conclusion' => 'Data sedang dimuat...'
+                ];
+            }
             
             // 6. Metode Pembelajaran - Dinamis dari pertanyaan skala
             $learningMethodData = $this->getRealLearningMethodData();
@@ -1097,23 +1306,60 @@ class UserController extends Controller
             ]);
             
         } catch (\Exception $e) {
+            // Return fallback data yang AMAN
             return response()->json([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage(),
-                'data' => $this->getFallbackData() 
+                'data' => $this->getSafeFallbackData()
             ], 500);
         }
     }
 
     /**
+     * Safe fallback data dengan struktur yang konsisten
+     */
+    private function getSafeFallbackData()
+    {
+        return [
+            'graduate_status' => [
+                'labels' => ['Data sedang dimuat...'],
+                'values' => [100],
+                'conclusion' => 'System - Menunggu Data'
+            ],
+            'study_work_relevance' => [
+                'labels' => ['Sangat Erat', 'Erat', 'Cukup Erat', 'Kurang Erat', 'Tidak Sama Sekali'],
+                'values' => [0, 0, 0, 0, 0],
+                'conclusion' => 'Data sedang dimuat...'
+            ],
+            'salary_range' => [
+                'labels' => ['< Rp1.000.000', 'Rp1.000.000 - Rp3.000.000', 'Rp3.000.001 - Rp5.000.000', 'Rp5.000.001 - Rp10.000.000', '> Rp10.000.000'],
+                'values' => [0, 0, 0, 0, 0],
+                'conclusion' => 'Data sedang dimuat...'
+            ]
+        ];
+    }
+
+    /**
      * Get graduate status data for Chart 1.1
      */
-    private function getRealGraduateStatusData()
+    private function getRealGraduateStatusData($startDate = null, $endDate = null)
     {
-        $statusCounts = StatusQuestionnaire::select('category_id', DB::raw('COUNT(*) as count'))
-            ->with('category')
-            ->groupBy('category_id')
-            ->get();
+        $query = StatusQuestionnaire::select('category_id', DB::raw('COUNT(*) as count'))
+            ->with('category');
+        
+        // Filter berdasarkan tanggal jawaban
+        if ($startDate || $endDate) {
+            $query->whereHas('alumni.answers', function($q) use ($startDate, $endDate) {
+                if ($startDate) {
+                    $q->whereDate('answered_at', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $q->whereDate('answered_at', '<=', $endDate);
+                }
+            });
+        }
+        
+        $statusCounts = $query->groupBy('category_id')->get();
         
         $labels = [];
         $values = [];
@@ -1125,24 +1371,29 @@ class UserController extends Controller
             $values[] = $total > 0 ? round(($status->count / $total) * 100, 2) : 0;
         }
         
+        $conclusion = $total > 0 ? 
+        "Total: {$total} alumni telah memilih kategori pada periode ini. " : 
+        "Belum ada data kategori dari alumni";
+    
+        if ($startDate || $endDate) {
+            $conclusion .= " (Periode: " . $this->formatDateRange($startDate, $endDate) . ")";
+        }
+        
         return [
             'labels' => $labels,
             'values' => $values,
-            'counts' => $statusCounts->pluck('count')->toArray(),
-            'total' => $total,
             'data_source' => 'Database (Dinamis - Berdasarkan Kategori)',
-            'conclusion' => $total > 0 ? 
-                "Total: {$total} alumni telah memilih kategori. " . 
-                "Kategori terbanyak: " . ($labels[0] ?? '-') . " (" . ($values[0] ?? 0) . "%)" : 
-                "Belum ada data kategori dari alumni"
+            'conclusion' => $conclusion,
+            'date_filtered' => !empty($startDate) || !empty($endDate)
         ];
     }
 
     /**
      * Get waiting time data for Chart 1.3
      */
-    private function getRealWaitingTimeData()
+    private function getRealWaitingTimeData($startDate = null, $endDate = null)
     {
+        // Cari pertanyaan yang berhubungan dengan waktu tunggu pekerjaan
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%lama%pekerjaan%')
                 ->orWhere('question_text', 'like', '%waktu%kerja%')
@@ -1159,9 +1410,18 @@ class UserController extends Controller
         ];
         
         foreach ($questions as $question) {
-            $answers = AnswerQuestion::where('question_id', $question->id)
-                ->whereNotNull('answer')
-                ->get();
+            $answersQuery = AnswerQuestion::where('question_id', $question->id)
+                ->whereNotNull('answer');
+            
+            // FILTER TANGGAL
+            if ($startDate) {
+                $answersQuery->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $answersQuery->whereDate('answered_at', '<=', $endDate);
+            }
+            
+            $answers = $answersQuery->get();
             
             foreach ($answers as $answer) {
                 $answerText = strtolower($answer->answer);
@@ -1214,8 +1474,9 @@ class UserController extends Controller
     /**
      * Get study-work relevance data for Chart 2.3
      */
-    private function getRealStudyWorkRelevanceData()
+    private function getRealStudyWorkRelevanceData($startDate = null, $endDate = null)
     {
+        // Cari pertanyaan tentang hubungan studi-pekerjaan
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%hubungan%studi%kerja%')
                 ->orWhere('question_text', 'like', '%erat%bidang%studi%')
@@ -1225,6 +1486,7 @@ class UserController extends Controller
             ->whereIn('question_type', ['radio', 'dropdown', 'likert_scale'])
             ->get();
         
+        // Inisialisasi dengan SEMUA kemungkinan nilai (walaupun 0)
         $relevanceData = [
             'Sangat Erat' => 0,
             'Erat' => 0,
@@ -1233,53 +1495,117 @@ class UserController extends Controller
             'Tidak Sama Sekali' => 0
         ];
         
+        $totalAnswers = 0;
+        
         foreach ($questions as $question) {
-            $answers = AnswerQuestion::where('question_id', $question->id)->get();
+            $answersQuery = AnswerQuestion::where('question_id', $question->id);
+            
+            // Filter tanggal jika ada
+            if ($startDate) {
+                $answersQuery->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $answersQuery->whereDate('answered_at', '<=', $endDate);
+            }
+            
+            $answers = $answersQuery->get();
             
             foreach ($answers as $answer) {
+                // Untuk skala Likert
                 if ($answer->scale_value !== null) {
                     $scale = (int)$answer->scale_value;
-                    if ($scale >= 4) $relevanceData['Sangat Erat']++;
-                    elseif ($scale == 3) $relevanceData['Erat']++;
-                    elseif ($scale == 2) $relevanceData['Cukup Erat']++;
-                    elseif ($scale == 1) $relevanceData['Kurang Erat']++;
-                    else $relevanceData['Tidak Sama Sekali']++;
+                    if ($scale >= 4) {
+                        $relevanceData['Sangat Erat']++;
+                    } elseif ($scale == 3) {
+                        $relevanceData['Erat']++;
+                    } elseif ($scale == 2) {
+                        $relevanceData['Cukup Erat']++;
+                    } elseif ($scale == 1) {
+                        $relevanceData['Kurang Erat']++;
+                    } else {
+                        $relevanceData['Tidak Sama Sekali']++;
+                    }
+                    $totalAnswers++;
                 }
+                // Untuk pilihan teks
                 elseif ($answer->answer) {
                     $answerText = strtolower($answer->answer);
-                    if (strpos($answerText, 'sangat erat') !== false) $relevanceData['Sangat Erat']++;
-                    elseif (strpos($answerText, 'erat') !== false) $relevanceData['Erat']++;
-                    elseif (strpos($answerText, 'cukup') !== false) $relevanceData['Cukup Erat']++;
-                    elseif (strpos($answerText, 'kurang') !== false) $relevanceData['Kurang Erat']++;
-                    elseif (strpos($answerText, 'tidak') !== false) $relevanceData['Tidak Sama Sekali']++;
+                    if (strpos($answerText, 'sangat erat') !== false) {
+                        $relevanceData['Sangat Erat']++;
+                    } elseif (strpos($answerText, 'erat') !== false) {
+                        $relevanceData['Erat']++;
+                    } elseif (strpos($answerText, 'cukup') !== false) {
+                        $relevanceData['Cukup Erat']++;
+                    } elseif (strpos($answerText, 'kurang') !== false) {
+                        $relevanceData['Kurang Erat']++;
+                    } elseif (strpos($answerText, 'tidak') !== false) {
+                        $relevanceData['Tidak Sama Sekali']++;
+                    } else {
+                        // Jika tidak dikenali, masukkan ke "Cukup Erat" sebagai default
+                        $relevanceData['Cukup Erat']++;
+                    }
+                    $totalAnswers++;
                 }
+                // Untuk pilihan ganda
                 elseif ($answer->selected_options) {
                     $selected = json_decode($answer->selected_options, true);
                     if (is_array($selected)) {
                         $selectedText = strtolower(implode(' ', $selected));
-                        if (strpos($selectedText, 'sangat erat') !== false) $relevanceData['Sangat Erat']++;
-                        elseif (strpos($selectedText, 'erat') !== false) $relevanceData['Erat']++;
-                        elseif (strpos($selectedText, 'cukup') !== false) $relevanceData['Cukup Erat']++;
-                        elseif (strpos($selectedText, 'kurang') !== false) $relevanceData['Kurang Erat']++;
-                        elseif (strpos($selectedText, 'tidak') !== false) $relevanceData['Tidak Sama Sekali']++;
+                        if (strpos($selectedText, 'sangat erat') !== false) {
+                            $relevanceData['Sangat Erat']++;
+                        } elseif (strpos($selectedText, 'erat') !== false) {
+                            $relevanceData['Erat']++;
+                        } elseif (strpos($selectedText, 'cukup') !== false) {
+                            $relevanceData['Cukup Erat']++;
+                        } elseif (strpos($selectedText, 'kurang') !== false) {
+                            $relevanceData['Kurang Erat']++;
+                        } elseif (strpos($selectedText, 'tidak') !== false) {
+                            $relevanceData['Tidak Sama Sekali']++;
+                        } else {
+                            $relevanceData['Cukup Erat']++;
+                        }
+                        $totalAnswers++;
                     }
                 }
             }
         }
         
-        $total = array_sum($relevanceData);
+        // Hitung persentase
+        $values = [];
+        if ($totalAnswers > 0) {
+            foreach ($relevanceData as $key => $count) {
+                $values[] = round(($count / $totalAnswers) * 100, 2);
+            }
+        } else {
+            // Jika tidak ada data, set semua ke 0
+            $values = [0, 0, 0, 0, 0];
+        }
+        
+        // Buat kesimpulan
+        $conclusion = '';
+        if ($totalAnswers > 0) {
+            $eratCount = $relevanceData['Sangat Erat'] + $relevanceData['Erat'];
+            $eratPercentage = round(($eratCount / $totalAnswers) * 100, 2);
+            $conclusion = "Dari {$totalAnswers} jawaban, {$eratCount} alumni ({$eratPercentage}%) " .
+                        "merasa hubungan studi-pekerjaan erat/sangat erat";
+        } else {
+            $conclusion = "Belum ada data relevansi untuk periode ini";
+        }
+        
+        // Tambahkan info tanggal filter jika ada
+        if ($startDate || $endDate) {
+            $dateRange = $this->formatDateRange($startDate, $endDate);
+            $conclusion .= " (Periode: {$dateRange})";
+        }
         
         return [
             'labels' => array_keys($relevanceData),
-            'values' => $total > 0 ? array_map(function($val) use ($total) {
-                return round(($val / $total) * 100, 2);
-            }, array_values($relevanceData)) : [0, 0, 0, 0, 0],
+            'values' => $values,
+            'counts' => array_values($relevanceData),
+            'total' => $totalAnswers,
             'data_source' => 'Database (Dinamis - Analisis Pertanyaan Relevansi)',
-            'conclusion' => $total > 0 ? 
-                ($relevanceData['Sangat Erat'] + $relevanceData['Erat']) . 
-                " alumni (" . round((($relevanceData['Sangat Erat'] + $relevanceData['Erat']) / $total) * 100, 2) . 
-                "%) merasa hubungan studi-pekerjaan erat/sangat erat" : 
-                "Belum ada data relevansi"
+            'conclusion' => $conclusion,
+            'has_data' => $totalAnswers > 0
         ];
     }
 
@@ -1333,7 +1659,7 @@ class UserController extends Controller
     /**
      * Get salary range data for Chart 2.6
      */
-    private function getRealSalaryRangeData()
+    private function getRealSalaryRangeData($startDate = null, $endDate = null)
     {
         $questions = Question::where(function($q) {
                 $q->where('question_text', 'like', '%gaji%')
@@ -1344,6 +1670,7 @@ class UserController extends Controller
             })
             ->get();
         
+        // Inisialisasi SEMUA range (walaupun 0)
         $salaryRanges = [
             '< Rp1.000.000' => 0,
             'Rp1.000.000 - Rp3.000.000' => 0,
@@ -1352,36 +1679,74 @@ class UserController extends Controller
             '> Rp10.000.000' => 0
         ];
         
+        $totalAnswers = 0;
+        
         foreach ($questions as $question) {
-            $answers = AnswerQuestion::where('question_id', $question->id)->get();
+            $answersQuery = AnswerQuestion::where('question_id', $question->id);
+            
+            if ($startDate) {
+                $answersQuery->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $answersQuery->whereDate('answered_at', '<=', $endDate);
+            }
+            
+            $answers = $answersQuery->get();
             
             foreach ($answers as $answer) {
                 if ($answer->answer) {
                     $answerText = strtolower($answer->answer);
                     
+                    // Ekstrak angka dari jawaban
                     preg_match_all('/\d+/', $answerText, $matches);
                     if (!empty($matches[0])) {
                         $numbers = array_map('intval', $matches[0]);
                         $maxNumber = max($numbers);
                         
-                        if ($maxNumber < 1000) $salaryRanges['< Rp1.000.000']++;
-                        elseif ($maxNumber <= 3000) $salaryRanges['Rp1.000.000 - Rp3.000.000']++;
-                        elseif ($maxNumber <= 5000) $salaryRanges['Rp3.000.001 - Rp5.000.000']++;
-                        elseif ($maxNumber <= 10000) $salaryRanges['Rp5.000.001 - Rp10.000.000']++;
-                        else $salaryRanges['> Rp10.000.000']++;
+                        if ($maxNumber < 1000) {
+                            $salaryRanges['< Rp1.000.000']++;
+                        } elseif ($maxNumber <= 3000) {
+                            $salaryRanges['Rp1.000.000 - Rp3.000.000']++;
+                        } elseif ($maxNumber <= 5000) {
+                            $salaryRanges['Rp3.000.001 - Rp5.000.000']++;
+                        } elseif ($maxNumber <= 10000) {
+                            $salaryRanges['Rp5.000.001 - Rp10.000.000']++;
+                        } else {
+                            $salaryRanges['> Rp10.000.000']++;
+                        }
+                        $totalAnswers++;
                     }
                 }
             }
         }
         
-        $total = array_sum($salaryRanges);
+        // Hitung persentase
+        $values = [];
+        if ($totalAnswers > 0) {
+            foreach ($salaryRanges as $range => $count) {
+                $values[] = round(($count / $totalAnswers) * 100, 2);
+            }
+        } else {
+            $values = [0, 0, 0, 0, 0];
+        }
+        
+        $conclusion = $totalAnswers > 0 ? 
+            "Dari {$totalAnswers} jawaban tentang gaji" :
+            "Belum ada data gaji untuk periode ini";
+        
+        if ($startDate || $endDate) {
+            $dateRange = $this->formatDateRange($startDate, $endDate);
+            $conclusion .= " (Periode: {$dateRange})";
+        }
         
         return [
             'labels' => array_keys($salaryRanges),
-            'values' => $total > 0 ? array_map(function($val) use ($total) {
-                return round(($val / $total) * 100, 2);
-            }, array_values($salaryRanges)) : [0, 0, 0, 0, 0],
-            'data_source' => 'Database (Dinamis - Analisis Pertanyaan Gaji)'
+            'values' => $values,
+            'counts' => array_values($salaryRanges),
+            'total' => $totalAnswers,
+            'data_source' => 'Database (Dinamis - Analisis Pertanyaan Gaji)',
+            'conclusion' => $conclusion,
+            'has_data' => $totalAnswers > 0
         ];
     }
 
@@ -1636,20 +2001,60 @@ class UserController extends Controller
     }
 
     /**
+     * Validasi tanggal di controller
+     */
+    private function validateDateRange($startDate, $endDate)
+    {
+        if ($startDate && $endDate) {
+            $start = strtotime($startDate);
+            $end = strtotime($endDate);
+            
+            if ($start > $end) {
+                throw new \Exception('Tanggal mulai tidak boleh lebih besar dari tanggal akhir.');
+            }
+            
+            $today = strtotime(date('Y-m-d'));
+            if ($start > $today) {
+                Log::warning('Start date is in future: ' . $startDate);
+            }
+        }
+        
+        return true;
+    }
+
+    /**
      * Export questionnaire results to PDF
      */
     public function exportQuestionnaireResultsPDF(Request $request)
     {
         try {
+            // DEBUG: Log parameter yang diterima
+            Log::info('PDF Export Parameters:', [
+                'category_id' => $request->get('category_id'),
+                'start_date' => $request->get('start_date'),
+                'end_date' => $request->get('end_date'),
+                'action' => $request->get('action'), // PASTIKAN INI ADA!
+                'all_params' => $request->all()
+            ]);
+            
+            // Parameter filter
             $categoryId = $request->get('category_id');
             $startDate = $request->get('start_date');
             $endDate = $request->get('end_date');
-            $action = $request->get('action', 'download'); 
+            $action = $request->get('action', 'download'); // Default ke download
             
+            // Validasi action
+            if (!in_array($action, ['preview', 'download'])) {
+                $action = 'download';
+            }
+            
+            // Get data untuk laporan
             $reportData = $this->preparePDFReportData($categoryId, $startDate, $endDate);
             
+            // Load view PDF
             $pdf = PDF::loadView('admin.views.questionnaire.export-pdf', $reportData);
             
+            // Set options PDF
             $pdf->setPaper('A4', 'portrait');
             $pdf->setOption('defaultFont', 'DejaVu Sans');
             $pdf->setOption('isHtml5ParserEnabled', true);
@@ -1657,21 +2062,30 @@ class UserController extends Controller
             $pdf->setOption('enable_php', true);
             $pdf->setOption('dpi', 150);
             
-            $filename = 'laporan-tracer-study-' . date('Y-m-d') . '.pdf';
+            $filename = 'laporan-kuesioner-alumni-' . date('Y-m-d') . '.pdf';
+            
+            // DEBUG: Log action decision
+            Log::info('PDF Action Decision:', [
+                'action' => $action,
+                'filename' => $filename
+            ]);
             
             if ($action === 'preview') {
+                // Tampilkan preview di browser (STREAM)
                 return $pdf->stream($filename);
             } else {
+                // Download file
                 return $pdf->download($filename);
             }
             
         } catch (\Exception $e) {
             Log::error('PDF Export Error: ' . $e->getMessage());
             
-            if ($request->has('debug') || $request->get('action') === 'preview') {
-                return response()->view('admin.views.questionnaire.export-error', [
+            // Jika preview, tampilkan error page
+            if ($request->get('action') === 'preview') {
+                return response()->view('admin.views.errors.pdf-export-error', [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'title' => 'Export PDF Error'
                 ], 500);
             }
             
@@ -1698,15 +2112,42 @@ class UserController extends Controller
     }
     
     /**
-     * Prepare data for PDF report - DATA REAL DAN DINAMIS
+     * Prepare data for PDF report
      */
     private function preparePDFReportData($categoryId = null, $startDate = null, $endDate = null)
     {
+        // 1. DATA STATISTIK dengan filter tanggal
         $totalAlumni = Alumni::count();
-        $alumniWithAnswers = StatusQuestionnaire::distinct('alumni_id')->count();
-        $totalAnswers = AnswerQuestion::count();
+        
+        // Query untuk alumni dengan jawaban dengan filter tanggal
+        $alumniWithAnswersQuery = StatusQuestionnaire::distinct('alumni_id');
+        
+        if ($startDate || $endDate) {
+            $alumniWithAnswersQuery->whereHas('alumni.answers', function($q) use ($startDate, $endDate) {
+                if ($startDate) {
+                    $q->whereDate('answered_at', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $q->whereDate('answered_at', '<=', $endDate);
+                }
+            });
+        }
+        
+        $alumniWithAnswers = $alumniWithAnswersQuery->count();
+        
+        // Total answers dengan filter tanggal
+        $answersQuery = AnswerQuestion::query();
+        if ($startDate) {
+            $answersQuery->whereDate('answered_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $answersQuery->whereDate('answered_at', '<=', $endDate);
+        }
+        $totalAnswers = $answersQuery->count();
+        
         $totalQuestions = Question::count();
         
+        // 2. DATA ALUMNI DENGAN JAWABAN dengan filter
         $alumniQuery = Alumni::with([
             'user',
             'statuses.category',
@@ -1729,18 +2170,29 @@ class UserController extends Controller
             }
         ])->has('answers');
         
-        $alumni = $alumniQuery->limit(50)->get(); 
+        $alumni = $alumniQuery->limit(50)->get(); // Batasi untuk PDF
         
-        $chartData = $this->getTracerChartsDataForPDF();
+        // 3. DATA GRAFIK (ambil dari method yang sudah ada)
+        $chartData = $this->getTracerChartsDataForPDF($startDate, $endDate);
         
+        // 4. DATA KATEGORI
         $categories = Category::withCount(['questionnaires', 'alumniStatuses'])
             ->orderBy('order')
             ->get();
         
-        $topQuestions = Question::withCount('answers')
-            ->orderBy('answers_count', 'desc')
-            ->limit(10)
-            ->get()
+        // 5. PERTANYAAN PALING SERING DIJAWAB dengan filter tanggal
+        $topQuestionsQuery = Question::withCount(['answers' => function($query) use ($startDate, $endDate) {
+            if ($startDate) {
+                $query->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('answered_at', '<=', $endDate);
+            }
+        }])
+        ->orderBy('answers_count', 'desc')
+        ->limit(10);
+        
+        $topQuestions = $topQuestionsQuery->get()
             ->map(function($question) {
                 return [
                     'text' => Str::limit($question->question_text, 100),
@@ -1751,49 +2203,92 @@ class UserController extends Controller
                 ];
             });
         
-        $topAlumni = Alumni::withCount('answers')
-            ->withSum('answers as total_points', 'points')
-            ->orderBy('total_points', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function($alumni) {
+        // 6. ALUMNI TOP - PERBAIKAN QUERY DISINI!
+        $topAlumniQuery = Alumni::withCount(['answers' => function($query) use ($startDate, $endDate) {
+            if ($startDate) {
+                $query->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('answered_at', '<=', $endDate);
+            }
+        }])
+        ->withSum(['answers' => function($query) use ($startDate, $endDate) {
+            if ($startDate) {
+                $query->whereDate('answered_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('answered_at', '<=', $endDate);
+            }
+        }], 'points')
+        ->orderBy('answers_sum_points', 'desc') // PERBAIKAN: gunakan 'answers_sum_points' bukan 'total_points'
+        ->limit(10);
+        
+        $topAlumni = $topAlumniQuery->get()
+            ->map(function($alumni) use ($totalQuestions) {
                 return [
                     'name' => $alumni->fullname,
                     'nim' => $alumni->nim,
                     'study_program' => $alumni->study_program,
                     'total_answers' => $alumni->answers_count,
-                    'total_points' => $alumni->total_points,
-                    'completion_rate' => Question::count() > 0 ? 
-                        round(($alumni->answers_count / Question::count()) * 100, 1) : 0
+                    'total_points' => $alumni->answers_sum_points ?? 0,
+                    'completion_rate' => $totalQuestions > 0 ? 
+                        round(($alumni->answers_count / $totalQuestions) * 100, 1) : 0
                 ];
             });
         
+        // Hitung response rate dengan pengecekan division by zero
+        $responseRate = $totalAlumni > 0 ? 
+            round(($alumniWithAnswers / $totalAlumni) * 100, 2) : 0;
+        
+        // Format period
+        $period = 'Semua Periode';
+        if ($startDate && $endDate) {
+            $period = date('d F Y', strtotime($startDate)) . ' sampai ' . date('d F Y', strtotime($endDate));
+        } elseif ($startDate) {
+            $period = 'Mulai ' . date('d F Y', strtotime($startDate));
+        } elseif ($endDate) {
+            $period = 'Sampai ' . date('d F Y', strtotime($endDate));
+        }
+        
+        // Cek apakah ada data berdasarkan filter
+        $hasDataBasedOnFilter = $totalAnswers > 0;
+        $isDateFiltered = !empty($startDate) || !empty($endDate);
+        
         return [
+            // Metadata
             'title' => 'Laporan Hasil Kuesioner Alumni',
             'subtitle' => 'Sistem Tracer Study',
             'date' => now()->format('d F Y'),
             'generated_at' => now()->format('d F Y H:i:s'),
-            'period' => $startDate && $endDate ? 
-                $startDate . ' sampai ' . $endDate : 'Semua Periode',
+            'period' => $period,
             'category_filter' => $categoryId ? 
                 Category::find($categoryId)->name ?? 'Semua Kategori' : 'Semua Kategori',
+            'is_date_filtered' => $isDateFiltered,
+            'filter_start_date' => $startDate,
+            'filter_end_date' => $endDate,
+            'filter_date_range' => $this->formatDateRange($startDate, $endDate),
+            'has_data_for_period' => $hasDataBasedOnFilter,
+            // 'has_data' => $hasDataBasedOnFilter,
             
+            // Data Statistik
             'total_alumni' => $totalAlumni,
             'alumni_with_answers' => $alumniWithAnswers,
             'total_answers' => $totalAnswers,
             'total_questions' => $totalQuestions,
             'completion_rate' => $totalAlumni > 0 ? 
                 round(($alumniWithAnswers / $totalAlumni) * 100, 2) : 0,
-            'response_rate' => $totalAlumni > 0 ? 
-                round(($alumniWithAnswers / $totalAlumni) * 100, 2) : 0,
+            'response_rate' => $responseRate,
             
+            // Data Utama
             'alumni' => $alumni,
             'categories' => $categories,
             'top_questions' => $topQuestions,
             'top_alumni' => $topAlumni,
             
+            // Data Grafik (untuk tampilan di PDF)
             'chart_data' => $chartData,
             
+            // Filter
             'filters' => [
                 'category_id' => $categoryId,
                 'start_date' => $startDate,
@@ -1806,44 +2301,107 @@ class UserController extends Controller
     /**
      * Get chart data khusus untuk PDF (ringkasan)
      */
-    private function getTracerChartsDataForPDF()
+    private function getTracerChartsDataForPDF($startDate = null, $endDate = null)
     {
         try {
+            // Tambahkan filter tanggal ke SEMUA method chart data
             return [
-                'graduate_status' => $this->getRealGraduateStatusData(),
-                'waiting_time' => $this->getRealWaitingTimeData(),
-                'study_work_relevance' => $this->getRealStudyWorkRelevanceData(),
-                'work_level' => $this->getRealWorkLevelData(),
-                'salary_range' => $this->getRealSalaryRangeData(),
-                'learning_methods' => $this->getRealLearningMethodData(),
-                'competence' => $this->getRealCompetenceData(),
-                'funding_source' => $this->getRealFundingSourceData(),
+                // Data utama dari dashboard DENGAN FILTER TANGGAL
+                'graduate_status' => $this->getRealGraduateStatusData($startDate, $endDate),
+                'waiting_time' => $this->getRealWaitingTimeData($startDate, $endDate),
+                'study_work_relevance' => $this->getRealStudyWorkRelevanceData($startDate, $endDate),
+                'work_level' => $this->getRealWorkLevelData($startDate, $endDate),
+                'salary_range' => $this->getRealSalaryRangeData($startDate, $endDate),
+                'learning_methods' => $this->getRealLearningMethodData($startDate, $endDate),
+                'competence' => $this->getRealCompetenceData($startDate, $endDate),
+                'funding_source' => $this->getRealFundingSourceData($startDate, $endDate),
                 
+                // Ringkasan statistik DENGAN FILTER TANGGAL
                 'summary' => [
                     'total_categories' => Category::count(),
                     'total_questionnaires' => Questionnaire::count(),
                     'total_questions' => Question::count(),
-                    'total_alumni_respondents' => StatusQuestionnaire::distinct('alumni_id')->count(),
-                    'latest_response' => AnswerQuestion::max('answered_at') ? 
-                        Carbon::parse(AnswerQuestion::max('answered_at'))->format('d F Y') : '-',
-                    'most_active_category' => $this->getMostActiveCategory(),
-                    'avg_completion_rate' => $this->getAverageCompletionRate()
+                    'total_alumni_respondents' => $this->getAlumniRespondentsCount($startDate, $endDate),
+                    'latest_response' => $this->getLatestResponseDate($startDate, $endDate),
+                    'most_active_category' => $this->getMostActiveCategory($startDate, $endDate),
+                    'avg_completion_rate' => $this->getAverageCompletionRate($startDate, $endDate),
+                    'date_filter_applied' => !empty($startDate) || !empty($endDate),
+                    'date_range' => $this->formatDateRange($startDate, $endDate)
                 ]
             ];
             
         } catch (\Exception $e) {
+            // Fallback data minimal
             return [
                 'graduate_status' => [
-                    'labels' => ['Bekerja', 'Belum Bekerja', 'Studi Lanjut', 'Wirausaha'],
-                    'values' => [65, 15, 10, 10],
-                    'conclusion' => 'Data sedang dimuat...'
+                    'labels' => ['Data sedang dimuat...'],
+                    'values' => [100],
+                    'conclusion' => 'Data tidak tersedia untuk periode ini.'
                 ],
                 'summary' => [
                     'total_categories' => Category::count(),
-                    'total_alumni_respondents' => StatusQuestionnaire::distinct('alumni_id')->count()
+                    'total_alumni_respondents' => 0,
+                    'date_filter_applied' => !empty($startDate) || !empty($endDate),
+                    'date_range' => $this->formatDateRange($startDate, $endDate)
                 ]
             ];
         }
+    }
+
+    /**
+     * Get alumni respondents count with date filter
+     */
+    private function getAlumniRespondentsCount($startDate = null, $endDate = null)
+    {
+        $query = StatusQuestionnaire::distinct('alumni_id');
+        
+        if ($startDate || $endDate) {
+            $query->whereHas('alumni.answers', function($q) use ($startDate, $endDate) {
+                if ($startDate) {
+                    $q->whereDate('answered_at', '>=', $startDate);
+                }
+                if ($endDate) {
+                    $q->whereDate('answered_at', '<=', $endDate);
+                }
+            });
+        }
+        
+        return $query->count();
+    }
+
+    /**
+     * Get latest response date with filter
+     */
+    private function getLatestResponseDate($startDate = null, $endDate = null)
+    {
+        $query = AnswerQuestion::query();
+        
+        if ($startDate) {
+            $query->whereDate('answered_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('answered_at', '<=', $endDate);
+        }
+        
+        $latest = $query->max('answered_at');
+        
+        return $latest ? Carbon::parse($latest)->format('d F Y') : '-';
+    }
+
+    /**
+     * Format date range for display
+     */
+    private function formatDateRange($startDate = null, $endDate = null)
+    {
+        if ($startDate && $endDate) {
+            return date('d F Y', strtotime($startDate)) . ' - ' . date('d F Y', strtotime($endDate));
+        } elseif ($startDate) {
+            return 'Mulai ' . date('d F Y', strtotime($startDate));
+        } elseif ($endDate) {
+            return 'Sampai ' . date('d F Y', strtotime($endDate));
+        }
+        
+        return 'Semua Periode';
     }
 
     /**
@@ -1891,8 +2449,30 @@ class UserController extends Controller
      */
     public function showExportPDFForm()
     {
-        $categories = Category::all();
-        return view('admin.views.questionnaire.export-pdf-form', compact('categories'));
+        try {
+            $categories = Category::all();
+            
+            // Hitung statistik untuk preview - PERBAIKAN QUERY DISINI
+            $totalAlumni = Alumni::count();
+            $totalAnswers = AnswerQuestion::count();
+            $alumniWithAnswers = StatusQuestionnaire::distinct('alumni_id')->count();
+            $responseRate = $totalAlumni > 0 ? round(($alumniWithAnswers / $totalAlumni) * 100, 1) : 0;
+            
+            return view('admin.views.questionnaire.export-pdf-form', compact(
+                'categories',
+                'totalAlumni',
+                'totalAnswers',
+                'responseRate'
+            ));
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading PDF export form: ' . $e->getMessage());
+            
+            // Fallback dengan data minimal
+            $categories = collect();
+            return view('admin.views.questionnaire.export-pdf-form', compact('categories'))
+                ->with('error', 'Gagal memuat data statistik: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -1982,7 +2562,7 @@ class UserController extends Controller
     }
     
     /**
-     * Prepare COMPLETE answers data - SEMUA JAWABAN DETAIL
+     * Prepare COMPLETE answers data
      */
     private function prepareCompleteAnswersData(
         $categoryId = null, 
@@ -1992,40 +2572,46 @@ class UserController extends Controller
         $endDate = null,
         $format = 'detailed'
     ) {
+        // 1. QUERY UTAMA: AMBIL SEMUA JAWABAN dengan filter tanggal yang benar
         $answersQuery = AnswerQuestion::with([
             'alumni.user',
             'question.questionnaire.category',
             'detailedAnswers'
-        ])->orderBy('answered_at', 'desc');
+        ]);
         
-        if ($categoryId) {
+        // Apply filters dengan pengecekan null yang benar
+        if (!empty($categoryId)) {
             $answersQuery->whereHas('question.questionnaire', function($q) use ($categoryId) {
                 $q->where('category_id', $categoryId);
             });
         }
         
-        if ($questionnaireId) {
+        if (!empty($questionnaireId)) {
             $answersQuery->whereHas('question', function($q) use ($questionnaireId) {
                 $q->where('questionnaire_id', $questionnaireId);
             });
         }
         
-        if ($alumniId) {
+        if (!empty($alumniId)) {
             $answersQuery->where('alumni_id', $alumniId);
         }
         
-        if ($startDate) {
+        // Filter tanggal - PERBAIKAN PENTING!
+        if (!empty($startDate)) {
             $answersQuery->whereDate('answered_at', '>=', $startDate);
         }
         
-        if ($endDate) {
+        if (!empty($endDate)) {
             $answersQuery->whereDate('answered_at', '<=', $endDate);
         }
         
-        $allAnswers = $answersQuery->get();
+        // Get all answers (tidak dibatasi untuk PDF lengkap)
+        $allAnswers = $answersQuery->orderBy('answered_at', 'desc')->get();
         
+        // 2. GROUP ANSWERS BY ALUMNI
         $answersByAlumni = $allAnswers->groupBy('alumni_id');
         
+        // 3. GET ALUMNI DATA
         $alumniData = [];
         foreach ($answersByAlumni as $alumniId => $answers) {
             $alumni = Alumni::with('user')->find($alumniId);
@@ -2042,48 +2628,92 @@ class UserController extends Controller
             }
         }
         
-        $questions = Question::with(['questionnaire.category'])
-            ->when($categoryId, function($q) use ($categoryId) {
-                $q->whereHas('questionnaire', function($query) use ($categoryId) {
-                    $query->where('category_id', $categoryId);
-                });
-            })
-            ->when($questionnaireId, function($q) use ($questionnaireId) {
-                $q->where('questionnaire_id', $questionnaireId);
-            })
-            ->orderByRaw('questionnaire_id, `order`')
-            ->get();
+        // 4. GET QUESTIONS DATA (untuk header table) - dengan filter yang sama
+        $questionsQuery = Question::with(['questionnaire.category']);
+        
+        if (!empty($categoryId)) {
+            $questionsQuery->whereHas('questionnaire', function($query) use ($categoryId) {
+                $query->where('category_id', $categoryId);
+            });
+        }
+        
+        if (!empty($questionnaireId)) {
+            $questionsQuery->where('questionnaire_id', $questionnaireId);
+        }
+        
+        $questions = $questionsQuery->orderByRaw('questionnaire_id, `order`')->get();
+        
+        // 5. GET SUMMARY STATISTICS dengan handle division by zero
+        $totalAlumniCount = count($alumniData);
+        $totalAnswersCount = $allAnswers->count();
+        $totalQuestionsCount = $questions->count();
+        
+        // Hitung rata-rata dengan pengecekan nol
+        $avgAnswersPerAlumni = $totalAlumniCount > 0 
+            ? round($totalAnswersCount / $totalAlumniCount, 1) 
+            : 0;
+        
+        // Hitung completion rate dengan pengecekan nol
+        $completionRate = 0;
+        if ($totalQuestionsCount > 0 && $totalAlumniCount > 0) {
+            $totalPossibleAnswers = $totalQuestionsCount * $totalAlumniCount;
+            if ($totalPossibleAnswers > 0) {
+                $completionRate = round(($totalAnswersCount / $totalPossibleAnswers) * 100, 1);
+            }
+        }
+        
+        // Format date range
+        $dateRange = '-';
+        if ($allAnswers->isNotEmpty()) {
+            $minDate = $allAnswers->min('answered_at');
+            $maxDate = $allAnswers->max('answered_at');
+            
+            if ($minDate && $maxDate) {
+                $dateRange = $minDate->format('d M Y') . ' - ' . $maxDate->format('d M Y');
+            }
+        }
         
         $summaryStats = [
-            'total_alumni' => count($alumniData),
-            'total_answers' => $allAnswers->count(),
-            'total_questions' => $questions->count(),
+            'total_alumni' => $totalAlumniCount,
+            'total_answers' => $totalAnswersCount,
+            'total_questions' => $totalQuestionsCount,
             'total_points' => $allAnswers->sum('points'),
-            'avg_answers_per_alumni' => count($alumniData) > 0 ? 
-                round($allAnswers->count() / count($alumniData), 1) : 0,
-            'completion_rate' => $questions->count() > 0 ? 
-                round(($allAnswers->count() / ($questions->count() * count($alumniData))) * 100, 1) : 0,
-            'date_range' => $allAnswers->isNotEmpty() ? 
-                $allAnswers->min('answered_at')->format('d M Y') . ' - ' . 
-                $allAnswers->max('answered_at')->format('d M Y') : '-'
+            'avg_answers_per_alumni' => $avgAnswersPerAlumni,
+            'completion_rate' => $completionRate,
+            'date_range' => $dateRange,
+            'has_data' => $totalAnswersCount > 0, // Flag untuk cek apakah ada data
+            'filtered_by_date' => !empty($startDate) || !empty($endDate)
         ];
         
+        // 6. GET FILTER INFO
         $filterInfo = [];
-        if ($categoryId) {
+        if (!empty($categoryId)) {
             $category = Category::find($categoryId);
             $filterInfo['category'] = $category ? $category->name : '-';
         }
-        if ($questionnaireId) {
+        
+        if (!empty($questionnaireId)) {
             $questionnaire = Questionnaire::find($questionnaireId);
             $filterInfo['questionnaire'] = $questionnaire ? $questionnaire->name : '-';
         }
-        if ($alumniId) {
+        
+        if (!empty($alumniId)) {
             $alumni = Alumni::find($alumniId);
             $filterInfo['alumni'] = $alumni ? $alumni->fullname . ' (' . $alumni->nim . ')' : '-';
         }
         
+        // Tambahkan info tanggal ke filter
+        if (!empty($startDate)) {
+            $filterInfo['start_date'] = date('d F Y', strtotime($startDate));
+        }
+        
+        if (!empty($endDate)) {
+            $filterInfo['end_date'] = date('d F Y', strtotime($endDate));
+        }
+        
+        // 7. PREPARE MATRIX DATA (untuk format summary)
         $answerMatrix = [];
-        if ($format === 'summary') {
+        if ($format === 'summary' && $totalAlumniCount > 0) {
             foreach ($alumniData as $alumniId => $data) {
                 $alumni = $data['info'];
                 $row = [
@@ -2093,6 +2723,7 @@ class UserController extends Controller
                     'prodi' => $alumni->study_program ?? '-',
                 ];
                 
+                // Add answers for each question
                 foreach ($questions as $question) {
                     $answer = $data['answers']->firstWhere('question_id', $question->id);
                     $row['q_' . $question->id] = $this->formatAnswerForMatrix($answer);
@@ -2103,19 +2734,23 @@ class UserController extends Controller
         }
         
         return [
+            // Metadata
             'title' => 'Laporan Lengkap Jawaban Alumni',
             'subtitle' => 'Detail Semua Jawaban Kuesioner',
             'date' => now()->format('d F Y'),
             'generated_at' => now()->format('d F Y H:i:s'),
             'format' => $format,
             
+            // Main Data
             'alumni_data' => $alumniData,
             'questions' => $questions,
             'all_answers' => $allAnswers,
             'answer_matrix' => $answerMatrix,
             
+            // Statistics
             'summary_stats' => $summaryStats,
             
+            // Filters
             'filters' => [
                 'category_id' => $categoryId,
                 'questionnaire_id' => $questionnaireId,
@@ -2123,11 +2758,16 @@ class UserController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'filter_info' => $filterInfo,
-                'has_filters' => $categoryId || $questionnaireId || $alumniId || $startDate || $endDate
+                'has_filters' => !empty($categoryId) || !empty($questionnaireId) || 
+                            !empty($alumniId) || !empty($startDate) || !empty($endDate)
             ],
             
+            // Options
             'show_all_details' => true,
             'max_answers_per_page' => $format === 'detailed' ? 15 : 50,
+            
+            // Tambahan untuk handle empty data
+            'has_no_data' => $totalAnswersCount === 0
         ];
     }
     
