@@ -224,7 +224,7 @@
                                         <h5 class="mb-3">Belum ada pertanyaan</h5>
                                         <p class="text-muted mb-4">Mulai dengan menambahkan pertanyaan pertama untuk
                                             kuesioner umum ini.</p>
-                                        <a href="?category_id={{ $selectedCategory->id }}&create_question=true"
+                                        <a href="{{ route('admin.questionnaire.general-questions.create', $generalQuestionnaire->id) }}"
                                             class="btn btn-primary">
                                             <i class="fas fa-plus-circle me-2"></i> Tambah Pertanyaan Pertama
                                         </a>

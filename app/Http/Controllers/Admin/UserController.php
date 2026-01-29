@@ -234,7 +234,6 @@ class UserController extends Controller
             'phone' => $validated['phone'],
             'graduation_date' => $validated['graduation_date'],
             'npwp' => $validated['npwp'],
-            'ranking' => $validated['ranking'],
             'points' => $validated['points'],
         ]);
 
